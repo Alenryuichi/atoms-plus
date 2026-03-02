@@ -85,9 +85,7 @@ describe("useAppTitle", () => {
     const { result } = renderAppTitleHook();
 
     await waitFor(() =>
-      expect(result.current).toBe(
-        "Another Conversation Title | Atoms Plus",
-      ),
+      expect(result.current).toBe("Another Conversation Title | Atoms Plus"),
     );
   });
 
