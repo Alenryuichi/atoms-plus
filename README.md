@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="frontend/public/atoms-plus-logo.png" alt="Atoms Plus" width="120" />
+  <img src="frontend/src/assets/branding/atoms-plus-logo.png" alt="Atoms Plus" width="120" />
 </p>
 
 <h1 align="center">Atoms Plus</h1>
