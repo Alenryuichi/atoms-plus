@@ -134,13 +134,14 @@ class ProcessSandboxService(SandboxService):
         )
 
         try:
-            # Start the process
+            # Start the process - inherit stdout/stderr to see agent server logs directly
+            # This helps debug startup issues in cloud environments
             process = subprocess.Popen(
                 cmd,
                 env=env,
                 cwd=working_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stdout=sys.stdout,  # Inherit stdout to see logs
+                stderr=sys.stderr,  # Inherit stderr to see errors
             )
 
             _logger.info(f'Agent process spawned with PID {process.pid} for sandbox {sandbox_id}')
@@ -150,9 +151,8 @@ class ProcessSandboxService(SandboxService):
 
             # Check if process is still running
             if process.poll() is not None:
-                stdout, stderr = process.communicate()
-                _logger.error(f'Agent process {process.pid} died immediately. stdout: {stdout.decode()[:500]}, stderr: {stderr.decode()[:1000]}')
-                raise SandboxError(f'Agent process failed to start: {stderr.decode()}')
+                _logger.error(f'Agent process {process.pid} died immediately with return code {process.returncode}')
+                raise SandboxError(f'Agent process failed to start with return code {process.returncode}')
 
             _logger.info(f'Agent process {process.pid} is running after initial check')
             return process
@@ -169,8 +169,7 @@ class ProcessSandboxService(SandboxService):
         while time.time() - start_time < timeout:
             # Check if process died
             if process and process.poll() is not None:
-                stdout, stderr = process.communicate()
-                _logger.error(f'Agent process died. stdout: {stdout.decode()}, stderr: {stderr.decode()}')
+                _logger.error(f'Agent process died with return code {process.returncode}')
                 return False
             try:
                 # For subprocess mode, we should connect directly to localhost
@@ -181,50 +180,21 @@ class ProcessSandboxService(SandboxService):
                 if response.status_code == 200:
                     data = response.json()
                     if data.get('status') == 'ok':
+                        _logger.info(f'Agent server on port {port} is ready!')
                         return True
             except Exception as e:
                 # Log more details periodically to help debug startup issues
                 elapsed = time.time() - start_time
                 if elapsed > 30 and int(elapsed) % 30 == 0:  # Every 30 seconds after first 30s
                     _logger.warning(f'Still waiting for agent server on port {port} after {int(elapsed)}s: {type(e).__name__}: {e}')
-                else:
-                    _logger.debug(f'Waiting for agent server on port {port}: {e}')
+                elif int(elapsed) % 10 == 0:  # Every 10 seconds
+                    _logger.info(f'Waiting for agent server on port {port} ({int(elapsed)}s elapsed): {type(e).__name__}')
             await asyncio.sleep(1)
 
         # Log final process state on timeout
         if process:
             is_running = process.poll() is None
-            _logger.error(f'Agent server timeout. Process running: {is_running}')
-            # Try to get any available output for debugging
-            if is_running:
-                import select
-                import os as os_module
-                # Non-blocking read of stdout/stderr
-                try:
-                    if process.stdout and hasattr(process.stdout, 'fileno'):
-                        import fcntl
-                        fd = process.stdout.fileno()
-                        fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-                        fcntl.fcntl(fd, fcntl.F_SETFL, fl | os_module.O_NONBLOCK)
-                        try:
-                            stdout_data = process.stdout.read()
-                            if stdout_data:
-                                _logger.error(f'Agent server stdout (partial): {stdout_data.decode()[:2000]}')
-                        except Exception:
-                            pass
-                    if process.stderr and hasattr(process.stderr, 'fileno'):
-                        import fcntl
-                        fd = process.stderr.fileno()
-                        fl = fcntl.fcntl(fd, fcntl.F_GETFL)
-                        fcntl.fcntl(fd, fcntl.F_SETFL, fl | os_module.O_NONBLOCK)
-                        try:
-                            stderr_data = process.stderr.read()
-                            if stderr_data:
-                                _logger.error(f'Agent server stderr (partial): {stderr_data.decode()[:2000]}')
-                        except Exception:
-                            pass
-                except Exception as e:
-                    _logger.debug(f'Could not read process output: {e}')
+            _logger.error(f'Agent server timeout after {timeout}s. Process running: {is_running}, return code: {process.returncode}')
         return False
 
     def _get_process_status(self, process_info: ProcessInfo) -> SandboxStatus:
