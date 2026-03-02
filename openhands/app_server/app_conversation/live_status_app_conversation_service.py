@@ -531,16 +531,14 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
         )
 
     def _get_agent_server_url(self, sandbox: SandboxInfo) -> str:
-        """Get agent server url for running sandbox."""
-        exposed_urls = sandbox.exposed_urls
-        assert exposed_urls is not None
-        agent_server_url = next(
-            exposed_url.url
-            for exposed_url in exposed_urls
-            if exposed_url.name == AGENT_SERVER
-        )
-        agent_server_url = replace_localhost_hostname_for_docker(agent_server_url)
-        return agent_server_url
+        """Get agent server url for running sandbox.
+
+        Delegates to sandbox_service._get_agent_server_url() to allow different
+        sandbox implementations to handle URL transformations appropriately.
+        For example, ProcessSandboxService doesn't need localhost replacement
+        since agent server runs as a child process.
+        """
+        return self.sandbox_service._get_agent_server_url(sandbox)
 
     def _inherit_configuration_from_parent(
         self, request: AppConversationStartRequest, parent_info: AppConversationInfo
