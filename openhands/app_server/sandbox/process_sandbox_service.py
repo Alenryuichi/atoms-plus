@@ -178,7 +178,12 @@ class ProcessSandboxService(SandboxService):
                     if data.get('status') == 'ok':
                         return True
             except Exception as e:
-                _logger.debug(f'Waiting for agent server on port {port}: {e}')
+                # Log more details periodically to help debug startup issues
+                elapsed = time.time() - start_time
+                if elapsed > 30 and int(elapsed) % 30 == 0:  # Every 30 seconds after first 30s
+                    _logger.warning(f'Still waiting for agent server on port {port} after {int(elapsed)}s: {type(e).__name__}: {e}')
+                else:
+                    _logger.debug(f'Waiting for agent server on port {port}: {e}')
             await asyncio.sleep(1)
 
         # Log final process state on timeout
