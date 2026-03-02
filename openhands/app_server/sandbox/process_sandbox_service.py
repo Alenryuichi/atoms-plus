@@ -265,9 +265,13 @@ class ProcessSandboxService(SandboxService):
                     ]
                     session_api_key = process_info.session_api_key
                 else:
-                    status = SandboxStatus.ERROR
+                    # Server responded but not OK - it may still be starting up
+                    # Keep as STARTING instead of ERROR to allow retry
+                    status = SandboxStatus.STARTING
             except Exception:
-                status = SandboxStatus.ERROR
+                # Connection failed - server is likely still starting up
+                # Keep as STARTING instead of ERROR to allow wait_for_sandbox_running to retry
+                status = SandboxStatus.STARTING
 
         return SandboxInfo(
             id=sandbox_id,
