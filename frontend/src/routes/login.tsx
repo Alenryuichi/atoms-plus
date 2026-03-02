@@ -4,6 +4,28 @@ import { useNavigate, useSearchParams } from "react-router";
 import { useSupabaseAuth } from "#/context/supabase-auth-context";
 import { isSupabaseConfigured } from "#/lib/supabase";
 
+// Cloudflare Turnstile Site Key
+const TURNSTILE_SITE_KEY = "0x4AAAAAACkzH2JkHuDAArJd";
+
+// Declare Turnstile types
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: HTMLElement,
+        options: {
+          sitekey: string;
+          callback: (token: string) => void;
+          "expired-callback"?: () => void;
+          theme?: "light" | "dark" | "auto";
+        },
+      ) => string;
+      reset: (container: HTMLElement) => void;
+      remove: (widgetId: string) => void;
+    };
+  }
+}
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -17,6 +39,52 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [captchaToken, setCaptchaToken] = React.useState<string | null>(null);
+  const turnstileRef = React.useRef<HTMLDivElement>(null);
+
+  // Load Turnstile script and render widget
+  React.useEffect(() => {
+    // Load Turnstile script if not already loaded
+    if (!document.getElementById("turnstile-script")) {
+      const script = document.createElement("script");
+      script.id = "turnstile-script";
+      script.src =
+        "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = true;
+      document.head.appendChild(script);
+    }
+
+    // Render widget when script is loaded
+    const renderWidget = () => {
+      if (
+        turnstileRef.current &&
+        window.turnstile &&
+        !turnstileRef.current.hasChildNodes()
+      ) {
+        window.turnstile.render(turnstileRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          callback: (token: string) => setCaptchaToken(token),
+          "expired-callback": () => setCaptchaToken(null),
+          theme: "dark",
+        });
+      }
+    };
+
+    // Check if script is already loaded
+    if (window.turnstile) {
+      renderWidget();
+    } else {
+      // Wait for script to load
+      const checkScript = setInterval(() => {
+        if (window.turnstile) {
+          clearInterval(checkScript);
+          renderWidget();
+        }
+      }, 100);
+      return () => clearInterval(checkScript);
+    }
+    return undefined;
+  }, []);
 
   // Redirect authenticated users away from login page
   React.useEffect(() => {
@@ -35,18 +103,30 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!captchaToken) {
+      setError("Please complete the captcha verification");
+      return;
+    }
+
     setIsSubmitting(true);
 
     const { error: authError } = isSignUp
-      ? await signUp(email, password)
-      : await signIn(email, password);
+      ? await signUp(email, password, captchaToken)
+      : await signIn(email, password, captchaToken);
 
     setIsSubmitting(false);
+
+    // Reset captcha after submission
+    if (window.turnstile && turnstileRef.current) {
+      window.turnstile.reset(turnstileRef.current);
+      setCaptchaToken(null);
+    }
 
     if (authError) {
       setError(authError.message);
     } else if (isSignUp) {
-      setError("Check your email for a confirmation link!");
+      setError("Account created! You can now sign in.");
     }
   };
 
@@ -130,9 +210,16 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Cloudflare Turnstile Captcha */}
+          <div
+            ref={turnstileRef}
+            className="flex justify-center"
+            data-testid="turnstile-container"
+          />
+
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !captchaToken}
             className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-medium rounded-md transition-colors"
           >
             {isSubmitting && "Loading..."}

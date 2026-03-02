@@ -24,10 +24,12 @@ interface SupabaseAuthContextType {
   signIn: (
     email: string,
     password: string,
+    captchaToken?: string,
   ) => Promise<{ error: AuthError | null }>;
   signUp: (
     email: string,
     password: string,
+    captchaToken?: string,
   ) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   signInWithGitHub: () => Promise<{ error: AuthError | null }>;
@@ -73,21 +75,29 @@ export function SupabaseAuthProvider({
     };
   }, []);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
-  }, []);
+  const signIn = useCallback(
+    async (email: string, password: string, captchaToken?: string) => {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+        options: captchaToken ? { captchaToken } : undefined,
+      });
+      return { error };
+    },
+    [],
+  );
 
-  const signUp = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    return { error };
-  }, []);
+  const signUp = useCallback(
+    async (email: string, password: string, captchaToken?: string) => {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: captchaToken ? { captchaToken } : undefined,
+      });
+      return { error };
+    },
+    [],
+  );
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
