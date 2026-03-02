@@ -149,9 +149,6 @@ def config_from_env() -> AppServerConfig:
     from openhands.app_server.event_callback.sql_event_callback_service import (
         SQLEventCallbackServiceInjector,
     )
-    from openhands.app_server.sandbox.daytona_sandbox_service import (
-        DaytonaSandboxServiceInjector,
-    )
     from openhands.app_server.sandbox.docker_sandbox_service import (
         DockerSandboxServiceInjector,
     )
@@ -195,10 +192,7 @@ def config_from_env() -> AppServerConfig:
                 api_key=os.environ['SANDBOX_API_KEY'],
                 api_url=os.environ['SANDBOX_REMOTE_RUNTIME_API_URL'],
             )
-        elif os.getenv('RUNTIME') == 'daytona':
-            # Use DaytonaSandboxService for Daytona runtime
-            config.sandbox = DaytonaSandboxServiceInjector()
-        elif os.getenv('RUNTIME') in ('local', 'process', 'e2b', 'modal', 'runloop'):
+        elif os.getenv('RUNTIME') in ('local', 'daytona', 'e2b', 'modal', 'runloop'):
             # Use ProcessSandboxService for local, process, and other third-party runtimes
             config.sandbox = ProcessSandboxServiceInjector()
         else:
