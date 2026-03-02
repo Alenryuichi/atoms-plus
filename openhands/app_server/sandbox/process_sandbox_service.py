@@ -169,9 +169,10 @@ class ProcessSandboxService(SandboxService):
                 _logger.error(f'Agent process died. stdout: {stdout.decode()}, stderr: {stderr.decode()}')
                 return False
             try:
-                url = replace_localhost_hostname_for_docker(
-                    f'http://localhost:{port}/alive'
-                )
+                # For subprocess mode, we should connect directly to localhost
+                # because the agent server runs as a child process, not in a separate container.
+                # DO NOT use replace_localhost_hostname_for_docker here!
+                url = f'http://localhost:{port}/alive'
                 response = await self.httpx_client.get(url, timeout=5.0)
                 if response.status_code == 200:
                     data = response.json()
@@ -250,10 +251,9 @@ class ProcessSandboxService(SandboxService):
 
         if status == SandboxStatus.RUNNING:
             # Check if server is actually responding
+            # For subprocess mode, connect directly to localhost (child process, not separate container)
             try:
-                url = replace_localhost_hostname_for_docker(
-                    f'http://localhost:{process_info.port}{self.health_check_path}'
-                )
+                url = f'http://localhost:{process_info.port}{self.health_check_path}'
                 response = await self.httpx_client.get(url, timeout=5.0)
                 if response.status_code == 200:
                     exposed_urls = [
