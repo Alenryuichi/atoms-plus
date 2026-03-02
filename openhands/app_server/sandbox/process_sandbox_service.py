@@ -183,7 +183,38 @@ class ProcessSandboxService(SandboxService):
 
         # Log final process state on timeout
         if process:
-            _logger.error(f'Agent server timeout. Process running: {process.poll() is None}')
+            is_running = process.poll() is None
+            _logger.error(f'Agent server timeout. Process running: {is_running}')
+            # Try to get any available output for debugging
+            if is_running:
+                import select
+                import os as os_module
+                # Non-blocking read of stdout/stderr
+                try:
+                    if process.stdout and hasattr(process.stdout, 'fileno'):
+                        import fcntl
+                        fd = process.stdout.fileno()
+                        fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                        fcntl.fcntl(fd, fcntl.F_SETFL, fl | os_module.O_NONBLOCK)
+                        try:
+                            stdout_data = process.stdout.read()
+                            if stdout_data:
+                                _logger.error(f'Agent server stdout (partial): {stdout_data.decode()[:2000]}')
+                        except Exception:
+                            pass
+                    if process.stderr and hasattr(process.stderr, 'fileno'):
+                        import fcntl
+                        fd = process.stderr.fileno()
+                        fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+                        fcntl.fcntl(fd, fcntl.F_SETFL, fl | os_module.O_NONBLOCK)
+                        try:
+                            stderr_data = process.stderr.read()
+                            if stderr_data:
+                                _logger.error(f'Agent server stderr (partial): {stderr_data.decode()[:2000]}')
+                        except Exception:
+                            pass
+                except Exception as e:
+                    _logger.debug(f'Could not read process output: {e}')
         return False
 
     def _get_process_status(self, process_info: ProcessInfo) -> SandboxStatus:
