@@ -156,13 +156,18 @@ class ProcessSandboxService(SandboxService):
         except Exception as e:
             raise SandboxError(f'Failed to start agent process: {e}')
 
-    async def _wait_for_server_ready(self, port: int, timeout: int = 60) -> bool:
+    async def _wait_for_server_ready(self, port: int, timeout: int = 60, process: subprocess.Popen | None = None) -> bool:
         """Wait for the agent server to be ready.
 
         Default timeout increased to 60 seconds for cloud environments like Railway.
         """
         start_time = time.time()
         while time.time() - start_time < timeout:
+            # Check if process died
+            if process and process.poll() is not None:
+                stdout, stderr = process.communicate()
+                _logger.error(f'Agent process died. stdout: {stdout.decode()}, stderr: {stderr.decode()}')
+                return False
             try:
                 url = replace_localhost_hostname_for_docker(
                     f'http://localhost:{port}/alive'
@@ -172,9 +177,13 @@ class ProcessSandboxService(SandboxService):
                     data = response.json()
                     if data.get('status') == 'ok':
                         return True
-            except Exception:
-                pass
+            except Exception as e:
+                _logger.debug(f'Waiting for agent server on port {port}: {e}')
             await asyncio.sleep(1)
+
+        # Log final process state on timeout
+        if process:
+            _logger.error(f'Agent server timeout. Process running: {process.poll() is None}')
         return False
 
     def _get_process_status(self, process_info: ProcessInfo) -> SandboxStatus:
@@ -338,22 +347,10 @@ class ProcessSandboxService(SandboxService):
         _processes[sandbox_id] = process_info
 
         # Wait for server to be ready
-        if not await self._wait_for_server_ready(port):
-            # Try to get error output from the process
-            process_info_for_error = _processes.get(sandbox_id)
-            error_msg = 'Agent Server Failed to start properly'
-            if process_info_for_error:
-                try:
-                    import psutil
-                    proc = psutil.Process(process_info_for_error.pid)
-                    if not proc.is_running():
-                        # Process died, try to get subprocess output
-                        _logger.error(f'Agent process {process_info_for_error.pid} is not running')
-                except Exception as e:
-                    _logger.error(f'Could not check process status: {e}')
+        if not await self._wait_for_server_ready(port, process=process):
             # Clean up if server didn't start properly
             await self.delete_sandbox(sandbox_id)
-            raise SandboxError(error_msg)
+            raise SandboxError('Agent Server Failed to start properly')
 
         return await self._process_to_sandbox_info(sandbox_id, process_info)
 
