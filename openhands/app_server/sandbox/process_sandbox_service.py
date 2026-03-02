@@ -156,10 +156,10 @@ class ProcessSandboxService(SandboxService):
         except Exception as e:
             raise SandboxError(f'Failed to start agent process: {e}')
 
-    async def _wait_for_server_ready(self, port: int, timeout: int = 60, process: subprocess.Popen | None = None) -> bool:
+    async def _wait_for_server_ready(self, port: int, timeout: int = 120, process: subprocess.Popen | None = None) -> bool:
         """Wait for the agent server to be ready.
 
-        Default timeout increased to 60 seconds for cloud environments like Railway.
+        Default timeout increased to 120 seconds for resource-constrained cloud environments.
         """
         start_time = time.time()
         while time.time() - start_time < timeout:
