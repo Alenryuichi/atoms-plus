@@ -12,6 +12,7 @@ import "./i18n";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./query-client-config";
 import { PostHogWrapper } from "./components/providers/posthog-wrapper";
+import { SupabaseAuthProvider } from "./context/supabase-auth-context";
 
 async function prepareApp() {
   if (
@@ -32,9 +33,11 @@ prepareApp().then(() =>
       document,
       <StrictMode>
         <QueryClientProvider client={queryClient}>
-          <PostHogWrapper>
-            <HydratedRouter />
-          </PostHogWrapper>
+          <SupabaseAuthProvider>
+            <PostHogWrapper>
+              <HydratedRouter />
+            </PostHogWrapper>
+          </SupabaseAuthProvider>
         </QueryClientProvider>
       </StrictMode>,
     );

@@ -3,6 +3,7 @@ import { usePostHog } from "posthog-js/react";
 import AuthService from "#/api/auth-service/auth-service.api";
 import { useConfig } from "../query/use-config";
 import { clearLoginData } from "#/utils/local-storage";
+import { supabase, isSupabaseConfigured } from "#/lib/supabase";
 
 export const useLogout = () => {
   const posthog = usePostHog();
@@ -20,6 +21,11 @@ export const useLogout = () => {
       // Clear login method and last page from local storage
       if (config?.app_mode === "saas") {
         clearLoginData();
+      }
+
+      // Clear Supabase session if configured
+      if (isSupabaseConfigured()) {
+        await supabase.auth.signOut();
       }
 
       posthog.reset();

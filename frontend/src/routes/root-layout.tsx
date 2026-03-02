@@ -30,6 +30,8 @@ import { AlertBanner } from "#/components/features/alerts/alert-banner";
 import { cn, isMobileDevice } from "#/utils/utils";
 import { LoadingSpinner } from "#/components/shared/loading-spinner";
 import { useAppTitle } from "#/hooks/use-app-title";
+import { useSupabaseAuth } from "#/context/supabase-auth-context";
+import { isSupabaseConfigured } from "#/lib/supabase";
 
 export function ErrorBoundary() {
   const error = useRouteError();
@@ -81,6 +83,17 @@ export default function MainApp() {
     isLoading: isAuthLoading,
     isError: isAuthError,
   } = useIsAuthed();
+
+  // Supabase auth state
+  const { isAuthenticated: isSupabaseAuthed, isLoading: isSupabaseLoading } =
+    useSupabaseAuth();
+
+  // Use Supabase auth if configured, otherwise use the original OSS/SAAS auth
+  const useSupabaseAuthFlow = isSupabaseConfigured();
+  const effectiveIsAuthed = useSupabaseAuthFlow ? isSupabaseAuthed : isAuthed;
+  const effectiveIsLoading = useSupabaseAuthFlow
+    ? isSupabaseLoading
+    : isAuthLoading;
 
   const [consentFormIsOpen, setConsentFormIsOpen] = React.useState(false);
 
@@ -173,14 +186,18 @@ export default function MainApp() {
     setLoginMethodExists(checkLoginMethodExists());
   }, [isAuthed, checkLoginMethodExists]);
 
-  const shouldRedirectToLogin =
-    config.isLoading ||
-    isAuthLoading ||
-    (!isAuthed &&
-      !isAuthError &&
-      !isOnIntermediatePage &&
-      config.data?.app_mode === "saas" &&
-      !loginMethodExists);
+  // Determine if we should redirect to login based on auth mode
+  const shouldRedirectToLogin = useSupabaseAuthFlow
+    ? // Supabase auth flow: redirect if not authenticated and not loading
+      !effectiveIsLoading && !effectiveIsAuthed && !isOnIntermediatePage
+    : // Original SAAS flow
+      config.isLoading ||
+      isAuthLoading ||
+      (!isAuthed &&
+        !isAuthError &&
+        !isOnIntermediatePage &&
+        config.data?.app_mode === "saas" &&
+        !loginMethodExists);
 
   React.useEffect(() => {
     if (shouldRedirectToLogin) {
@@ -196,6 +213,15 @@ export default function MainApp() {
       navigate(loginUrl, { replace: true });
     }
   }, [shouldRedirectToLogin, pathname, searchParams, navigate]);
+
+  // Show loading state while checking auth
+  if (effectiveIsLoading && useSupabaseAuthFlow) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-base">
+        <LoadingSpinner size="large" />
+      </div>
+    );
+  }
 
   if (shouldRedirectToLogin) {
     return (
