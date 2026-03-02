@@ -266,6 +266,26 @@ class ProcessSandboxService(SandboxService):
             created_at=process_info.created_at,
         )
 
+    def _get_agent_server_url(self, sandbox: SandboxInfo) -> str:
+        """Get agent server URL from sandbox exposed URLs.
+
+        Override base class to NOT replace localhost with host.docker.internal,
+        because ProcessSandboxService runs the agent server as a child process,
+        not in a separate Docker container.
+        """
+        from openhands.app_server.errors import SandboxError
+        from openhands.app_server.sandbox.sandbox_models import AGENT_SERVER
+
+        if not sandbox.exposed_urls:
+            raise SandboxError(f'No exposed URLs for sandbox: {sandbox.id}')
+
+        for exposed_url in sandbox.exposed_urls:
+            if exposed_url.name == AGENT_SERVER:
+                # For subprocess mode, return URL as-is without localhost replacement
+                return exposed_url.url
+
+        raise SandboxError(f'No agent server URL found for sandbox: {sandbox.id}')
+
     async def search_sandboxes(
         self,
         page_id: str | None = None,
