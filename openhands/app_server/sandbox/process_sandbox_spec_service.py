@@ -28,7 +28,10 @@ def get_default_sandbox_specs():
                 'OH_ENABLE_VS_CODE': '0',
                 **get_agent_server_env(),
             },
-            working_dir='',
+            # Use a placeholder that will be replaced by the actual sandbox directory
+            # in ProcessSandboxService._start_agent_process
+            # The actual working_dir is created by ProcessSandboxService._create_sandbox_directory
+            working_dir='/tmp/openhands-sandboxes',
         )
     ]
 
