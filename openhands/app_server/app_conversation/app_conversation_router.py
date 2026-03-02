@@ -64,14 +64,11 @@ from openhands.app_server.config import (
     get_app_conversation_service,
 )
 from openhands.app_server.sandbox.sandbox_models import (
-    AGENT_SERVER,
     SandboxStatus,
 )
 from openhands.app_server.sandbox.sandbox_service import SandboxService
 from openhands.app_server.sandbox.sandbox_spec_service import SandboxSpecService
-from openhands.app_server.utils.docker_utils import (
-    replace_localhost_hostname_for_docker,
-)
+
 from openhands.sdk.context.skills import KeywordTrigger, TaskTrigger
 from openhands.sdk.workspace.remote.async_remote_workspace import AsyncRemoteWorkspace
 
@@ -407,16 +404,11 @@ async def read_conversation_file(
     if not sandbox.exposed_urls:
         return ''
 
-    agent_server_url = None
-    for exposed_url in sandbox.exposed_urls:
-        if exposed_url.name == AGENT_SERVER:
-            agent_server_url = exposed_url.url
-            break
-
+    # Use sandbox_service to get the URL - it handles localhost replacement
+    # appropriately based on sandbox type (Docker vs Process)
+    agent_server_url = sandbox_service._get_agent_server_url(sandbox)
     if not agent_server_url:
         return ''
-
-    agent_server_url = replace_localhost_hostname_for_docker(agent_server_url)
 
     # Create remote workspace
     remote_workspace = AsyncRemoteWorkspace(
@@ -512,26 +504,20 @@ async def get_conversation_skills(
                 content={'error': 'Sandbox spec not found'},
             )
 
-        # Get the agent server URL
+        # Get the agent server URL - use sandbox_service for proper URL handling
+        # based on sandbox type (Docker vs Process)
         if not sandbox.exposed_urls:
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
                 content={'error': 'No agent server URL found for sandbox'},
             )
 
-        agent_server_url = None
-        for exposed_url in sandbox.exposed_urls:
-            if exposed_url.name == AGENT_SERVER:
-                agent_server_url = exposed_url.url
-                break
-
+        agent_server_url = sandbox_service._get_agent_server_url(sandbox)
         if not agent_server_url:
             return JSONResponse(
                 status_code=status.HTTP_404_NOT_FOUND,
                 content={'error': 'Agent server URL not found in sandbox'},
             )
-
-        agent_server_url = replace_localhost_hostname_for_docker(agent_server_url)
 
         # Load skills from all sources
         logger.info(f'Loading skills for conversation {conversation_id}')

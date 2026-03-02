@@ -15,9 +15,6 @@ from openhands.app_server.event_callback.event_callback_result_models import (
 )
 from openhands.app_server.services.injector import InjectorState
 from openhands.app_server.user.specifiy_user_context import ADMIN, USER_CONTEXT_ATTR
-from openhands.app_server.utils.docker_utils import (
-    replace_localhost_hostname_for_docker,
-)
 from openhands.sdk import Event, MessageEvent
 
 _logger = logging.getLogger(__name__)
@@ -39,6 +36,7 @@ class SetTitleCallbackProcessor(EventCallbackProcessor):
             get_app_conversation_service,
             get_event_callback_service,
             get_httpx_client,
+            get_sandbox_service,
         )
 
         _logger.info(f'Callback {callback.id} Invoked for event {event}')
@@ -49,6 +47,7 @@ class SetTitleCallbackProcessor(EventCallbackProcessor):
             get_event_callback_service(state) as event_callback_service,
             get_app_conversation_service(state) as app_conversation_service,
             get_app_conversation_info_service(state) as app_conversation_info_service,
+            get_sandbox_service(state) as sandbox_service,
             get_httpx_client(state) as httpx_client,
         ):
             # Generate a title for the conversation
@@ -56,11 +55,15 @@ class SetTitleCallbackProcessor(EventCallbackProcessor):
                 conversation_id
             )
             assert app_conversation is not None
-            app_conversation_url = app_conversation.conversation_url
+
+            # Get sandbox to use sandbox_service for proper URL handling
+            # based on sandbox type (Docker vs Process)
+            sandbox = await sandbox_service.get_sandbox(app_conversation.sandbox_id)
+            assert sandbox is not None
+            app_conversation_url = sandbox_service._get_agent_server_url(sandbox)
             assert app_conversation_url is not None
-            app_conversation_url = replace_localhost_hostname_for_docker(
-                app_conversation_url
-            )
+            # Append conversation path to agent server URL
+            app_conversation_url = f'{app_conversation_url}/api/conversations/{app_conversation.id.hex}'
             response = await httpx_client.post(
                 f'{app_conversation_url}/generate_title',
                 headers={

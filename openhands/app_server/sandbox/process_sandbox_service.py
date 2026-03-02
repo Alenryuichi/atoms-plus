@@ -37,9 +37,6 @@ from openhands.app_server.sandbox.sandbox_service import (
 from openhands.app_server.sandbox.sandbox_spec_models import SandboxSpecInfo
 from openhands.app_server.sandbox.sandbox_spec_service import SandboxSpecService
 from openhands.app_server.services.injector import InjectorState
-from openhands.app_server.utils.docker_utils import (
-    replace_localhost_hostname_for_docker,
-)
 
 _logger = logging.getLogger(__name__)
 

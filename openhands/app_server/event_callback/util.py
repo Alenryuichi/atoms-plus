@@ -4,12 +4,8 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from openhands.app_server.sandbox.sandbox_models import (
-    AGENT_SERVER,
     SandboxInfo,
     SandboxStatus,
-)
-from openhands.app_server.utils.docker_utils import (
-    replace_localhost_hostname_for_docker,
 )
 
 if TYPE_CHECKING:
@@ -39,23 +35,3 @@ def ensure_running_sandbox(sandbox: SandboxInfo | None, sandbox_id: str) -> Sand
         raise RuntimeError(f'No session API key for sandbox: {sandbox.id}')
 
     return sandbox
-
-
-def get_agent_server_url_from_sandbox(sandbox: SandboxInfo) -> str:
-    """Return the agent server URL from sandbox exposed URLs."""
-    exposed_urls = sandbox.exposed_urls
-    if not exposed_urls:
-        raise RuntimeError(f'No exposed URLs configured for sandbox {sandbox.id!r}')
-
-    try:
-        agent_server_url = next(
-            exposed_url.url
-            for exposed_url in exposed_urls
-            if exposed_url.name == AGENT_SERVER
-        )
-    except StopIteration:
-        raise RuntimeError(
-            f'No {AGENT_SERVER!r} URL found for sandbox {sandbox.id!r}'
-        ) from None
-
-    return replace_localhost_hostname_for_docker(agent_server_url)
