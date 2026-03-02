@@ -106,11 +106,7 @@ class DaytonaSandboxService(SandboxService):
     ) -> SandboxInfo:
         """Start a new Daytona sandbox."""
         try:
-            from daytona import (
-                CreateSandboxFromSnapshotParams,
-                Daytona,
-                DaytonaConfig,
-            )
+            from daytona import Daytona, DaytonaConfig
         except ImportError:
             raise SandboxError('Daytona package not installed. Install with: pip install daytona')
 
@@ -127,14 +123,8 @@ class DaytonaSandboxService(SandboxService):
             )
             daytona = Daytona(config)
 
-            # Create sandbox with OpenHands label using default snapshot
-            sandbox_params = CreateSandboxFromSnapshotParams(
-                language="python",
-                public=True,
-                labels={"OpenHands_SID": sandbox_id},
-                auto_stop_interval=60,
-            )
-            sandbox = daytona.create(sandbox_params)
+            # Create sandbox with default settings (no params = uses default snapshot)
+            sandbox = daytona.create()
             
             _logger.info(f'Daytona sandbox created: {sandbox.id}')
             
