@@ -102,10 +102,16 @@ class SandboxService(ABC):
             SandboxError: If sandbox not found, enters ERROR state, or times out
         """
         start = time.time()
+        last_status = None
         while time.time() - start <= timeout:
             sandbox = await self.get_sandbox(sandbox_id)
             if sandbox is None:
                 raise SandboxError(f'Sandbox not found: {sandbox_id}')
+
+            # Log status changes
+            if sandbox.status != last_status:
+                _logger.info(f'Sandbox {sandbox_id} status changed: {last_status} -> {sandbox.status}, exposed_urls: {sandbox.exposed_urls is not None}')
+                last_status = sandbox.status
 
             if sandbox.status == SandboxStatus.ERROR:
                 raise SandboxError(f'Sandbox entered error state: {sandbox_id}')
@@ -115,9 +121,11 @@ class SandboxService(ABC):
                 # where sandbox reports RUNNING but agent server isn't ready yet
                 if httpx_client and sandbox.exposed_urls:
                     if await self._check_agent_server_alive(sandbox, httpx_client):
+                        _logger.info(f'Sandbox {sandbox_id} is fully ready!')
                         return sandbox
                     # Agent server not ready yet, continue polling
                 else:
+                    _logger.info(f'Sandbox {sandbox_id} is RUNNING (no httpx_client or exposed_urls)')
                     return sandbox
 
             await asyncio.sleep(poll_interval)
@@ -140,12 +148,18 @@ class SandboxService(ABC):
         try:
             agent_server_url = self._get_agent_server_url(sandbox)
             url = f'{agent_server_url.rstrip("/")}/alive'
+            _logger.debug(f'Checking agent server alive at: {url}')
             response = await httpx_client.get(url, timeout=5.0)
-            return response.is_success
+            if response.is_success:
+                _logger.info(f'Agent server alive check passed for sandbox {sandbox.id} at {url}')
+                return True
+            else:
+                _logger.warning(f'Agent server alive check returned {response.status_code} for sandbox {sandbox.id}')
+                return False
         except Exception as exc:
-            _logger.debug(
+            _logger.warning(
                 f'Agent server health check failed for sandbox {sandbox.id}'
-                f'{f" at {url}" if url else ""}: {exc}'
+                f'{f" at {url}" if url else ""}: {type(exc).__name__}: {exc}'
             )
             return False
 
