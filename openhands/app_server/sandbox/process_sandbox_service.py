@@ -143,14 +143,18 @@ class ProcessSandboxService(SandboxService):
                 stderr=subprocess.PIPE,
             )
 
+            _logger.info(f'Agent process spawned with PID {process.pid} for sandbox {sandbox_id}')
+
             # Wait a moment for the process to start
             await asyncio.sleep(1)
 
             # Check if process is still running
             if process.poll() is not None:
                 stdout, stderr = process.communicate()
+                _logger.error(f'Agent process {process.pid} died immediately. stdout: {stdout.decode()[:500]}, stderr: {stderr.decode()[:1000]}')
                 raise SandboxError(f'Agent process failed to start: {stderr.decode()}')
 
+            _logger.info(f'Agent process {process.pid} is running after initial check')
             return process
 
         except Exception as e:
@@ -264,13 +268,16 @@ class ProcessSandboxService(SandboxService):
                         ),
                     ]
                     session_api_key = process_info.session_api_key
+                    _logger.info(f'Agent server on port {process_info.port} is healthy')
                 else:
                     # Server responded but not OK - it may still be starting up
                     # Keep as STARTING instead of ERROR to allow retry
+                    _logger.debug(f'Agent server health check returned {response.status_code}, treating as STARTING')
                     status = SandboxStatus.STARTING
-            except Exception:
+            except Exception as e:
                 # Connection failed - server is likely still starting up
                 # Keep as STARTING instead of ERROR to allow wait_for_sandbox_running to retry
+                _logger.debug(f'Agent server health check failed ({type(e).__name__}), treating as STARTING')
                 status = SandboxStatus.STARTING
 
         return SandboxInfo(
