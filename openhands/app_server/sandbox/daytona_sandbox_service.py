@@ -127,10 +127,9 @@ class DaytonaSandboxService(SandboxService):
             )
             daytona = Daytona(config)
 
-            # Create sandbox with OpenHands label using proper params
+            # Create sandbox with OpenHands label using default snapshot
             sandbox_params = CreateSandboxFromSnapshotParams(
                 language="python",
-                snapshot="nikolaik/python-nodejs:python3.12-nodejs22",
                 public=True,
                 labels={"OpenHands_SID": sandbox_id},
                 auto_stop_interval=60,
