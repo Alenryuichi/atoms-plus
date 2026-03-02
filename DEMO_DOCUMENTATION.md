@@ -9,6 +9,12 @@
 
 Atoms Plus 是一个 AI 驱动的低代码开发平台，目标是复刻并超越 [atoms.dev](https://atoms.dev) 的核心功能。基于 OpenHands 开源框架进行深度定制和扩展，实现了多模型竞速、多角色 Agent 协调等差异化能力。
 
+### 📚 相关文档
+
+| 文档 | 说明 |
+|------|------|
+| [MetaGPT 集成工作总结](docs/METAGPT_INTEGRATION.md) | MetaGPT 多代理系统集成的详细技术记录 |
+
 ---
 
 ## 二、实现思路与关键取舍
