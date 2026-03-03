@@ -38,12 +38,13 @@ class SandboxInfo(BaseModel):
     sandbox_spec_id: str
     status: SandboxStatus
     session_api_key: str | None = Field(
+        default=None,
         description=(
             'Key to access sandbox, to be added as an `X-Session-API-Key` header '
             'in each request. In cases where the sandbox statues is STARTING or '
             'PAUSED, or the current user does not have full access '
             'the session_api_key will be None.'
-        )
+        ),
     )
     exposed_urls: list[ExposedUrl] | None = Field(
         default_factory=lambda: [],
@@ -51,6 +52,14 @@ class SandboxInfo(BaseModel):
             'URLs exposed by the sandbox (App server, Vscode, etc...)'
             'Sandboxes with a status STARTING / PAUSED / ERROR may '
             'not return urls.'
+        ),
+    )
+    working_dir: str | None = Field(
+        default=None,
+        description=(
+            'Working directory for agent operations and tool execution. '
+            'This is the per-sandbox directory where files should be created. '
+            'For ProcessSandbox, this is /tmp/openhands-sandboxes/{sandbox_id}/'
         ),
     )
     created_at: datetime = Field(default_factory=utc_now)

@@ -304,6 +304,7 @@ class ProcessSandboxService(SandboxService):
             status=status,
             session_api_key=session_api_key,
             exposed_urls=exposed_urls,
+            working_dir=process_info.working_dir,
             created_at=process_info.created_at,
         )
 

@@ -228,17 +228,19 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
             assert sandbox is not None
             agent_server_url = self._get_agent_server_url(sandbox)
 
-            # Get the working dir
+            # Get the working dir - prefer sandbox.working_dir (actual per-sandbox dir)
+            # over sandbox_spec.working_dir (template default)
             sandbox_spec = await self.sandbox_spec_service.get_sandbox_spec(
                 sandbox.sandbox_spec_id
             )
             assert sandbox_spec is not None
+            working_dir = sandbox.working_dir or sandbox_spec.working_dir
 
             # Run setup scripts
             remote_workspace = AsyncRemoteWorkspace(
                 host=agent_server_url,
                 api_key=sandbox.session_api_key,
-                working_dir=sandbox_spec.working_dir,
+                working_dir=working_dir,
             )
             async for updated_task in self.run_setup_scripts(
                 task, sandbox, remote_workspace, agent_server_url
@@ -252,7 +254,7 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
                     request.initial_message,
                     request.system_message_suffix,
                     request.git_provider,
-                    sandbox_spec.working_dir,
+                    working_dir,
                     request.agent_type,
                     request.llm_model,
                     request.conversation_id,
