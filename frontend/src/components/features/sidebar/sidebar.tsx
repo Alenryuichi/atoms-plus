@@ -16,7 +16,7 @@ import { useLogout } from "#/hooks/mutation/use-logout";
 import { useConfig } from "#/hooks/query/use-config";
 import { displayErrorToast } from "#/utils/custom-toast-handlers";
 import { I18nKey } from "#/i18n/declaration";
-import { cn } from "#/utils/utils";
+import { cn } from "#/lib/utils";
 
 // Animation variants for sidebar items
 const sidebarItemVariants = {
@@ -102,8 +102,11 @@ export function Sidebar() {
       <aside
         aria-label={t(I18nKey.SIDEBAR$NAVIGATION_LABEL)}
         className={cn(
-          "h-[54px] p-3 md:p-0 md:h-[40px] md:h-auto flex flex-row md:flex-col gap-1 bg-base md:w-[75px] md:min-w-[75px] sm:pt-0 sm:px-2 md:pt-[14px] md:px-0",
-          pathname === "/" && "md:pt-6.5 md:pb-3",
+          // Modern sidebar styling with subtle border and clean background
+          "h-[54px] p-3 md:p-0 md:h-auto flex flex-row md:flex-col gap-1",
+          "bg-card/50 backdrop-blur-sm border-r border-border/40",
+          "md:w-[72px] md:min-w-[72px] sm:pt-0 sm:px-2 md:pt-4 md:px-0",
+          pathname === "/" && "md:pt-6 md:pb-3",
         )}
       >
         <nav className="flex flex-row md:flex-col items-center justify-between w-full h-auto md:w-auto md:h-full">

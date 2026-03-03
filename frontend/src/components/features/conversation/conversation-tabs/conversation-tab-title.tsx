@@ -1,4 +1,4 @@
-import RefreshIcon from "#/icons/u-refresh.svg?react";
+import { RefreshCw } from "lucide-react";
 import { useUnifiedGetGitChanges } from "#/hooks/query/use-unified-get-git-changes";
 
 type ConversationTabTitleProps = {
@@ -17,15 +17,15 @@ export function ConversationTabTitle({
   };
 
   return (
-    <div className="flex flex-row items-center justify-between border-b border-[#474A54] py-2 px-3">
-      <span className="text-xs font-medium text-white">{title}</span>
+    <div className="flex flex-row items-center justify-between border-b border-border/50 py-2.5 px-4">
+      <span className="text-sm font-semibold text-foreground">{title}</span>
       {conversationKey === "editor" && (
         <button
           type="button"
-          className="flex w-[26px] py-1 justify-center items-center gap-[10px] rounded-[7px] hover:bg-[#474A54] cursor-pointer"
+          className="flex items-center justify-center p-1.5 rounded-md hover:bg-muted transition-colors cursor-pointer"
           onClick={handleRefresh}
         >
-          <RefreshIcon width={12.75} height={15} color="#ffffff" />
+          <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />
         </button>
       )}
     </div>

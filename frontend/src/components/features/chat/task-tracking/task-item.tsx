@@ -1,11 +1,9 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import CircleIcon from "#/icons/u-circle.svg?react";
-import CheckCircleIcon from "#/icons/u-check-circle.svg?react";
-import LoadingIcon from "#/icons/loading.svg?react";
+import { Circle, CheckCircle2, Loader2 } from "lucide-react";
 import { I18nKey } from "#/i18n/declaration";
-import { cn } from "#/utils/utils";
-import { Typography } from "#/ui/typography";
+import { cn } from "#/lib/utils";
+import { Checkbox } from "#/components/ui/checkbox";
 
 interface TaskItemProps {
   task: {
@@ -19,45 +17,58 @@ interface TaskItemProps {
 export function TaskItem({ task }: TaskItemProps) {
   const { t } = useTranslation();
 
-  const icon = useMemo(() => {
+  const statusIcon = useMemo(() => {
     switch (task.status) {
       case "todo":
-        return <CircleIcon className="w-4 h-4 text-[#ffffff]" />;
+        return <Circle className="h-4 w-4 text-muted-foreground" />;
       case "in_progress":
-        return <LoadingIcon className="w-4 h-4 text-[#ffffff] animate-spin" />;
+        return <Loader2 className="h-4 w-4 text-primary animate-spin" />;
       case "done":
-        return <CheckCircleIcon className="w-4 h-4 text-[#A3A3A3]" />;
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       default:
-        return <CircleIcon className="w-4 h-4 text-[#ffffff]" />;
+        return <Circle className="h-4 w-4 text-muted-foreground" />;
     }
   }, [task.status]);
 
-  const isDoneStatus = task.status === "done";
+  const isDone = task.status === "done";
+  const isInProgress = task.status === "in_progress";
 
   return (
     <div
-      className="flex gap-[14px] items-center px-4 py-2 w-full"
-      data-name="item"
+      className={cn(
+        "flex items-start gap-3 px-3 py-2.5 transition-colors",
+        "border-b border-border/30 last:border-b-0",
+        isInProgress && "bg-primary/5",
+        isDone && "opacity-60",
+      )}
+      data-name="task-item"
     >
-      <div className="shrink-0">{icon}</div>
-      <div className="flex flex-col items-start justify-center leading-[20px] text-nowrap whitespace-pre font-normal">
-        <Typography.Text
+      <div className="shrink-0 mt-0.5">
+        <Checkbox
+          checked={isDone}
+          disabled
+          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p
           className={cn(
-            "text-[12px] text-white",
-            isDoneStatus && "text-[#A3A3A3]",
+            "text-sm text-foreground leading-tight",
+            isDone && "line-through text-muted-foreground",
           )}
         >
           {task.title}
-        </Typography.Text>
-        <Typography.Text className="text-[10px] text-[#A3A3A3] font-normal">
+        </p>
+        <p className="text-xs text-muted-foreground mt-0.5">
           {t(I18nKey.TASK_TRACKING_OBSERVATION$TASK_ID)}: {task.id}
-        </Typography.Text>
+        </p>
         {task.notes && (
-          <Typography.Text className="text-[10px] text-[#A3A3A3]">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {t(I18nKey.TASK_TRACKING_OBSERVATION$TASK_NOTES)}: {task.notes}
-          </Typography.Text>
+          </p>
         )}
       </div>
+      <div className="shrink-0">{statusIcon}</div>
     </div>
   );
 }

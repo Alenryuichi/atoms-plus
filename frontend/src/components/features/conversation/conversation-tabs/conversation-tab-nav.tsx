@@ -26,18 +26,24 @@ export function ConversationTabNav({
       }}
       data-testid={`conversation-tab-${tabValue}`}
       className={cn(
-        "flex items-center gap-2 rounded-md cursor-pointer",
-        "pl-1.5 pr-2 py-1",
-        "text-[#9299AA] bg-[#0D0F11]",
-        isActive && "bg-[#25272D] text-white",
+        // Base styles - cleaner modern look matching reference
+        "flex items-center gap-2 rounded-lg cursor-pointer",
+        "px-3 py-1.5",
+        "transition-all duration-200 ease-in-out",
+        // Inactive state
+        "text-muted-foreground bg-transparent",
+        // Active state - subtle primary accent
+        isActive && "bg-primary/10 text-primary shadow-sm",
+        // Hover states
         isActive
-          ? "hover:text-white hover:bg-tertiary"
-          : "hover:text-white hover:bg-[#0D0F11]",
-        isActive ? "focus-within:text-white" : "focus-within:text-[#9299AA]",
+          ? "hover:bg-primary/15"
+          : "hover:bg-accent hover:text-accent-foreground",
+        // Focus states
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
         className,
       )}
     >
-      <Icon className={cn("w-5 h-5 text-inherit flex-shrink-0")} />
+      <Icon className={cn("w-4 h-4 text-inherit flex-shrink-0")} />
       {isActive && label && (
         <span className="text-sm font-medium whitespace-nowrap">{label}</span>
       )}

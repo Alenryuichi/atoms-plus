@@ -19,15 +19,15 @@ export function ChatSuggestions({ onSuggestionsClick }: ChatSuggestionsProps) {
       {!shouldHideSuggestions && (
         <motion.div
           data-testid="chat-suggestions"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
           className="absolute top-0 left-0 right-0 bottom-[151px] flex flex-col items-center justify-center pointer-events-auto"
         >
-          <div className="flex flex-col items-center p-4 rounded-xl w-full">
-            <BuildIt width={86} height={103} />
-            <span className="text-[32px] font-bold leading-5 text-white pt-4 pb-6">
+          <div className="flex flex-col items-center p-6 rounded-2xl w-full">
+            <BuildIt width={72} height={86} className="text-primary" />
+            <span className="text-3xl font-bold leading-tight text-foreground pt-5 pb-7">
               {t(I18nKey.LANDING$TITLE)}
             </span>
           </div>

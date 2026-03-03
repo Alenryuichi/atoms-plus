@@ -255,7 +255,7 @@ export function ChatInterface() {
 
   return (
     <ScrollProvider value={scrollProviderValue}>
-      <div className="h-full flex flex-col justify-between pr-0 md:pr-4 relative">
+      <div className="h-full flex flex-col justify-between pr-0 md:pr-4 relative bg-background">
         {!hasSubstantiveAgentActions &&
           !optimisticUserMessage &&
           !userEventsExist &&
@@ -269,7 +269,7 @@ export function ChatInterface() {
         <div
           ref={scrollRef}
           onScroll={(e) => onChatBodyScroll(e.currentTarget)}
-          className="custom-scrollbar-always flex flex-col grow overflow-y-auto overflow-x-hidden px-4 pt-4 gap-2"
+          className="custom-scrollbar-always flex flex-col grow overflow-y-auto overflow-x-hidden px-4 pt-6 gap-3"
         >
           {isChatLoading && isReturningToConversation && (
             <ChatMessagesSkeleton />

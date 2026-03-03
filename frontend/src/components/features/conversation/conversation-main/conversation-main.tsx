@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { cn } from "#/utils/utils";
+import { cn } from "#/lib/utils";
 import { ChatInterfaceWrapper } from "./chat-interface-wrapper";
 import { ConversationTabContent } from "../conversation-tabs/conversation-tab-content/conversation-tab-content";
 import { ResizeHandle } from "../../../ui/resize-handle";
@@ -56,10 +56,12 @@ export function ConversationMain() {
             : undefined
         }
       >
-        {/* Chat Panel - always mounted, styled differently for mobile/desktop */}
+        {/* Chat Panel - left side with clean background */}
         <div
           className={cn(
-            "flex flex-col bg-base overflow-hidden",
+            "flex flex-col overflow-hidden",
+            // Modern light background with subtle border
+            "bg-background border-r border-border/30",
             isMobile
               ? getMobileChatPanelClass(isRightPanelShown)
               : "transition-all duration-300 ease-in-out",
