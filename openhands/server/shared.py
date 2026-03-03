@@ -57,6 +57,11 @@ sio = socketio.AsyncServer(
     client_manager=client_manager,
     # Increase buffer size to 4MB (to handle 3MB files with base64 overhead)
     max_http_buffer_size=4 * 1024 * 1024,
+    # Heartbeat configuration to prevent Railway/cloud TCP idle timeouts
+    # Railway disconnects idle connections; these settings ensure keepalive traffic
+    # every 10 seconds with a 5 second timeout for responses
+    ping_interval=10,  # Send ping every 10 seconds
+    ping_timeout=5,  # Wait 5 seconds for pong response
 )
 
 MonitoringListenerImpl = get_impl(
