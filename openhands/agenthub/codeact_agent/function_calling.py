@@ -380,11 +380,12 @@ def response_to_actions(
         # This allows the agent to retry and actually call the tool
         wait_for_response = not is_action_intent
 
-        if is_action_intent:
-            logger.debug(
-                f'LLM returned text without tool call but appears to intend action. '
-                f'Content preview: {content[:100]}... Setting wait_for_response=False to allow retry.'
-            )
+        # Log the decision for debugging
+        logger.info(
+            f'LLM returned text without tool_calls. '
+            f'Content preview: {content[:80]}... '
+            f'is_action_intent={is_action_intent}, wait_for_response={wait_for_response}'
+        )
 
         actions.append(
             MessageAction(
