@@ -11,6 +11,7 @@ import { useAgentState } from "#/hooks/use-agent-state";
 
 // Error message patterns
 const GIT_REPO_ERROR_PATTERN = /not a git repository/i;
+const DIRECTORY_NOT_EXIST_PATTERN = /directory does not exist/i;
 
 function StatusMessage({ children }: React.PropsWithChildren) {
   return (
@@ -40,12 +41,19 @@ function GitChanges() {
   const isNotGitRepoError =
     error && GIT_REPO_ERROR_PATTERN.test(retrieveAxiosErrorMessage(error));
 
+  const isDirectoryNotExistError =
+    error && DIRECTORY_NOT_EXIST_PATTERN.test(retrieveAxiosErrorMessage(error));
+
   React.useEffect(() => {
     if (!runtimeIsActive) {
       setStatusMessage([I18nKey.DIFF_VIEWER$WAITING_FOR_RUNTIME]);
     } else if (error) {
       const errorMessage = retrieveAxiosErrorMessage(error);
-      if (GIT_REPO_ERROR_PATTERN.test(errorMessage)) {
+      if (
+        GIT_REPO_ERROR_PATTERN.test(errorMessage) ||
+        DIRECTORY_NOT_EXIST_PATTERN.test(errorMessage)
+      ) {
+        // Show friendly message for git repo errors or directory not exist errors
         setStatusMessage([
           I18nKey.DIFF_VIEWER$NOT_A_GIT_REPO,
           I18nKey.DIFF_VIEWER$ASK_OH,
@@ -61,6 +69,7 @@ function GitChanges() {
   }, [
     runtimeIsActive,
     isNotGitRepoError,
+    isDirectoryNotExistError,
     loadingGitChanges,
     error,
     setStatusMessage,

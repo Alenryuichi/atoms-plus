@@ -1,6 +1,7 @@
 import { AxiosError } from "axios";
 import {
   isAxiosErrorWithErrorField,
+  isAxiosErrorWithExceptionField,
   isAxiosErrorWithMessageField,
 } from "./type-guards";
 
@@ -13,6 +14,12 @@ export const retrieveAxiosErrorMessage = (error: AxiosError) => {
 
   if (isAxiosErrorWithErrorField(error) && error.response?.data.error) {
     errorMessage = error.response?.data.error;
+  } else if (
+    isAxiosErrorWithExceptionField(error) &&
+    error.response?.data.exception
+  ) {
+    // Handle FastAPI-style error responses with "exception" field
+    errorMessage = error.response?.data.exception;
   } else if (
     isAxiosErrorWithMessageField(error) &&
     error.response?.data.message
