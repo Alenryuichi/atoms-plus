@@ -52,7 +52,7 @@ RUN mkdir -p $FILE_STORE_PATH
 RUN mkdir -p $WORKSPACE_BASE
 
 # CACHE_BUST: Change this value to force rebuild of apt-get layer
-ARG CACHE_BUST_APT=2026-03-03-chromium-v2
+ARG CACHE_BUST_APT=2026-03-03-chromium-v3
 RUN apt-get update -y \
     && apt-get install -y curl ssh sudo tmux \
     # Playwright/Chromium dependencies
@@ -105,10 +105,21 @@ USER root
 
 # Install Playwright Chromium browser for browser_use tool
 # This enables web browsing capabilities in the agent
-# Install to /home/openhands so it's accessible by openhands user
-ENV PLAYWRIGHT_BROWSERS_PATH=/home/openhands/.cache/ms-playwright
-RUN playwright install chromium && \
-    chown -R openhands:openhands /home/openhands/.cache
+# Use /opt/playwright-browsers as the standard location (same as runtime_templates/Dockerfile.j2)
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/playwright-browsers
+RUN mkdir -p /opt/playwright-browsers && \
+    playwright install chromium && \
+    # Set proper permissions for shared access
+    chmod -R 755 /opt/playwright-browsers && \
+    # Create cache directories and symlinks for both users (following runtime template pattern)
+    mkdir -p /home/openhands/.cache && \
+    mkdir -p /root/.cache && \
+    ln -sf /opt/playwright-browsers /home/openhands/.cache/ms-playwright && \
+    ln -sf /opt/playwright-browsers /root/.cache/ms-playwright && \
+    chown -h openhands:openhands /home/openhands/.cache/ms-playwright && \
+    # Also create symlink for ~/.cache/playwright (used by browser_env.py for local runtime)
+    ln -sf /opt/playwright-browsers /home/openhands/.cache/playwright && \
+    chown -h openhands:openhands /home/openhands/.cache/playwright
 
 WORKDIR /app
 
