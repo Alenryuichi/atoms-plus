@@ -10,9 +10,12 @@ It also provides special handling for file operations (list-files, select-file)
 that are not directly supported by the agent server but are needed by the frontend.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import os
+from typing import Optional
 
 import httpx
 from fastapi import (
@@ -107,7 +110,9 @@ async def _forward_request(request: Request, port: int, path: str) -> StreamingR
             )
 
 
-async def _execute_bash_command(port: int, command: str, headers: dict) -> dict | None:
+async def _execute_bash_command(
+    port: int, command: str, headers: dict
+) -> Optional[dict]:
     """Execute a bash command on the agent server and return the result."""
     target_url = f'http://localhost:{port}/api/bash/execute_bash_command'
     async with httpx.AsyncClient() as client:
@@ -126,7 +131,9 @@ async def _execute_bash_command(port: int, command: str, headers: dict) -> dict 
             return None
 
 
-async def _list_files_via_bash(port: int, path: str | None, headers: dict) -> list[str]:
+async def _list_files_via_bash(
+    port: int, path: Optional[str], headers: dict
+) -> list[str]:
     """List files using bash command on the agent server.
 
     Uses `find` command to recursively list files and directories.
@@ -175,7 +182,7 @@ async def _list_files_via_bash(port: int, path: str | None, headers: dict) -> li
 
 async def _read_file_via_download(
     port: int, file_path: str, headers: dict
-) -> str | None:
+) -> Optional[str]:
     """Read a file using the agent server's download API.
 
     The agent server expects absolute paths for file download.
@@ -234,7 +241,7 @@ async def list_files(
     request: Request,
     port: int,
     conversation_id: str,
-    path: str | None = Query(None),
+    path: Optional[str] = Query(None),
 ) -> JSONResponse:
     """List files in the workspace for a V1 conversation.
 
