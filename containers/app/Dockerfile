@@ -52,7 +52,7 @@ RUN mkdir -p $FILE_STORE_PATH
 RUN mkdir -p $WORKSPACE_BASE
 
 # CACHE_BUST: Change this value to force rebuild of apt-get layer
-ARG CACHE_BUST_APT=2026-03-03-chromium
+ARG CACHE_BUST_APT=2026-03-03-chromium-v2
 RUN apt-get update -y \
     && apt-get install -y curl ssh sudo tmux \
     # Playwright/Chromium dependencies
@@ -93,10 +93,6 @@ COPY --chown=openhands:openhands pyproject.toml poetry.lock README.md MANIFEST.i
 # This is run as "openhands" user, and will create __pycache__ with openhands:openhands ownership
 RUN python openhands/core/download.py # No-op to download assets
 
-# Install Playwright Chromium browser for browser_use tool
-# This enables web browsing capabilities in the agent
-RUN playwright install chromium
-
 # Add this line to set group ownership of all files/directories not already in "app" group
 # openhands:openhands -> openhands:openhands
 RUN find /app \! -group openhands -exec chgrp openhands {} +
@@ -104,7 +100,15 @@ RUN find /app \! -group openhands -exec chgrp openhands {} +
 COPY --chown=openhands:openhands --chmod=770 --from=frontend-builder /app/build ./frontend/build
 COPY --chown=openhands:openhands --chmod=770 ./containers/app/entrypoint.sh /app/entrypoint.sh
 
+# Switch to root to install Playwright browser (needs write to system directories)
 USER root
+
+# Install Playwright Chromium browser for browser_use tool
+# This enables web browsing capabilities in the agent
+# Install to /home/openhands so it's accessible by openhands user
+ENV PLAYWRIGHT_BROWSERS_PATH=/home/openhands/.cache/ms-playwright
+RUN playwright install chromium && \
+    chown -R openhands:openhands /home/openhands/.cache
 
 WORKDIR /app
 
