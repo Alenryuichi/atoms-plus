@@ -6,6 +6,7 @@ import {
   SandpackPreview,
 } from "@codesandbox/sandpack-react";
 import { useTranslation } from "react-i18next";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, RefreshCw, FileCode } from "lucide-react";
 import { I18nKey } from "#/i18n/declaration";
 import { useWorkspaceFiles } from "#/hooks/query/use-workspace-files";
@@ -15,6 +16,26 @@ import { useConversationId } from "#/hooks/use-conversation-id";
 import { useClickOutsideElement } from "#/hooks/use-click-outside-element";
 import { LoadingSpinner } from "#/components/shared/loading-spinner";
 import { cn } from "#/utils/utils";
+
+// Animation variants for view mode transitions
+const contentVariants = {
+  hidden: { opacity: 0, scale: 0.98 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.2,
+      ease: "easeOut",
+    },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.98,
+    transition: {
+      duration: 0.15,
+    },
+  },
+};
 
 type ViewMode = "split" | "editor" | "preview";
 
@@ -340,55 +361,73 @@ export function PreviewPanel() {
         </div>
       </div>
 
-      {/* Sandpack Preview */}
+      {/* Sandpack Preview with animated transitions */}
       <div className="flex-1 overflow-hidden h-full">
-        {isLoadingFiles ? (
-          <div className="h-full flex items-center justify-center">
-            <LoadingSpinner size="large" />
-          </div>
-        ) : (
-          <SandpackProvider
-            key={`${selectedFile}-${template}`}
-            template={template}
-            files={sandpackFiles}
-            theme="dark"
-            options={{
-              recompileMode: "delayed",
-              recompileDelay: 300,
-            }}
-          >
-            <SandpackLayout
-              style={{
-                height: "100%",
-                border: "none",
-                borderRadius: 0,
-              }}
+        <AnimatePresence mode="wait">
+          {isLoadingFiles ? (
+            <motion.div
+              key="loading"
+              className="h-full flex items-center justify-center"
+              variants={contentVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
             >
-              {(viewMode === "split" || viewMode === "editor") && (
-                <SandpackCodeEditor
+              <LoadingSpinner size="large" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key={`${selectedFile}-${viewMode}`}
+              className="h-full"
+              variants={contentVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <SandpackProvider
+                key={`${selectedFile}-${template}`}
+                template={template}
+                files={sandpackFiles}
+                theme="dark"
+                options={{
+                  recompileMode: "delayed",
+                  recompileDelay: 300,
+                }}
+              >
+                <SandpackLayout
                   style={{
                     height: "100%",
-                    flex: viewMode === "split" ? 1 : "auto",
+                    border: "none",
+                    borderRadius: 0,
                   }}
-                  showTabs
-                  showLineNumbers
-                  showInlineErrors
-                  wrapContent
-                />
-              )}
-              {(viewMode === "split" || viewMode === "preview") && (
-                <SandpackPreview
-                  style={{
-                    height: "100%",
-                    flex: viewMode === "split" ? 1 : "auto",
-                  }}
-                  showNavigator
-                  showRefreshButton
-                />
-              )}
-            </SandpackLayout>
-          </SandpackProvider>
-        )}
+                >
+                  {(viewMode === "split" || viewMode === "editor") && (
+                    <SandpackCodeEditor
+                      style={{
+                        height: "100%",
+                        flex: viewMode === "split" ? 1 : "auto",
+                      }}
+                      showTabs
+                      showLineNumbers
+                      showInlineErrors
+                      wrapContent
+                    />
+                  )}
+                  {(viewMode === "split" || viewMode === "preview") && (
+                    <SandpackPreview
+                      style={{
+                        height: "100%",
+                        flex: viewMode === "split" ? 1 : "auto",
+                      }}
+                      showNavigator
+                      showRefreshButton
+                    />
+                  )}
+                </SandpackLayout>
+              </SandpackProvider>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

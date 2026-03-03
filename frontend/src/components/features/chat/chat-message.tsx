@@ -1,9 +1,30 @@
 import React from "react";
+import { motion } from "framer-motion";
 import { cn } from "#/utils/utils";
 import { CopyToClipboardButton } from "#/components/shared/buttons/copy-to-clipboard-button";
 import { OpenHandsSourceType } from "#/types/core/base";
 import { StyledTooltip } from "#/components/shared/buttons/styled-tooltip";
 import { MarkdownRenderer } from "../markdown/markdown-renderer";
+
+// Message animation variants
+const messageVariants = {
+  hidden: (type: OpenHandsSourceType) => ({
+    opacity: 0,
+    x: type === "user" ? 20 : -20,
+    y: 10,
+  }),
+  visible: {
+    opacity: 1,
+    x: 0,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 200,
+      damping: 20,
+      duration: 0.3,
+    },
+  },
+};
 
 interface ChatMessageProps {
   type: OpenHandsSourceType;
@@ -46,7 +67,7 @@ export function ChatMessage({
   }, [isCopy]);
 
   return (
-    <article
+    <motion.article
       data-testid={`${type}-message`}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
@@ -65,6 +86,10 @@ export function ChatMessage({
           type === "agent" &&
           "border border-primary/30 bg-primary/5 px-4 py-3 rounded-2xl mt-2",
       )}
+      variants={messageVariants}
+      initial="hidden"
+      animate="visible"
+      custom={type}
     >
       <div
         className={cn(
@@ -117,6 +142,6 @@ export function ChatMessage({
       </div>
 
       {children}
-    </article>
+    </motion.article>
   );
 }
