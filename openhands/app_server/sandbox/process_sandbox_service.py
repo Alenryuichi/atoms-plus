@@ -517,12 +517,13 @@ class ProcessSandboxServiceInjector(SandboxServiceInjector):
         default='/alive', description='Health check endpoint path'
     )
     exposed_url_pattern: str = Field(
-        default='http://localhost:{port}',
+        default='/runtime/{port}',
         description=(
             'URL pattern for exposed sandbox ports. Use {port} as placeholder. '
-            'For remote deployments (e.g., Railway), set to the public URL pattern '
-            '(e.g., https://your-app.railway.app/runtime/{port} or just leave as '
-            'http://localhost:{port} if the app proxies requests). '
+            'Default is "/runtime/{port}" which uses the built-in proxy endpoint. '
+            'The frontend will use its own host with this relative path. '
+            'For direct access (e.g., local development), set to '
+            '"http://localhost:{port}". '
             'Configure via OH_SANDBOX_EXPOSED_URL_PATTERN environment variable.'
         ),
     )
