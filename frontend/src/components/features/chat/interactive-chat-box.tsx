@@ -4,13 +4,11 @@ import { validateFiles } from "#/utils/file-validation";
 import { CustomChatInput } from "./custom-chat-input";
 import { AgentState } from "#/types/agent-state";
 import { useActiveConversation } from "#/hooks/query/use-active-conversation";
-import { GitControlBar } from "./git-control-bar";
 import { useConversationStore } from "#/stores/conversation-store";
 import { useAgentState } from "#/hooks/use-agent-state";
 import { processFiles, processImages } from "#/utils/file-processing";
 import { useSubConversationTaskPolling } from "#/hooks/query/use-sub-conversation-task-polling";
 import { isTaskPolling } from "#/utils/utils";
-import { RaceModePanel } from "#/components/features/race-mode";
 
 interface InteractiveChatBoxProps {
   onSubmit: (message: string, images: File[], files: File[]) => void;
@@ -139,10 +137,6 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
     clearAllFiles();
   };
 
-  const handleSuggestionsClick = (suggestion: string) => {
-    handleSubmit(suggestion);
-  };
-
   const isDisabled =
     curAgentState === AgentState.LOADING ||
     curAgentState === AgentState.AWAITING_USER_CONFIRMATION ||
@@ -150,20 +144,13 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
 
   return (
     <div data-testid="interactive-chat-box">
-      {/* Race Mode Panel */}
-      <div className="mb-4">
-        <RaceModePanel />
-      </div>
-
+      {/* Atoms Plus: Simplified chat box - removed RaceModePanel and GitControlBar */}
       <CustomChatInput
         disabled={isDisabled}
         onSubmit={handleSubmit}
         onFilesPaste={handleUpload}
         conversationStatus={conversation?.status || null}
       />
-      <div className="mt-4">
-        <GitControlBar onSuggestionsClick={handleSuggestionsClick} />
-      </div>
     </div>
   );
 }

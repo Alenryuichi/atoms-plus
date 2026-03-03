@@ -51,13 +51,19 @@ export function ChatMessage({
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       className={cn(
-        "rounded-xl relative w-fit max-w-full last:mb-4",
+        // Atoms Plus: Cleaner message bubble styling
+        "relative w-fit max-w-[85%] last:mb-4",
         "flex flex-col gap-2",
-        type === "user" && "p-4 bg-tertiary self-end",
-        type === "agent" && "mt-6 w-full max-w-full bg-transparent",
+        // User message: right-aligned with subtle background
+        type === "user" &&
+          "px-4 py-3 rounded-2xl rounded-tr-sm bg-primary/10 border border-primary/20 self-end text-content",
+        // Agent message: left-aligned with clean styling
+        type === "agent" &&
+          "mt-4 w-full max-w-full bg-transparent text-content-secondary",
+        // Planning agent message styling
         isFromPlanningAgent &&
           type === "agent" &&
-          "border border-[#597ff4] bg-tertiary p-4 mt-2",
+          "border border-primary/30 bg-primary/5 px-4 py-3 rounded-2xl mt-2",
       )}
     >
       <div
