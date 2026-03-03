@@ -348,10 +348,48 @@ def response_to_actions(
             )
             actions.append(action)
     else:
+        # When LLM returns text without tool_calls, check if it seems like the agent
+        # is about to perform an action. If so, don't wait for user response - let the
+        # agent continue and retry. This handles cases where LLM says "Let me create..."
+        # but doesn't actually call the tool.
+        content = str(assistant_msg.content) if assistant_msg.content else ''
+        content_lower = content.lower()
+
+        # Patterns indicating the agent intends to take action
+        action_intent_patterns = [
+            'let me ',
+            "i'll ",
+            'i will ',
+            'now i ',
+            "now let's",
+            'next, i',
+            'next i',
+            '让我',
+            '我来',
+            '接下来',
+            '现在我',
+            '下面我',
+        ]
+
+        # Check if content suggests agent was about to act but didn't call a tool
+        is_action_intent = any(
+            pattern in content_lower for pattern in action_intent_patterns
+        )
+
+        # If the message indicates intent to act, don't wait for user response
+        # This allows the agent to retry and actually call the tool
+        wait_for_response = not is_action_intent
+
+        if is_action_intent:
+            logger.debug(
+                f'LLM returned text without tool call but appears to intend action. '
+                f'Content preview: {content[:100]}... Setting wait_for_response=False to allow retry.'
+            )
+
         actions.append(
             MessageAction(
-                content=str(assistant_msg.content) if assistant_msg.content else '',
-                wait_for_response=True,
+                content=content,
+                wait_for_response=wait_for_response,
             )
         )
 
