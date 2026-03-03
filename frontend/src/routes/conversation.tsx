@@ -21,9 +21,7 @@ import { ConversationSubscriptionsProvider } from "#/context/conversation-subscr
 import { useUserProviders } from "#/hooks/use-user-providers";
 
 import { ConversationMain } from "#/components/features/conversation/conversation-main/conversation-main";
-import { ConversationNameWithStatus } from "#/components/features/conversation/conversation-name-with-status";
 
-import { ConversationTabs } from "#/components/features/conversation/conversation-tabs/conversation-tabs";
 import { WebSocketProviderWrapper } from "#/contexts/websocket-provider-wrapper";
 import { useErrorMessageStore } from "#/stores/error-message-store";
 import { useUnifiedResumeConversationSandbox } from "#/hooks/mutation/use-unified-start-conversation";
@@ -152,13 +150,9 @@ function AppContent() {
       <EventHandler>
         <div
           data-testid="app-route"
-          className="p-3 md:p-0 flex flex-col h-full gap-3"
+          className="p-3 md:p-0 flex flex-col h-full"
         >
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4.5 pt-2 lg:pt-0">
-            <ConversationNameWithStatus />
-            <ConversationTabs />
-          </div>
-
+          {/* Atoms Plus: Simplified layout - Chat + Preview only */}
           <ConversationMain />
         </div>
       </EventHandler>
