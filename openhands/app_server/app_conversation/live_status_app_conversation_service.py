@@ -940,9 +940,12 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
                 mcp_config=mcp_config,
             )
         else:
+            # Respect OH_ENABLE_BROWSER environment variable for ProcessSandboxService
+            # (Railway doesn't have Chromium installed)
+            enable_browser = os.getenv('OH_ENABLE_BROWSER', 'true').lower() != 'false'
             agent = Agent(
                 llm=llm,
-                tools=get_default_tools(enable_browser=True),
+                tools=get_default_tools(enable_browser=enable_browser),
                 system_prompt_kwargs={'cli_mode': False},
                 condenser=condenser,
                 mcp_config=mcp_config,
