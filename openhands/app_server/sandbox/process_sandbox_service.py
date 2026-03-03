@@ -78,6 +78,7 @@ class ProcessSandboxService(SandboxService):
     agent_server_module: str
     health_check_path: str
     httpx_client: httpx.AsyncClient
+    exposed_url_pattern: str = 'http://localhost:{port}'
 
     def __post_init__(self):
         """Initialize the service after dataclass creation."""
@@ -141,15 +142,21 @@ class ProcessSandboxService(SandboxService):
                 stderr=sys.stderr,  # Inherit stderr to see errors
             )
 
-            _logger.info(f'Agent process spawned with PID {process.pid} for sandbox {sandbox_id}')
+            _logger.info(
+                f'Agent process spawned with PID {process.pid} for sandbox {sandbox_id}'
+            )
 
             # Wait a moment for the process to start
             await asyncio.sleep(1)
 
             # Check if process is still running
             if process.poll() is not None:
-                _logger.error(f'Agent process {process.pid} died immediately with return code {process.returncode}')
-                raise SandboxError(f'Agent process failed to start with return code {process.returncode}')
+                _logger.error(
+                    f'Agent process {process.pid} died immediately with return code {process.returncode}'
+                )
+                raise SandboxError(
+                    f'Agent process failed to start with return code {process.returncode}'
+                )
 
             _logger.info(f'Agent process {process.pid} is running after initial check')
             return process
@@ -157,7 +164,9 @@ class ProcessSandboxService(SandboxService):
         except Exception as e:
             raise SandboxError(f'Failed to start agent process: {e}')
 
-    async def _wait_for_server_ready(self, port: int, timeout: int = 240, process: subprocess.Popen | None = None) -> bool:
+    async def _wait_for_server_ready(
+        self, port: int, timeout: int = 240, process: subprocess.Popen | None = None
+    ) -> bool:
         """Wait for the agent server to be ready.
 
         Default timeout increased to 240 seconds (4 min) for resource-constrained cloud environments.
@@ -166,7 +175,9 @@ class ProcessSandboxService(SandboxService):
         while time.time() - start_time < timeout:
             # Check if process died
             if process and process.poll() is not None:
-                _logger.error(f'Agent process died with return code {process.returncode}')
+                _logger.error(
+                    f'Agent process died with return code {process.returncode}'
+                )
                 return False
             try:
                 # For subprocess mode, we should connect directly to localhost
@@ -182,16 +193,24 @@ class ProcessSandboxService(SandboxService):
             except Exception as e:
                 # Log more details periodically to help debug startup issues
                 elapsed = time.time() - start_time
-                if elapsed > 30 and int(elapsed) % 30 == 0:  # Every 30 seconds after first 30s
-                    _logger.warning(f'Still waiting for agent server on port {port} after {int(elapsed)}s: {type(e).__name__}: {e}')
+                if (
+                    elapsed > 30 and int(elapsed) % 30 == 0
+                ):  # Every 30 seconds after first 30s
+                    _logger.warning(
+                        f'Still waiting for agent server on port {port} after {int(elapsed)}s: {type(e).__name__}: {e}'
+                    )
                 elif int(elapsed) % 10 == 0:  # Every 10 seconds
-                    _logger.info(f'Waiting for agent server on port {port} ({int(elapsed)}s elapsed): {type(e).__name__}')
+                    _logger.info(
+                        f'Waiting for agent server on port {port} ({int(elapsed)}s elapsed): {type(e).__name__}'
+                    )
             await asyncio.sleep(1)
 
         # Log final process state on timeout
         if process:
             is_running = process.poll() is None
-            _logger.error(f'Agent server timeout after {timeout}s. Process running: {is_running}, return code: {process.returncode}')
+            _logger.error(
+                f'Agent server timeout after {timeout}s. Process running: {is_running}, return code: {process.returncode}'
+            )
         return False
 
     def _get_process_status(self, process_info: ProcessInfo) -> SandboxStatus:
@@ -203,7 +222,11 @@ class ProcessSandboxService(SandboxService):
                 # Note: psutil.STATUS_RUNNING means "currently executing on CPU"
                 # Most server processes spend time in STATUS_SLEEPING (waiting for I/O)
                 # We should treat SLEEPING as RUNNING for server processes
-                if status in (psutil.STATUS_RUNNING, psutil.STATUS_SLEEPING, psutil.STATUS_DISK_SLEEP):
+                if status in (
+                    psutil.STATUS_RUNNING,
+                    psutil.STATUS_SLEEPING,
+                    psutil.STATUS_DISK_SLEEP,
+                ):
                     return SandboxStatus.RUNNING
                 elif status == psutil.STATUS_STOPPED:
                     return SandboxStatus.PAUSED
@@ -233,24 +256,36 @@ class ProcessSandboxService(SandboxService):
                 url = f'http://localhost:{process_info.port}{self.health_check_path}'
                 response = await self.httpx_client.get(url, timeout=5.0)
                 if response.status_code == 200:
+                    # Use exposed_url_pattern for the URL that frontend will use to connect
+                    # This allows configuring a public URL for remote deployments (e.g., Railway)
+                    # while still using localhost for health checks (internal connection)
+                    exposed_url = self.exposed_url_pattern.format(
+                        port=process_info.port
+                    )
                     exposed_urls = [
                         ExposedUrl(
                             name=AGENT_SERVER,
-                            url=f'http://localhost:{process_info.port}',
+                            url=exposed_url,
                             port=process_info.port,
                         ),
                     ]
                     session_api_key = process_info.session_api_key
-                    _logger.info(f'Agent server on port {process_info.port} is healthy')
+                    _logger.info(
+                        f'Agent server on port {process_info.port} is healthy, exposed as {exposed_url}'
+                    )
                 else:
                     # Server responded but not OK - it may still be starting up
                     # Keep as STARTING instead of ERROR to allow retry
-                    _logger.debug(f'Agent server health check returned {response.status_code}, treating as STARTING')
+                    _logger.debug(
+                        f'Agent server health check returned {response.status_code}, treating as STARTING'
+                    )
                     status = SandboxStatus.STARTING
             except Exception as e:
                 # Connection failed - server is likely still starting up
                 # Keep as STARTING instead of ERROR to allow wait_for_sandbox_running to retry
-                _logger.debug(f'Agent server health check failed ({type(e).__name__}), treating as STARTING')
+                _logger.debug(
+                    f'Agent server health check failed ({type(e).__name__}), treating as STARTING'
+                )
                 status = SandboxStatus.STARTING
 
         return SandboxInfo(
@@ -481,6 +516,16 @@ class ProcessSandboxServiceInjector(SandboxServiceInjector):
     health_check_path: str = Field(
         default='/alive', description='Health check endpoint path'
     )
+    exposed_url_pattern: str = Field(
+        default='http://localhost:{port}',
+        description=(
+            'URL pattern for exposed sandbox ports. Use {port} as placeholder. '
+            'For remote deployments (e.g., Railway), set to the public URL pattern '
+            '(e.g., https://your-app.railway.app/runtime/{port} or just leave as '
+            'http://localhost:{port} if the app proxies requests). '
+            'Configure via OH_SANDBOX_EXPOSED_URL_PATTERN environment variable.'
+        ),
+    )
 
     async def inject(
         self, state: InjectorState, request: Request | None = None
@@ -507,4 +552,5 @@ class ProcessSandboxServiceInjector(SandboxServiceInjector):
                 agent_server_module=self.agent_server_module,
                 health_check_path=self.health_check_path,
                 httpx_client=httpx_client,
+                exposed_url_pattern=self.exposed_url_pattern,
             )
