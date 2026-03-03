@@ -125,6 +125,8 @@ class ProcessSandboxService(SandboxService):
             self.agent_server_module,
             '--port',
             str(port),
+            '--working-dir',
+            working_dir,
         ]
 
         _logger.info(
