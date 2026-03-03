@@ -299,7 +299,7 @@ class ProcessSandboxService(SandboxService):
         )
 
     def _get_agent_server_url(self, sandbox: SandboxInfo) -> str:
-        """Get agent server URL from sandbox exposed URLs.
+        """Get agent server URL from sandbox exposed URLs for internal health checks.
 
         Override base class to NOT replace localhost with host.docker.internal,
         because ProcessSandboxService runs the agent server as a child process,
@@ -313,8 +313,11 @@ class ProcessSandboxService(SandboxService):
 
         for exposed_url in sandbox.exposed_urls:
             if exposed_url.name == AGENT_SERVER:
-                # For subprocess mode, return URL as-is without localhost replacement
-                return exposed_url.url
+                url = exposed_url.url
+                # If URL is relative (e.g., /runtime/8000), use localhost for health check
+                if url.startswith('/'):
+                    url = f'http://localhost:{exposed_url.port}'
+                return url
 
         raise SandboxError(f'No agent server URL found for sandbox: {sandbox.id}')
 
