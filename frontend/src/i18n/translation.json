@@ -17008,5 +17008,17 @@
   "ATOMS$TEMPLATE_BLOG_DESC": {
     "en": "A blog platform with posts, categories, and comments",
     "zh-CN": "带文章、分类和评论的博客平台"
+  },
+  "COMMON$WORKING_PROCESS": {
+    "en": "Working Process",
+    "zh-CN": "工作进程"
+  },
+  "COMMON$EDIT_PLANS": {
+    "en": "Edit Plans",
+    "zh-CN": "编辑计划"
+  },
+  "COMMON$APPROVE": {
+    "en": "Approve",
+    "zh-CN": "批准"
   }
 }

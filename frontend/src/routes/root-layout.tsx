@@ -12,7 +12,7 @@ import { I18nKey } from "#/i18n/declaration";
 import i18n from "#/i18n";
 import { useIsAuthed } from "#/hooks/query/use-is-authed";
 import { useConfig } from "#/hooks/query/use-config";
-import { Sidebar } from "#/components/features/sidebar/sidebar";
+import { TopNavbar } from "#/components/features/top-navbar";
 import { ReauthModal } from "#/components/features/waitlist/reauth-modal";
 import { AnalyticsConsentFormModal } from "#/components/features/analytics/analytics-consent-form-modal";
 import { useSettings } from "#/hooks/query/use-settings";
@@ -243,15 +243,20 @@ export default function MainApp() {
     <div
       data-testid="root-layout"
       className={cn(
-        "h-screen lg:min-w-5xl flex flex-col md:flex-row bg-base",
-        pathname === "/" ? "p-0" : "p-0 md:p-3 md:pl-0",
+        "min-h-screen lg:min-w-5xl flex flex-col bg-background",
         isMobileDevice() && "overflow-hidden",
       )}
     >
       <title>{appTitle}</title>
-      <Sidebar />
+      <TopNavbar />
 
-      <div className="flex flex-col w-full h-[calc(100%-50px)] md:h-full gap-3">
+      {/* Main content area with top padding for fixed navbar */}
+      <main
+        className={cn(
+          "flex-1 flex flex-col pt-14",
+          pathname === "/" ? "p-0" : "p-0 md:p-3",
+        )}
+      >
         {config.data &&
           (config.data.maintenance_start_time ||
             (config.data.faulty_models &&
@@ -272,7 +277,7 @@ export default function MainApp() {
             <Outlet />
           </EmailVerificationGuard>
         </div>
-      </div>
+      </main>
 
       {renderReAuthModal && <ReauthModal />}
       {config.data?.app_mode === "oss" && consentFormIsOpen && (

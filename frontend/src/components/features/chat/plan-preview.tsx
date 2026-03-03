@@ -1,18 +1,22 @@
 import { useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowUpRight } from "lucide-react";
-import LessonPlanIcon from "#/icons/lesson-plan.svg?react";
-import { Typography } from "#/ui/typography";
+import { ArrowUpRight, FileText } from "lucide-react";
 import { I18nKey } from "#/i18n/declaration";
 import { MarkdownRenderer } from "#/components/features/markdown/markdown-renderer";
 import { useHandleBuildPlanClick } from "#/hooks/use-handle-build-plan-click";
-import { cn } from "#/utils/utils";
 import { useSelectConversationTab } from "#/hooks/use-select-conversation-tab";
 import {
   planComponents,
   createPlanComponents,
 } from "#/components/features/markdown/plan-components";
 import { useScrollContext } from "#/context/scroll-context";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "#/components/ui/card";
+import { Button } from "#/components/ui/button";
 
 const MAX_CONTENT_LENGTH = 300;
 
@@ -67,31 +71,31 @@ export function PlanPreview({
   }
 
   return (
-    <div className="bg-[#25272d] border border-[#597FF4] rounded-[12px] w-full mt-2">
+    <Card className="border-primary/30 shadow-card mt-2">
       {/* Header */}
-      <div className="border-b border-[#525252] flex h-[41px] items-center px-2 gap-1">
-        <LessonPlanIcon width={18} height={18} color="#9299aa" />
-        <Typography.Text className="font-medium text-[11px] text-white tracking-[0.11px] leading-4">
-          {t(I18nKey.COMMON$PLAN_MD)}
-        </Typography.Text>
-        <div className="flex-1" />
-        <button
-          type="button"
-          onClick={handleViewClick}
-          className="flex items-center gap-1 hover:opacity-80 transition-opacity cursor-pointer"
-          data-testid="plan-preview-view-button"
-        >
-          <Typography.Text className="font-medium text-[11px] text-white tracking-[0.11px] leading-4">
-            {t(I18nKey.COMMON$VIEW)}
-          </Typography.Text>
-          <ArrowUpRight className="text-white" size={18} />
-        </button>
-      </div>
+      <CardHeader className="p-3 pb-2 border-b border-border/50">
+        <div className="flex items-center gap-2">
+          <FileText className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold text-foreground">
+            {t(I18nKey.COMMON$PLAN_MD)}
+          </span>
+          <div className="flex-1" />
+          <button
+            type="button"
+            onClick={handleViewClick}
+            className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors cursor-pointer"
+            data-testid="plan-preview-view-button"
+          >
+            <span>{t(I18nKey.COMMON$VIEW)}</span>
+            <ArrowUpRight className="h-4 w-4" />
+          </button>
+        </div>
+      </CardHeader>
 
       {/* Content */}
-      <div
+      <CardContent
         data-testid="plan-preview-content"
-        className="flex flex-col gap-[10px] p-4 text-[15px] text-white leading-[29px]"
+        className="p-4 text-sm text-foreground leading-relaxed"
       >
         {truncatedContent && (
           <>
@@ -105,7 +109,7 @@ export function PlanPreview({
               <button
                 type="button"
                 onClick={handleViewClick}
-                className="text-[#4a67bd] cursor-pointer hover:underline text-left"
+                className="text-primary cursor-pointer hover:underline text-left mt-2"
                 data-testid="plan-preview-read-more-button"
               >
                 {t(I18nKey.COMMON$READ_MORE)}
@@ -113,30 +117,23 @@ export function PlanPreview({
             )}
           </>
         )}
-      </div>
+      </CardContent>
 
       {/* Footer */}
-      <div className="border-t border-[#525252] flex h-[54px] items-center justify-start px-4">
-        <button
-          type="button"
+      <CardFooter className="p-3 pt-0">
+        <Button
           onClick={handleBuildClick}
           disabled={isBuildDisabled}
-          className={cn(
-            "bg-white flex items-center justify-center h-[26px] px-2 rounded-[4px] w-[93px] transition-opacity",
-            isBuildDisabled
-              ? "opacity-50 cursor-not-allowed"
-              : "hover:opacity-90 cursor-pointer",
-          )}
+          size="sm"
+          className="gap-2"
           data-testid="plan-preview-build-button"
         >
-          <Typography.Text className="font-medium text-[14px] text-black leading-5">
-            {t(I18nKey.COMMON$BUILD)}{" "}
-            <Typography.Text className="font-medium text-black">
-              ⌘↩
-            </Typography.Text>
-          </Typography.Text>
-        </button>
-      </div>
-    </div>
+          {t(I18nKey.COMMON$BUILD)}
+          <kbd className="ml-1 px-1.5 py-0.5 text-xs bg-primary-foreground/20 rounded">
+            ⌘↩
+          </kbd>
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }

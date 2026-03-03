@@ -5,7 +5,7 @@ import { ChatInputRow } from "./chat-input-row";
 import { ChatInputActions } from "./chat-input-actions";
 import { SlashCommandMenu } from "./slash-command-menu";
 import { useConversationStore } from "#/stores/conversation-store";
-import { cn } from "#/utils/utils";
+import { cn } from "#/lib/utils";
 import { SlashCommandItem } from "#/hooks/chat/use-slash-command";
 
 interface ChatInputContainerProps {
@@ -63,8 +63,13 @@ export function ChatInputContainer({
     <div
       ref={chatContainerRef}
       className={cn(
-        "bg-[#25272D] box-border content-stretch flex flex-col items-start justify-center p-4 pt-3 relative rounded-[15px] w-full",
-        conversationMode === "plan" && "border border-[#597FF4]",
+        // Modern chat input styling matching reference design
+        "bg-card border border-border/50 shadow-sm",
+        "box-border content-stretch flex flex-col items-start justify-center",
+        "p-4 pt-3 relative rounded-xl w-full",
+        "transition-colors duration-200",
+        "focus-within:border-primary/40 focus-within:shadow-md",
+        conversationMode === "plan" && "border-primary/50",
       )}
       onDragOver={(e) => onDragOver(e, disabled)}
       onDragLeave={(e) => onDragLeave(e, disabled)}

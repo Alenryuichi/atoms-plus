@@ -1,6 +1,7 @@
 import React from "react";
 import { useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 import { useGitUser } from "#/hooks/query/use-git-user";
 import { UserActions } from "./user-actions";
 import { CreditsDisplay } from "./credits-display";
@@ -15,7 +16,39 @@ import { useLogout } from "#/hooks/mutation/use-logout";
 import { useConfig } from "#/hooks/query/use-config";
 import { displayErrorToast } from "#/utils/custom-toast-handlers";
 import { I18nKey } from "#/i18n/declaration";
-import { cn } from "#/utils/utils";
+import { cn } from "#/lib/utils";
+
+// Animation variants for sidebar items
+const sidebarItemVariants = {
+  initial: { scale: 1 },
+  hover: { scale: 1.05 },
+  tap: { scale: 0.95 },
+};
+
+// Stagger animation for sidebar navigation items
+const navContainerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const navItemVariants = {
+  hidden: { opacity: 0, y: -10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 24,
+    },
+  },
+};
 
 export function Sidebar() {
   const { t } = useTranslation();
@@ -69,48 +102,94 @@ export function Sidebar() {
       <aside
         aria-label={t(I18nKey.SIDEBAR$NAVIGATION_LABEL)}
         className={cn(
-          "h-[54px] p-3 md:p-0 md:h-[40px] md:h-auto flex flex-row md:flex-col gap-1 bg-base md:w-[75px] md:min-w-[75px] sm:pt-0 sm:px-2 md:pt-[14px] md:px-0",
-          pathname === "/" && "md:pt-6.5 md:pb-3",
+          // Modern sidebar styling with subtle border and clean background
+          "h-[54px] p-3 md:p-0 md:h-auto flex flex-row md:flex-col gap-1",
+          "bg-card/50 backdrop-blur-sm border-r border-border/40",
+          "md:w-[72px] md:min-w-[72px] sm:pt-0 sm:px-2 md:pt-4 md:px-0",
+          pathname === "/" && "md:pt-6 md:pb-3",
         )}
       >
         <nav className="flex flex-row md:flex-col items-center justify-between w-full h-auto md:w-auto md:h-full">
-          <div className="flex flex-row md:flex-col items-center gap-[26px]">
-            <div className="flex items-center justify-center">
-              <OpenHandsLogoButton />
-            </div>
-            <div>
-              <NewProjectButton disabled={settings?.email_verified === false} />
-            </div>
-            <ConversationPanelButton
-              isOpen={conversationPanelIsOpen}
-              onClick={() =>
-                settings?.email_verified === false
-                  ? null
-                  : setConversationPanelIsOpen((prev) => !prev)
-              }
-              disabled={settings?.email_verified === false}
-            />
-          </div>
+          <motion.div
+            className="flex flex-row md:flex-col items-center gap-[26px]"
+            variants={navContainerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div
+              variants={navItemVariants}
+              className="flex items-center justify-center"
+            >
+              <motion.div
+                variants={sidebarItemVariants}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <OpenHandsLogoButton />
+              </motion.div>
+            </motion.div>
+            <motion.div variants={navItemVariants}>
+              <motion.div
+                variants={sidebarItemVariants}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <NewProjectButton
+                  disabled={settings?.email_verified === false}
+                />
+              </motion.div>
+            </motion.div>
+            <motion.div variants={navItemVariants}>
+              <motion.div
+                variants={sidebarItemVariants}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <ConversationPanelButton
+                  isOpen={conversationPanelIsOpen}
+                  onClick={() =>
+                    settings?.email_verified === false
+                      ? null
+                      : setConversationPanelIsOpen((prev) => !prev)
+                  }
+                  disabled={settings?.email_verified === false}
+                />
+              </motion.div>
+            </motion.div>
+          </motion.div>
 
-          <div className="flex flex-row md:flex-col md:items-center gap-[18px]">
-            <CreditsDisplay />
-            <UserActions
-              user={
-                user.data ? { avatar_url: user.data.avatar_url } : undefined
-              }
-              onLogout={logout}
-              isLoading={user.isFetching}
-            />
-          </div>
+          <motion.div
+            className="flex flex-row md:flex-col md:items-center gap-[18px]"
+            variants={navContainerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div variants={navItemVariants}>
+              <CreditsDisplay />
+            </motion.div>
+            <motion.div variants={navItemVariants}>
+              <motion.div
+                variants={sidebarItemVariants}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                <UserActions
+                  user={
+                    user.data ? { avatar_url: user.data.avatar_url } : undefined
+                  }
+                  onLogout={logout}
+                  isLoading={user.isFetching}
+                />
+              </motion.div>
+            </motion.div>
+          </motion.div>
         </nav>
 
-        {conversationPanelIsOpen && (
-          <ConversationPanelWrapper isOpen={conversationPanelIsOpen}>
-            <ConversationPanel
-              onClose={() => setConversationPanelIsOpen(false)}
-            />
-          </ConversationPanelWrapper>
-        )}
+        <ConversationPanelWrapper isOpen={conversationPanelIsOpen}>
+          <ConversationPanel
+            onClose={() => setConversationPanelIsOpen(false)}
+          />
+        </ConversationPanelWrapper>
       </aside>
 
       {settingsModalIsOpen && (

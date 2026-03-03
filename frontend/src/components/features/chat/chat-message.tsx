@@ -1,9 +1,31 @@
 import React from "react";
-import { cn } from "#/utils/utils";
+import { motion } from "framer-motion";
+import { cn } from "#/lib/utils";
 import { CopyToClipboardButton } from "#/components/shared/buttons/copy-to-clipboard-button";
 import { OpenHandsSourceType } from "#/types/core/base";
 import { StyledTooltip } from "#/components/shared/buttons/styled-tooltip";
 import { MarkdownRenderer } from "../markdown/markdown-renderer";
+import { Card } from "#/components/ui/card";
+
+// Message animation variants - smoother spring for modern feel
+const messageVariants = {
+  hidden: (type: OpenHandsSourceType) => ({
+    opacity: 0,
+    x: type === "user" ? 16 : -16,
+    y: 8,
+  }),
+  visible: {
+    opacity: 1,
+    x: 0,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 280,
+      damping: 24,
+      duration: 0.25,
+    },
+  },
+};
 
 interface ChatMessageProps {
   type: OpenHandsSourceType;
@@ -45,26 +67,70 @@ export function ChatMessage({
     };
   }, [isCopy]);
 
+  const isUserMessage = type === "user";
+  const isAgentMessage = type === "agent";
+
   return (
-    <article
+    <motion.article
       data-testid={`${type}-message`}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       className={cn(
-        "rounded-xl relative w-fit max-w-full last:mb-4",
-        "flex flex-col gap-2",
-        type === "user" && "p-4 bg-tertiary self-end",
-        type === "agent" && "mt-6 w-full max-w-full bg-transparent",
-        isFromPlanningAgent &&
-          type === "agent" &&
-          "border border-[#597ff4] bg-tertiary p-4 mt-2",
+        "relative w-fit last:mb-4 flex flex-col gap-2",
+        // User message: right-aligned with primary accent
+        isUserMessage && "max-w-[80%] self-end",
+        // Agent message: left-aligned, full width
+        isAgentMessage && "w-full max-w-full",
       )}
+      variants={messageVariants}
+      initial="hidden"
+      animate="visible"
+      custom={type}
     >
+      {/* User message bubble */}
+      {isUserMessage && (
+        <Card
+          className={cn(
+            "px-4 py-3 border-primary/20 bg-primary/10",
+            "rounded-2xl rounded-tr-md",
+            "shadow-sm",
+          )}
+        >
+          <div
+            className="text-sm text-foreground leading-relaxed"
+            style={{ whiteSpace: "normal", wordBreak: "break-word" }}
+          >
+            <MarkdownRenderer includeStandard>{message}</MarkdownRenderer>
+          </div>
+        </Card>
+      )}
+
+      {/* Agent message */}
+      {isAgentMessage && (
+        <div
+          className={cn(
+            "mt-3",
+            // Planning agent has special styling
+            isFromPlanningAgent &&
+              "border border-primary/20 bg-primary/5 px-4 py-3 rounded-xl shadow-sm",
+          )}
+        >
+          <div
+            className="text-sm text-foreground leading-relaxed"
+            style={{ whiteSpace: "normal", wordBreak: "break-word" }}
+          >
+            <MarkdownRenderer includeStandard>{message}</MarkdownRenderer>
+          </div>
+        </div>
+      )}
+
+      {/* Hover actions */}
       <div
         className={cn(
-          "absolute -top-2.5 -right-2.5",
+          "absolute -top-2 z-10",
+          isUserMessage ? "-left-2" : "-right-2",
           !isHovering ? "hidden" : "flex",
-          "items-center gap-1",
+          "items-center gap-1 bg-card rounded-lg shadow-md border border-border/50 p-1",
         )}
       >
         {actions?.map((action, index) =>
@@ -73,7 +139,7 @@ export function ChatMessage({
               <button
                 type="button"
                 onClick={action.onClick}
-                className="button-base p-1 cursor-pointer"
+                className="p-1.5 rounded-md hover:bg-muted transition-colors cursor-pointer"
                 aria-label={action.tooltip}
               >
                 {action.icon}
@@ -84,7 +150,7 @@ export function ChatMessage({
               key={index}
               type="button"
               onClick={action.onClick}
-              className="button-base p-1 cursor-pointer"
+              className="p-1.5 rounded-md hover:bg-muted transition-colors cursor-pointer"
               aria-label={`Action ${index + 1}`}
             >
               {action.icon}
@@ -100,17 +166,7 @@ export function ChatMessage({
         />
       </div>
 
-      <div
-        className="text-sm"
-        style={{
-          whiteSpace: "normal",
-          wordBreak: "break-word",
-        }}
-      >
-        <MarkdownRenderer includeStandard>{message}</MarkdownRenderer>
-      </div>
-
       {children}
-    </article>
+    </motion.article>
   );
 }

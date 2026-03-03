@@ -1,9 +1,60 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 import { useCreateConversation } from "#/hooks/mutation/use-create-conversation";
 import { LoadingSpinner } from "#/components/shared/loading-spinner";
 import { I18nKey } from "#/i18n/declaration";
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 15,
+    },
+  },
+  hover: {
+    scale: 1.02,
+    y: -4,
+    transition: {
+      type: "spring",
+      stiffness: 400,
+      damping: 20,
+    },
+  },
+  tap: {
+    scale: 0.98,
+  },
+};
 
 // Template suggestions like atoms.dev
 const TEMPLATES = [
@@ -83,10 +134,15 @@ export default function AtomsHome() {
 
   return (
     <div className="h-full flex flex-col items-center justify-center bg-base px-4 py-8 overflow-auto">
-      {/* Main Content */}
-      <div className="w-full max-w-3xl mx-auto flex flex-col items-center gap-12">
+      {/* Main Content with stagger animation */}
+      <motion.div
+        className="w-full max-w-3xl mx-auto flex flex-col items-center gap-12"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Hero Section */}
-        <div className="text-center space-y-4">
+        <motion.div className="text-center space-y-4" variants={itemVariants}>
           <h1 className="text-4xl md:text-5xl font-bold text-white">
             {t(I18nKey.ATOMS$HERO_TITLE_PREFIX)}{" "}
             <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
@@ -96,11 +152,14 @@ export default function AtomsHome() {
           <p className="text-lg text-neutral-400 max-w-lg mx-auto">
             {t(I18nKey.ATOMS$HERO_SUBTITLE)}
           </p>
-        </div>
+        </motion.div>
 
         {/* Input Section */}
-        <div className="w-full relative">
-          <div className="relative flex items-center bg-neutral-800 border border-neutral-700 rounded-2xl overflow-hidden focus-within:border-blue-500 transition-colors">
+        <motion.div className="w-full relative" variants={itemVariants}>
+          <motion.div
+            className="relative flex items-center bg-neutral-800 border border-neutral-700 rounded-2xl overflow-hidden focus-within:border-blue-500 transition-colors"
+            whileFocus={{ scale: 1.01 }}
+          >
             <input
               type="text"
               value={inputValue}
@@ -110,11 +169,13 @@ export default function AtomsHome() {
               className="flex-1 bg-transparent text-white placeholder-neutral-500 px-6 py-5 text-lg outline-none"
               disabled={isCreating}
             />
-            <button
+            <motion.button
               type="button"
               onClick={() => handleSubmit(inputValue)}
               disabled={!inputValue.trim() || isCreating}
               className="mr-3 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-700 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors flex items-center gap-2"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               {isCreating ? (
                 <>
@@ -124,11 +185,13 @@ export default function AtomsHome() {
               ) : (
                 <>
                   <span>{t(I18nKey.ATOMS$BUTTON_START)}</span>
-                  <svg
+                  <motion.svg
                     className="w-4 h-4"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
+                    initial={{ x: 0 }}
+                    whileHover={{ x: 3 }}
                   >
                     <path
                       strokeLinecap="round"
@@ -136,29 +199,41 @@ export default function AtomsHome() {
                       strokeWidth={2}
                       d="M14 5l7 7m0 0l-7 7m7-7H3"
                     />
-                  </svg>
+                  </motion.svg>
                 </>
               )}
-            </button>
-          </div>
-        </div>
+            </motion.button>
+          </motion.div>
+        </motion.div>
 
         {/* Templates Section */}
-        <div className="w-full space-y-4">
+        <motion.div className="w-full space-y-4" variants={itemVariants}>
           <h2 className="text-lg font-medium text-neutral-300 text-center">
             {t(I18nKey.ATOMS$TEMPLATES_TITLE)}
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {TEMPLATES.map((template) => (
-              <button
+            {TEMPLATES.map((template, index) => (
+              <motion.button
                 type="button"
                 key={template.id}
                 onClick={() => handleTemplateClick(template)}
                 disabled={isCreating}
-                className="group p-4 bg-neutral-800/50 hover:bg-neutral-800 border border-neutral-700/50 hover:border-neutral-600 rounded-xl text-left transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group p-4 bg-neutral-800/50 hover:bg-neutral-800 border border-neutral-700/50 hover:border-blue-500/50 rounded-xl text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
+                whileHover="hover"
+                whileTap="tap"
+                transition={{ delay: index * 0.05 }}
               >
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">{template.icon}</span>
+                  <motion.span
+                    className="text-2xl"
+                    whileHover={{ scale: 1.2, rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 400 }}
+                  >
+                    {template.icon}
+                  </motion.span>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-white group-hover:text-blue-400 transition-colors">
                       {t(template.titleKey)}
@@ -168,13 +243,16 @@ export default function AtomsHome() {
                     </p>
                   </div>
                 </div>
-              </button>
+              </motion.button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Footer */}
-        <p className="text-sm text-neutral-500 text-center">
+        <motion.p
+          className="text-sm text-neutral-500 text-center"
+          variants={itemVariants}
+        >
           {t(I18nKey.ATOMS$FOOTER_POWERED_BY)}{" "}
           <a
             href="https://github.com/All-Hands-AI/OpenHands"
@@ -184,8 +262,8 @@ export default function AtomsHome() {
           >
             {t(I18nKey.BRANDING$OPENHANDS)}
           </a>
-        </p>
-      </div>
+        </motion.p>
+      </motion.div>
     </div>
   );
 }

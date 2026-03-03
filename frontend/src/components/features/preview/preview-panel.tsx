@@ -6,6 +6,7 @@ import {
   SandpackPreview,
 } from "@codesandbox/sandpack-react";
 import { useTranslation } from "react-i18next";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, RefreshCw, FileCode } from "lucide-react";
 import { I18nKey } from "#/i18n/declaration";
 import { useWorkspaceFiles } from "#/hooks/query/use-workspace-files";
@@ -15,6 +16,26 @@ import { useConversationId } from "#/hooks/use-conversation-id";
 import { useClickOutsideElement } from "#/hooks/use-click-outside-element";
 import { LoadingSpinner } from "#/components/shared/loading-spinner";
 import { cn } from "#/utils/utils";
+
+// Animation variants for view mode transitions
+const contentVariants = {
+  hidden: { opacity: 0, scale: 0.98 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.2,
+      ease: "easeOut",
+    },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.98,
+    transition: {
+      duration: 0.15,
+    },
+  },
+};
 
 type ViewMode = "split" | "editor" | "preview";
 
@@ -208,11 +229,11 @@ export function PreviewPanel() {
   }
 
   return (
-    <div className="h-full w-full flex flex-col bg-neutral-900">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-2 p-2 border-b border-neutral-700">
+    <div className="h-full w-full flex flex-col bg-base-secondary">
+      {/* Atoms Plus: Simplified toolbar - cleaner design */}
+      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-tertiary-light bg-base-tertiary">
+        {/* Left side: File selector */}
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          {/* File Selector Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
@@ -226,11 +247,12 @@ export function PreviewPanel() {
                   setIsDropdownOpen(true);
                 }
               }}
-              className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 border border-neutral-600 rounded text-sm text-white max-w-[200px]"
+              className="flex items-center gap-2 px-2.5 py-1 bg-base-secondary hover:bg-neutral-700 border border-tertiary rounded-lg text-sm text-content-secondary max-w-[180px] transition-colors"
               aria-label={t(I18nKey.PREVIEW$SELECT_FILE)}
               aria-expanded={isDropdownOpen}
               aria-haspopup="listbox"
             >
+              <FileCode className="w-3.5 h-3.5 shrink-0 text-content-tertiary" />
               <span className="truncate">
                 {selectedFile
                   ? selectedFile.split("/").pop()
@@ -238,7 +260,7 @@ export function PreviewPanel() {
               </span>
               <ChevronDown
                 className={cn(
-                  "w-4 h-4 shrink-0 transition-transform",
+                  "w-3.5 h-3.5 shrink-0 transition-transform text-content-tertiary",
                   isDropdownOpen && "rotate-180",
                 )}
               />
@@ -247,7 +269,7 @@ export function PreviewPanel() {
               <div
                 role="listbox"
                 aria-label={t(I18nKey.PREVIEW$SELECT_FILE)}
-                className="absolute top-full left-0 mt-1 z-50 min-w-[200px] max-h-[300px] overflow-auto bg-neutral-800 border border-neutral-600 rounded shadow-lg"
+                className="absolute top-full left-0 mt-1 z-50 min-w-[200px] max-h-[300px] overflow-auto bg-base-tertiary border border-tertiary rounded-lg shadow-xl"
               >
                 {files.map((file) => {
                   const fileName = file.split("/").pop() || file;
@@ -267,16 +289,16 @@ export function PreviewPanel() {
                         }
                       }}
                       className={cn(
-                        "w-full text-left px-3 py-2 text-sm hover:bg-neutral-700",
+                        "w-full text-left px-3 py-2 text-sm hover:bg-neutral-700 transition-colors",
                         selectedFile === file
-                          ? "bg-neutral-700 text-white"
-                          : "text-neutral-300",
+                          ? "bg-primary/10 text-primary"
+                          : "text-content-secondary",
                       )}
                       title={file}
                     >
                       <span className="block truncate">{fileName}</span>
                       {dirPath && (
-                        <span className="block text-xs text-neutral-500 truncate">
+                        <span className="block text-xs text-content-tertiary truncate">
                           {dirPath}
                         </span>
                       )}
@@ -287,124 +309,125 @@ export function PreviewPanel() {
             )}
           </div>
 
-          {/* Loading indicator for content */}
+          {/* Loading/Error indicators */}
           {isLoadingContent && (
-            <div className="flex items-center gap-2 text-neutral-400 text-sm">
+            <div className="flex items-center gap-1.5 text-content-tertiary text-xs">
               <LoadingSpinner size="small" />
-              <span className="hidden sm:inline">Loading...</span>
             </div>
           )}
-
-          {/* Content error */}
           {contentError && (
-            <span className="text-red-400 text-sm truncate">
+            <span className="text-danger text-xs truncate">
               {t(I18nKey.COMMON$FETCH_ERROR)}
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* View Mode Toggle */}
-          <div className="flex gap-0.5 bg-neutral-800 rounded p-0.5">
-            <button
-              type="button"
-              onClick={() => setViewMode("split")}
-              className={cn(
-                "px-2 py-1 text-xs rounded transition-colors",
-                viewMode === "split"
-                  ? "bg-neutral-600 text-white"
-                  : "text-neutral-400 hover:text-white",
-              )}
-            >
-              {t(I18nKey.COMMON$SPLIT)}
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("editor")}
-              className={cn(
-                "px-2 py-1 text-xs rounded transition-colors",
-                viewMode === "editor"
-                  ? "bg-neutral-600 text-white"
-                  : "text-neutral-400 hover:text-white",
-              )}
-            >
-              {t(I18nKey.COMMON$CODE)}
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("preview")}
-              className={cn(
-                "px-2 py-1 text-xs rounded transition-colors",
-                viewMode === "preview"
-                  ? "bg-neutral-600 text-white"
-                  : "text-neutral-400 hover:text-white",
-              )}
-            >
-              {t(I18nKey.COMMON$PREVIEW)}
-            </button>
+        {/* Right side: View mode + Refresh */}
+        <div className="flex items-center gap-1.5">
+          {/* Compact View Mode Toggle */}
+          <div className="flex bg-base-secondary rounded-lg p-0.5 border border-tertiary">
+            {(["split", "editor", "preview"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setViewMode(mode)}
+                className={cn(
+                  "px-2 py-0.5 text-xs rounded-md transition-all font-medium",
+                  viewMode === mode
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-content-tertiary hover:text-content-secondary",
+                )}
+              >
+                {
+                  {
+                    split: t(I18nKey.COMMON$SPLIT),
+                    editor: t(I18nKey.COMMON$CODE),
+                    preview: t(I18nKey.COMMON$PREVIEW),
+                  }[mode]
+                }
+              </button>
+            ))}
           </div>
 
           {/* Refresh Button */}
           <button
             type="button"
             onClick={handleRefresh}
-            className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-700 rounded"
+            className="p-1 text-content-tertiary hover:text-content hover:bg-neutral-700 rounded-md transition-colors"
             aria-label={t(I18nKey.BUTTON$REFRESH)}
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      {/* Sandpack Preview */}
+      {/* Sandpack Preview with animated transitions */}
       <div className="flex-1 overflow-hidden h-full">
-        {isLoadingFiles ? (
-          <div className="h-full flex items-center justify-center">
-            <LoadingSpinner size="large" />
-          </div>
-        ) : (
-          <SandpackProvider
-            key={`${selectedFile}-${template}`}
-            template={template}
-            files={sandpackFiles}
-            theme="dark"
-            options={{
-              recompileMode: "delayed",
-              recompileDelay: 300,
-            }}
-          >
-            <SandpackLayout
-              style={{
-                height: "100%",
-                border: "none",
-                borderRadius: 0,
-              }}
+        <AnimatePresence mode="wait">
+          {isLoadingFiles ? (
+            <motion.div
+              key="loading"
+              className="h-full flex items-center justify-center"
+              variants={contentVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
             >
-              {(viewMode === "split" || viewMode === "editor") && (
-                <SandpackCodeEditor
+              <LoadingSpinner size="large" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key={`${selectedFile}-${viewMode}`}
+              className="h-full"
+              variants={contentVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <SandpackProvider
+                key={`${selectedFile}-${template}`}
+                template={template}
+                files={sandpackFiles}
+                theme="dark"
+                options={{
+                  recompileMode: "delayed",
+                  recompileDelay: 300,
+                }}
+              >
+                <SandpackLayout
                   style={{
                     height: "100%",
-                    flex: viewMode === "split" ? 1 : "auto",
+                    border: "none",
+                    borderRadius: 0,
                   }}
-                  showTabs
-                  showLineNumbers
-                  showInlineErrors
-                  wrapContent
-                />
-              )}
-              {(viewMode === "split" || viewMode === "preview") && (
-                <SandpackPreview
-                  style={{
-                    height: "100%",
-                    flex: viewMode === "split" ? 1 : "auto",
-                  }}
-                  showNavigator
-                  showRefreshButton
-                />
-              )}
-            </SandpackLayout>
-          </SandpackProvider>
-        )}
+                >
+                  {(viewMode === "split" || viewMode === "editor") && (
+                    <SandpackCodeEditor
+                      style={{
+                        height: "100%",
+                        flex: viewMode === "split" ? 1 : "auto",
+                      }}
+                      showTabs
+                      showLineNumbers
+                      showInlineErrors
+                      wrapContent
+                    />
+                  )}
+                  {(viewMode === "split" || viewMode === "preview") && (
+                    <SandpackPreview
+                      style={{
+                        height: "100%",
+                        flex: viewMode === "split" ? 1 : "auto",
+                      }}
+                      showNavigator
+                      showRefreshButton
+                    />
+                  )}
+                </SandpackLayout>
+              </SandpackProvider>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
