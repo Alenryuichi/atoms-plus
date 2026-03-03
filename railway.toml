@@ -1,0 +1,16 @@
+# Railway 配置 - Atoms Plus Server
+# 使用扩展的 Atoms Plus server 而不是默认的 OpenHands server
+# 这样可以启用 multiagent、race mode 等扩展功能
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+# 使用 Atoms Plus Server 入口点
+# 包含: /api/v1/race/*, /api/v1/orchestrator/*, /api/v1/roles/*
+startCommand = "uvicorn atoms_plus.atoms_server:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/atoms-plus/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
