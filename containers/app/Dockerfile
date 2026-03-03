@@ -52,9 +52,15 @@ RUN mkdir -p $FILE_STORE_PATH
 RUN mkdir -p $WORKSPACE_BASE
 
 # CACHE_BUST: Change this value to force rebuild of apt-get layer
-ARG CACHE_BUST_APT=2026-03-02-v3
+ARG CACHE_BUST_APT=2026-03-03-chromium
 RUN apt-get update -y \
     && apt-get install -y curl ssh sudo tmux \
+    # Playwright/Chromium dependencies
+    && apt-get install -y \
+        libnss3 libnspr4 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 \
+        libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 \
+        libxfixes3 libxrandr2 libgbm1 libasound2 libpango-1.0-0 \
+        libcairo2 libatspi2.0-0 libwayland-client0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Default is 1000, but OSX is often 501
@@ -86,6 +92,11 @@ COPY --chown=openhands:openhands pyproject.toml poetry.lock README.md MANIFEST.i
 
 # This is run as "openhands" user, and will create __pycache__ with openhands:openhands ownership
 RUN python openhands/core/download.py # No-op to download assets
+
+# Install Playwright Chromium browser for browser_use tool
+# This enables web browsing capabilities in the agent
+RUN playwright install chromium
+
 # Add this line to set group ownership of all files/directories not already in "app" group
 # openhands:openhands -> openhands:openhands
 RUN find /app \! -group openhands -exec chgrp openhands {} +
