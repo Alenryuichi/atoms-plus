@@ -97,6 +97,12 @@ FUNCTION_CALLING_PATTERNS: list[str] = [
     'qwen3-coder-480b-a35b-instruct',
     'deepseek-chat',
     'grok-code-fast-1',
+    # Alibaba Cloud Qwen (DashScope/百炼) - supports OpenAI-compatible function calling
+    'qwen-turbo*',
+    'qwen-plus*',
+    'qwen-max*',
+    'qwen2.5*',
+    'qwen3*',
 ]
 
 REASONING_EFFORT_PATTERNS: list[str] = [
