@@ -31,12 +31,16 @@ export const useUnifiedGetGitChanges = () => {
     [selectedRepository],
   );
 
+  // V1 conversations require sessionApiKey for authentication
+  const hasV1Auth = !isV1Conversation || !!sessionApiKey;
+
   const result = useQuery({
     queryKey: [
       "file_changes",
       conversationId,
       isV1Conversation,
       conversationUrl,
+      sessionApiKey, // Include in queryKey to refetch when auth changes
       gitPath,
     ],
     queryFn: async () => {
@@ -57,7 +61,8 @@ export const useUnifiedGetGitChanges = () => {
     retry: false,
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 15, // 15 minutes
-    enabled: runtimeIsReady && !!conversationId,
+    // Wait for sessionApiKey to be available for V1 conversations
+    enabled: runtimeIsReady && !!conversationId && hasV1Auth,
     meta: {
       disableToast: true,
     },

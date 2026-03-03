@@ -88,7 +88,11 @@ async def _forward_request(request: Request, port: int, path: str) -> StreamingR
 )
 async def proxy_http_request(request: Request, port: int, path: str):
     """Proxy HTTP requests to the agent server on the specified port."""
-    _logger.debug(f'Proxying {request.method} request to port {port}, path: /{path}')
+    # Log auth header presence for debugging
+    has_auth = 'x-session-api-key' in [k.lower() for k in request.headers.keys()]
+    _logger.info(
+        f'Proxying {request.method} to port {port}, path: /{path}, has_auth: {has_auth}'
+    )
     return await _forward_request(request, port, path)
 
 
