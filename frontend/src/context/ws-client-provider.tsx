@@ -373,23 +373,7 @@ export function WsClientProvider({
       return () => undefined; // conversation not ready for WebSocket connection
     }
 
-    let sio = sioRef.current;
-
-    if (sio?.connected) {
-      sio.disconnect();
-    }
-
-    // Set initial status...
-    setWebSocketStatus("CONNECTING");
-
-    const lastEvent = lastEventRef.current;
-    const query = {
-      latest_event_id: lastEvent?.id ?? -1,
-      conversation_id: conversationId,
-      providers_set: providers,
-      session_api_key: conversation.session_api_key, // Have to set here because socketio doesn't support custom headers. :(
-    };
-
+    // Calculate connection parameters first
     let baseUrl: string | null = null;
     let socketPath: string;
     if (conversation.url && !conversation.url.startsWith("/")) {
@@ -404,6 +388,37 @@ export function WsClientProvider({
         window?.location.host;
       socketPath = "/socket.io";
     }
+
+    let sio = sioRef.current;
+
+    // Check if we already have a working connection with the same parameters
+    // This prevents unnecessary reconnections when conversation data is polled
+    if (sio?.connected) {
+      const currentQuery = sio.io.opts.query as Record<string, unknown>;
+      const isSameConnection =
+        currentQuery?.conversation_id === conversationId &&
+        currentQuery?.session_api_key === conversation.session_api_key &&
+        sio.io.opts.path === socketPath;
+
+      if (isSameConnection) {
+        // Connection is still valid, no need to reconnect
+        return () => undefined;
+      }
+
+      // Parameters changed, need to reconnect
+      sio.disconnect();
+    }
+
+    // Set initial status...
+    setWebSocketStatus("CONNECTING");
+
+    const lastEvent = lastEventRef.current;
+    const query = {
+      latest_event_id: lastEvent?.id ?? -1,
+      conversation_id: conversationId,
+      providers_set: providers,
+      session_api_key: conversation.session_api_key, // Have to set here because socketio doesn't support custom headers. :(
+    };
 
     sio = io(baseUrl, {
       transports: ["websocket"],

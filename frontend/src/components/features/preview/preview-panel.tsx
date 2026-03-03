@@ -83,7 +83,8 @@ export function PreviewPanel() {
         return saved;
       }
     }
-    return "split";
+    // Default to preview-only mode (like bolt.new, lovable.dev)
+    return "preview";
   });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
