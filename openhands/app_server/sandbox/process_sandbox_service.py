@@ -118,6 +118,15 @@ class ProcessSandboxService(SandboxService):
         env.update(sandbox_spec.initial_env)
         env['SESSION_API_KEY'] = session_api_key
 
+        # Set working directory environment variables for agent server
+        # This ensures files are created in the correct per-conversation directory
+        # These variables are used by the agent server to configure:
+        # - OH_CONVERSATIONS_PATH: where conversation data is stored
+        # - OH_BASH_EVENTS_DIR: where bash events are logged
+        env['OH_CONVERSATIONS_PATH'] = os.path.join(working_dir, 'conversations')
+        env['OH_BASH_EVENTS_DIR'] = os.path.join(working_dir, 'bash_events')
+        env['WORKSPACE_BASE'] = working_dir
+
         # Prepare command arguments
         cmd = [
             self.python_executable,
