@@ -110,7 +110,9 @@ class SandboxService(ABC):
 
             # Log status changes
             if sandbox.status != last_status:
-                _logger.info(f'Sandbox {sandbox_id} status changed: {last_status} -> {sandbox.status}, exposed_urls: {sandbox.exposed_urls is not None}')
+                _logger.info(
+                    f'Sandbox {sandbox_id} status changed: {last_status} -> {sandbox.status}, exposed_urls: {sandbox.exposed_urls is not None}'
+                )
                 last_status = sandbox.status
 
             if sandbox.status == SandboxStatus.ERROR:
@@ -125,7 +127,9 @@ class SandboxService(ABC):
                         return sandbox
                     # Agent server not ready yet, continue polling
                 else:
-                    _logger.info(f'Sandbox {sandbox_id} is RUNNING (no httpx_client or exposed_urls)')
+                    _logger.info(
+                        f'Sandbox {sandbox_id} is RUNNING (no httpx_client or exposed_urls)'
+                    )
                     return sandbox
 
             await asyncio.sleep(poll_interval)
@@ -151,10 +155,14 @@ class SandboxService(ABC):
             _logger.debug(f'Checking agent server alive at: {url}')
             response = await httpx_client.get(url, timeout=5.0)
             if response.is_success:
-                _logger.info(f'Agent server alive check passed for sandbox {sandbox.id} at {url}')
+                _logger.info(
+                    f'Agent server alive check passed for sandbox {sandbox.id} at {url}'
+                )
                 return True
             else:
-                _logger.warning(f'Agent server alive check returned {response.status_code} for sandbox {sandbox.id}')
+                _logger.warning(
+                    f'Agent server alive check returned {response.status_code} for sandbox {sandbox.id}'
+                )
                 return False
         except Exception as exc:
             _logger.warning(
@@ -164,13 +172,13 @@ class SandboxService(ABC):
             return False
 
     def _get_agent_server_url(self, sandbox: SandboxInfo) -> str:
-        """Get agent server URL from sandbox exposed URLs.
+        """Get agent server URL from sandbox exposed URLs for internal health checks.
 
         Args:
             sandbox: The sandbox info containing exposed URLs
 
         Returns:
-            The agent server URL
+            The agent server URL (always a full URL suitable for HTTP requests)
 
         Raises:
             SandboxError: If no agent server URL is found
@@ -180,7 +188,11 @@ class SandboxService(ABC):
 
         for exposed_url in sandbox.exposed_urls:
             if exposed_url.name == AGENT_SERVER:
-                return replace_localhost_hostname_for_docker(exposed_url.url)
+                url = exposed_url.url
+                # If URL is relative (e.g., /runtime/8000), use localhost for health check
+                if url.startswith('/'):
+                    url = f'http://localhost:{exposed_url.port}'
+                return replace_localhost_hostname_for_docker(url)
 
         raise SandboxError(f'No agent server URL found for sandbox: {sandbox.id}')
 
