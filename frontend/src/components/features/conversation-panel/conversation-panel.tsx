@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink, useParams, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 import { I18nKey } from "#/i18n/declaration";
 import { usePaginatedConversations } from "#/hooks/query/use-paginated-conversations";
 import { useStartTasks } from "#/hooks/query/use-start-tasks";
@@ -18,6 +19,31 @@ import { displaySuccessToast } from "#/utils/custom-toast-handlers";
 import { ConversationCard } from "./conversation-card/conversation-card";
 import { StartTaskCard } from "./start-task-card/start-task-card";
 import { ConversationCardSkeleton } from "./conversation-card/conversation-card-skeleton";
+
+// Stagger animation variants for conversation list
+const listVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, x: -10 },
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 24,
+    },
+  },
+};
 
 interface ConversationPanelProps {
   onClose: () => void;
@@ -160,54 +186,56 @@ export function ConversationPanel({ onClose }: ConversationPanelProps) {
           </p>
         </div>
       )}
-      {/* Render in-progress start tasks first */}
-      {startTasks?.map((task) => (
-        <NavLink
-          key={task.id}
-          to={`/conversations/task-${task.id}`}
-          onClick={onClose}
-        >
-          <StartTaskCard task={task} />
-        </NavLink>
-      ))}
-      {/* Then render completed conversations */}
-      {conversations?.map((project) => (
-        <NavLink
-          key={project.conversation_id}
-          to={`/conversations/${project.conversation_id}`}
-          onClick={onClose}
-        >
-          <ConversationCard
-            onDelete={() =>
-              handleDeleteProject(project.conversation_id, project.title)
-            }
-            onStop={() =>
-              handleStopConversation(
-                project.conversation_id,
-                project.conversation_version,
-              )
-            }
-            onChangeTitle={(title) =>
-              handleConversationTitleChange(project.conversation_id, title)
-            }
-            title={project.title}
-            selectedRepository={{
-              selected_repository: project.selected_repository,
-              selected_branch: project.selected_branch,
-              git_provider: project.git_provider as Provider,
-            }}
-            lastUpdatedAt={project.last_updated_at}
-            createdAt={project.created_at}
-            conversationStatus={project.status}
-            conversationId={project.conversation_id}
-            conversationVersion={project.conversation_version}
-            contextMenuOpen={openContextMenuId === project.conversation_id}
-            onContextMenuToggle={(isOpen) =>
-              setOpenContextMenuId(isOpen ? project.conversation_id : null)
-            }
-          />
-        </NavLink>
-      ))}
+      {/* Render conversation list with stagger animation */}
+      <motion.div variants={listVariants} initial="hidden" animate="visible">
+        {/* Render in-progress start tasks first */}
+        {startTasks?.map((task) => (
+          <motion.div key={task.id} variants={itemVariants}>
+            <NavLink to={`/conversations/task-${task.id}`} onClick={onClose}>
+              <StartTaskCard task={task} />
+            </NavLink>
+          </motion.div>
+        ))}
+        {/* Then render completed conversations */}
+        {conversations?.map((project) => (
+          <motion.div key={project.conversation_id} variants={itemVariants}>
+            <NavLink
+              to={`/conversations/${project.conversation_id}`}
+              onClick={onClose}
+            >
+              <ConversationCard
+                onDelete={() =>
+                  handleDeleteProject(project.conversation_id, project.title)
+                }
+                onStop={() =>
+                  handleStopConversation(
+                    project.conversation_id,
+                    project.conversation_version,
+                  )
+                }
+                onChangeTitle={(title) =>
+                  handleConversationTitleChange(project.conversation_id, title)
+                }
+                title={project.title}
+                selectedRepository={{
+                  selected_repository: project.selected_repository,
+                  selected_branch: project.selected_branch,
+                  git_provider: project.git_provider as Provider,
+                }}
+                lastUpdatedAt={project.last_updated_at}
+                createdAt={project.created_at}
+                conversationStatus={project.status}
+                conversationId={project.conversation_id}
+                conversationVersion={project.conversation_version}
+                contextMenuOpen={openContextMenuId === project.conversation_id}
+                onContextMenuToggle={(isOpen) =>
+                  setOpenContextMenuId(isOpen ? project.conversation_id : null)
+                }
+              />
+            </NavLink>
+          </motion.div>
+        ))}
+      </motion.div>
 
       {/* Loading indicator for fetching more conversations */}
       {isFetchingNextPage && (

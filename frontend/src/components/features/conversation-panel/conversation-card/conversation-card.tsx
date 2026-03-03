@@ -1,5 +1,6 @@
 import React from "react";
 import { usePostHog } from "posthog-js/react";
+import { motion } from "framer-motion";
 import { cn } from "#/utils/utils";
 import { transformVSCodeUrl } from "#/utils/vscode-url-helper";
 import ConversationService from "#/api/conversation-service/conversation-service.api";
@@ -118,14 +119,20 @@ export function ConversationCard({
   const hasContextMenu = !!(onDelete || onChangeTitle || showOptions);
 
   return (
-    <div
+    <motion.div
       data-testid="conversation-card"
       data-context-menu-open={contextMenuOpen.toString()}
       onClick={onClick}
       className={cn(
-        "relative h-auto w-full p-3.5 border-b border-neutral-600 cursor-pointer",
-        "data-[context-menu-open=false]:hover:bg-[#454545]",
+        "relative h-auto w-full p-3.5 border-b border-neutral-600/50 cursor-pointer",
+        "transition-colors duration-150",
       )}
+      whileHover={{
+        backgroundColor: contextMenuOpen ? undefined : "rgba(69, 69, 69, 0.8)",
+        x: 2,
+      }}
+      whileTap={{ scale: 0.995 }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
       <div className="flex items-center justify-between w-full">
         <ConversationCardHeader
@@ -162,6 +169,6 @@ export function ConversationCard({
         createdAt={createdAt}
         conversationStatus={conversationStatus}
       />
-    </div>
+    </motion.div>
   );
 }
