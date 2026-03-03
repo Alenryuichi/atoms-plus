@@ -16928,5 +16928,85 @@
     "es": "Estado",
     "tr": "Durum",
     "uk": "Статус"
+  },
+  "ATOMS$HERO_TITLE_PREFIX": {
+    "en": "Turn ideas into",
+    "zh-CN": "将创意变为"
+  },
+  "ATOMS$HERO_TITLE_HIGHLIGHT": {
+    "en": "reality",
+    "zh-CN": "现实"
+  },
+  "ATOMS$HERO_SUBTITLE": {
+    "en": "Describe what you want to build, and watch AI create it for you in real-time.",
+    "zh-CN": "描述你想构建的内容，观看 AI 为你实时创建。"
+  },
+  "ATOMS$INPUT_PLACEHOLDER": {
+    "en": "Tell me what you want to build...",
+    "zh-CN": "告诉我你想构建什么..."
+  },
+  "ATOMS$BUTTON_START": {
+    "en": "Start",
+    "zh-CN": "开始"
+  },
+  "ATOMS$BUTTON_CREATING": {
+    "en": "Creating...",
+    "zh-CN": "创建中..."
+  },
+  "ATOMS$TEMPLATES_TITLE": {
+    "en": "Start with a template",
+    "zh-CN": "从模板开始"
+  },
+  "ATOMS$FOOTER_POWERED_BY": {
+    "en": "Powered by AI • Built on",
+    "zh-CN": "由 AI 驱动 • 基于"
+  },
+  "ATOMS$TEMPLATE_TODO_TITLE": {
+    "en": "Todo App",
+    "zh-CN": "待办事项应用"
+  },
+  "ATOMS$TEMPLATE_TODO_DESC": {
+    "en": "A simple task management app with add, complete, and delete features",
+    "zh-CN": "一个简单的任务管理应用，支持添加、完成和删除功能"
+  },
+  "ATOMS$TEMPLATE_LANDING_TITLE": {
+    "en": "Landing Page",
+    "zh-CN": "落地页"
+  },
+  "ATOMS$TEMPLATE_LANDING_DESC": {
+    "en": "A modern marketing landing page with hero, features, and CTA sections",
+    "zh-CN": "现代营销落地页，包含主视觉、功能介绍和行动号召部分"
+  },
+  "ATOMS$TEMPLATE_DASHBOARD_TITLE": {
+    "en": "Dashboard",
+    "zh-CN": "仪表盘"
+  },
+  "ATOMS$TEMPLATE_DASHBOARD_DESC": {
+    "en": "An analytics dashboard with charts, stats, and data visualization",
+    "zh-CN": "带有图表、统计和数据可视化的分析仪表盘"
+  },
+  "ATOMS$TEMPLATE_PORTFOLIO_TITLE": {
+    "en": "Portfolio",
+    "zh-CN": "作品集"
+  },
+  "ATOMS$TEMPLATE_PORTFOLIO_DESC": {
+    "en": "A personal portfolio website showcasing projects and skills",
+    "zh-CN": "展示项目和技能的个人作品集网站"
+  },
+  "ATOMS$TEMPLATE_ECOMMERCE_TITLE": {
+    "en": "E-commerce",
+    "zh-CN": "电商网站"
+  },
+  "ATOMS$TEMPLATE_ECOMMERCE_DESC": {
+    "en": "A product catalog with shopping cart and checkout flow",
+    "zh-CN": "带购物车和结账流程的产品目录"
+  },
+  "ATOMS$TEMPLATE_BLOG_TITLE": {
+    "en": "Blog",
+    "zh-CN": "博客"
+  },
+  "ATOMS$TEMPLATE_BLOG_DESC": {
+    "en": "A blog platform with posts, categories, and comments",
+    "zh-CN": "带文章、分类和评论的博客平台"
   }
 }

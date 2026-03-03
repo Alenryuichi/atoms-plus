@@ -9,7 +9,7 @@ export default [
   route("login", "routes/login.tsx"),
   route("onboarding", "routes/onboarding-form.tsx"),
   layout("routes/root-layout.tsx", [
-    index("routes/home.tsx"),
+    index("routes/atoms-home.tsx"),
     route("accept-tos", "routes/accept-tos.tsx"),
     route("settings", "routes/settings.tsx", [
       index("routes/llm-settings.tsx"),

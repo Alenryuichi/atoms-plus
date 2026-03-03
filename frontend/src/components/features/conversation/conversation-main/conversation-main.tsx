@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { cn } from "#/utils/utils";
 import { ChatInterfaceWrapper } from "./chat-interface-wrapper";
 import { ConversationTabContent } from "../conversation-tabs/conversation-tab-content/conversation-tab-content";
@@ -18,7 +19,14 @@ function getDesktopTabPanelClass(isRightPanelShown: boolean) {
 
 export function ConversationMain() {
   const isMobile = useBreakpoint();
-  const { isRightPanelShown } = useConversationStore();
+  const { isRightPanelShown, setSelectedTab, setIsRightPanelShown } =
+    useConversationStore();
+
+  // Atoms Plus: Auto-show Preview tab by default
+  useEffect(() => {
+    setSelectedTab("preview");
+    setIsRightPanelShown(true);
+  }, [setSelectedTab, setIsRightPanelShown]);
 
   const { leftWidth, rightWidth, isDragging, containerRef, handleMouseDown } =
     useResizablePanels({
