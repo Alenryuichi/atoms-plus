@@ -12,6 +12,9 @@ class MessageAction(Action):
     file_urls: list[str] | None = None
     image_urls: list[str] | None = None
     wait_for_response: bool = False
+    is_action_intent: bool = (
+        False  # True when LLM said it will act but didn't call a tool
+    )
     action: str = ActionType.MESSAGE
     security_risk: ActionSecurityRisk = ActionSecurityRisk.UNKNOWN
 

@@ -391,6 +391,7 @@ def response_to_actions(
             MessageAction(
                 content=content,
                 wait_for_response=wait_for_response,
+                is_action_intent=is_action_intent,
             )
         )
 

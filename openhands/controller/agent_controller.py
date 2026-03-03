@@ -202,6 +202,10 @@ class AgentController:
         self._stuck_detector = StuckDetector(self.state)
         self.status_callback = status_callback
 
+        # Action intent retry tracking - when LLM says it will act but doesn't call a tool
+        self._consecutive_action_intents = 0
+        self._max_action_intent_retries = 3  # After this many, add a hint message
+
         # replay-related
         self._replay_manager = ReplayManager(replay_events)
 
@@ -606,6 +610,39 @@ class AgentController:
                 await self.set_agent_state_to(AgentState.RUNNING)
 
         elif action.source == EventSource.AGENT:
+            # Track action intent messages (LLM said it will act but didn't call a tool)
+            is_action_intent = getattr(action, 'is_action_intent', False)
+
+            if is_action_intent:
+                self._consecutive_action_intents += 1
+                logger.info(
+                    f'Action intent detected ({self._consecutive_action_intents}/{self._max_action_intent_retries}). '
+                    f'LLM described action but did not call a tool.'
+                )
+
+                # If we've hit the threshold, inject a hint message to prompt tool usage
+                if self._consecutive_action_intents >= self._max_action_intent_retries:
+                    hint_message = (
+                        'IMPORTANT: You have described your intended action multiple times without '
+                        'actually executing it. Please use the appropriate tool to perform the action. '
+                        'Do not just describe what you will do - call the tool NOW.'
+                    )
+                    self.event_stream.add_event(
+                        MessageAction(content=hint_message, wait_for_response=False),
+                        EventSource.USER,
+                    )
+                    self._consecutive_action_intents = 0  # Reset counter after hint
+                    logger.info('Injected hint message to prompt tool usage.')
+                    # Don't wait for response - let agent continue
+                    return
+            else:
+                # Reset counter when agent takes actual action or sends non-intent message
+                if self._consecutive_action_intents > 0:
+                    logger.info(
+                        'Action intent counter reset (non-intent message received).'
+                    )
+                self._consecutive_action_intents = 0
+
             # If the agent is waiting for a response, set the appropriate state
             if action.wait_for_response:
                 await self.set_agent_state_to(AgentState.AWAITING_USER_INPUT)
