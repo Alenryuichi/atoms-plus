@@ -357,7 +357,7 @@ export function PreviewPanel() {
       </div>
 
       {/* Sandpack Preview */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden h-full">
         {isLoadingFiles ? (
           <div className="h-full flex items-center justify-center">
             <LoadingSpinner size="large" />

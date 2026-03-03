@@ -66,3 +66,20 @@ code {
   scroll-behavior: smooth;
   scroll-timeline: 100ms;
 }
+
+/* Sandpack preview height fix - ensure wrapper takes full height */
+.sp-wrapper {
+  height: 100% !important;
+}
+
+.sp-layout {
+  height: 100% !important;
+}
+
+.sp-preview {
+  height: 100% !important;
+}
+
+.sp-preview-container {
+  height: 100% !important;
+}
