@@ -455,6 +455,49 @@ async def test_budget_control_flag_syncs_with_metrics(
         )
 
 
+def test_emit_status_calls_callback(mock_llm_registry, mock_conversation_stats):
+    """Test that _emit_status correctly calls the status callback."""
+    from openhands.runtime.runtime_status import RuntimeStatus
+
+    # Setup
+    file_store = InMemoryFileStore({})
+    status_callback = MagicMock()
+
+    session = AgentSession(
+        sid='test-session',
+        file_store=file_store,
+        llm_registry=mock_llm_registry,
+        conversation_stats=mock_conversation_stats,
+        status_callback=status_callback,
+    )
+
+    # Call _emit_status with a test status
+    session._emit_status(RuntimeStatus.CONNECTING_RUNTIME, 'Test message')
+
+    # Verify the callback was called with correct arguments
+    status_callback.assert_called_once_with(
+        'info', RuntimeStatus.CONNECTING_RUNTIME, 'Test message'
+    )
+
+
+def test_emit_status_no_callback(mock_llm_registry, mock_conversation_stats):
+    """Test that _emit_status handles missing callback gracefully."""
+    from openhands.runtime.runtime_status import RuntimeStatus
+
+    # Setup - no status_callback provided
+    file_store = InMemoryFileStore({})
+
+    session = AgentSession(
+        sid='test-session',
+        file_store=file_store,
+        llm_registry=mock_llm_registry,
+        conversation_stats=mock_conversation_stats,
+    )
+
+    # Should not raise an error even without callback
+    session._emit_status(RuntimeStatus.AGENT_READY, 'Ready!')
+
+
 def test_override_provider_tokens_with_custom_secret(
     mock_llm_registry, mock_conversation_stats
 ):

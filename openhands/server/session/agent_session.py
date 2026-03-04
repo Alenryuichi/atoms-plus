@@ -419,10 +419,17 @@ class AgentSession:
         self._emit_status(RuntimeStatus.PREPARING_WORKSPACE, 'Preparing workspace...')
 
         # Run setup scripts and git hooks in parallel for faster initialization
-        await asyncio.gather(
+        # Use return_exceptions=True to handle partial failures gracefully
+        setup_results = await asyncio.gather(
             call_sync_from_async(self.runtime.maybe_run_setup_script),
             call_sync_from_async(self.runtime.maybe_setup_git_hooks),
+            return_exceptions=True,
         )
+        # Log any setup task failures without blocking initialization
+        for i, result in enumerate(setup_results):
+            if isinstance(result, Exception):
+                task_name = 'setup script' if i == 0 else 'git hooks'
+                self.logger.warning(f'Setup task ({task_name}) failed: {result}')
 
         self.logger.debug(
             f'Runtime initialized with plugins: {[plugin.name for plugin in self.runtime.plugins]}'
