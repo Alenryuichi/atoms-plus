@@ -1,3 +1,8 @@
+---
+name: openhands-agent-server-api
+description: OpenHands Agent Server REST/WebSocket API reference. Use when integrating with OpenHands runtime, making API calls to the agent server, or debugging agent communication issues.
+---
+
 # OpenHands Agent Server API Reference
 
 **Version**: 0.1.0  
@@ -181,4 +186,3 @@ curl -X POST "https://{host}/runtime/8000/api/conversations/{conv_id}/events" \
 
 - `openhands/app_server/runtime_proxy/runtime_proxy_router.py` - Runtime 代理路由
 - `openhands/app_server/sandbox/process_sandbox_service.py` - Sandbox 服务
-
