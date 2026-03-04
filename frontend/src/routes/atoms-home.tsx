@@ -6,6 +6,10 @@ import { useCreateConversation } from "#/hooks/mutation/use-create-conversation"
 import { LoadingSpinner } from "#/components/shared/loading-spinner";
 import { I18nKey } from "#/i18n/declaration";
 import { autoDetectRole } from "#/api/role-service/role-service.api";
+import type { AgentRoleId } from "#/api/conversation-service/v1-conversation-service.types";
+
+// Atoms Plus: Role detection timeout (ms) - don't block conversation creation too long
+const ROLE_DETECTION_TIMEOUT = 2000;
 
 // Animation variants
 const containerVariants = {
@@ -191,19 +195,37 @@ export default function AtomsHome() {
 
     setIsCreating(true);
     try {
-      // Atoms Plus: Auto-detect role based on user query
-      let agentRole: string | undefined;
+      // Atoms Plus: Auto-detect role with timeout to avoid blocking UI
+      let agentRole: AgentRoleId | undefined;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        ROLE_DETECTION_TIMEOUT,
+      );
+
       try {
         const roleResult = await autoDetectRole(query.trim());
-        agentRole = roleResult.role_id;
-        // eslint-disable-next-line no-console
-        console.log(
-          `[Atoms Plus] Auto-detected role: ${roleResult.role_name} (${roleResult.role_id})`,
-        );
-      } catch {
-        // Fall back to default role if detection fails
-        // eslint-disable-next-line no-console
-        console.log("[Atoms Plus] Role detection failed, using default");
+        clearTimeout(timeoutId);
+        agentRole = roleResult.role_id as AgentRoleId;
+        if (process.env.NODE_ENV === "development") {
+          // eslint-disable-next-line no-console
+          console.log(
+            `[Atoms Plus] Auto-detected role: ${roleResult.role_name} (${roleResult.role_id})`,
+          );
+        }
+      } catch (error) {
+        clearTimeout(timeoutId);
+        // Fall back to default role if detection fails or times out
+        if (process.env.NODE_ENV === "development") {
+          const reason =
+            error instanceof Error && error.name === "AbortError"
+              ? "timeout"
+              : "error";
+          // eslint-disable-next-line no-console
+          console.log(
+            `[Atoms Plus] Role detection ${reason}, using default engineer role`,
+          );
+        }
       }
 
       const result = await createConversation.mutateAsync({

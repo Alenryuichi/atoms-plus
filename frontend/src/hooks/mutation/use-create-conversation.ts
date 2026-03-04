@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import ConversationService from "#/api/conversation-service/conversation-service.api";
 import V1ConversationService from "#/api/conversation-service/v1-conversation-service.api";
+import type { AgentRoleId } from "#/api/conversation-service/v1-conversation-service.types";
 import { SuggestedTask } from "#/utils/types";
 import { Provider } from "#/types/settings";
 import { CreateMicroagent, Conversation } from "#/api/open-hands.types";
@@ -19,7 +20,12 @@ interface CreateConversationVariables {
   createMicroagent?: CreateMicroagent;
   parentConversationId?: string;
   agentType?: "default" | "plan";
-  agentRole?: string; // Atoms Plus: role selection (engineer, architect, etc.)
+  /**
+   * Atoms Plus: Auto-detected role ID that determines the agent's personality.
+   * When set, the backend injects the role's system prompt into the agent context.
+   * @see AgentRoleId for valid values
+   */
+  agentRole?: AgentRoleId;
 }
 
 // Response type that combines both V1 and legacy responses

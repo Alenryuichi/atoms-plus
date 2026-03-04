@@ -3,6 +3,20 @@ import { V1SandboxStatus } from "../sandbox-service/sandbox-service.types";
 import { Provider } from "#/types/settings";
 import { SuggestedTask } from "#/utils/types";
 
+/**
+ * Atoms Plus: Valid agent role IDs
+ * These correspond to the roles defined in atoms_plus/roles/registry.py
+ */
+export type AgentRoleId =
+  | "engineer"
+  | "architect"
+  | "product_manager"
+  | "data_analyst"
+  | "researcher"
+  | "project_manager"
+  | "seo_specialist"
+  | "team_leader";
+
 // V1 Metrics Types
 export interface V1TokenUsage {
   prompt_tokens: number;
@@ -54,8 +68,8 @@ export interface V1AppConversationStartRequest {
   pr_number?: number[];
   parent_conversation_id?: string | null;
   agent_type?: "default" | "plan";
-  // Atoms Plus: auto-detected role ID (engineer, architect, product_manager, etc.)
-  agent_role?: string | null;
+  /** Atoms Plus: auto-detected role ID that determines agent personality */
+  agent_role?: AgentRoleId | null;
 }
 
 export type V1AppConversationStartTaskStatus =
