@@ -15,7 +15,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from typing import Optional
 
 import httpx
 from fastapi import (
@@ -110,9 +109,7 @@ async def _forward_request(request: Request, port: int, path: str) -> StreamingR
             )
 
 
-async def _execute_bash_command(
-    port: int, command: str, headers: dict
-) -> Optional[dict]:
+async def _execute_bash_command(port: int, command: str, headers: dict) -> dict | None:
     """Execute a bash command on the agent server and return the result."""
     target_url = f'http://localhost:{port}/api/bash/execute_bash_command'
     async with httpx.AsyncClient() as client:
@@ -131,9 +128,7 @@ async def _execute_bash_command(
             return None
 
 
-async def _list_files_via_bash(
-    port: int, path: Optional[str], headers: dict
-) -> list[str]:
+async def _list_files_via_bash(port: int, path: str | None, headers: dict) -> list[str]:
     """List files using bash command on the agent server.
 
     Uses `find` command to recursively list files and directories.
@@ -182,7 +177,7 @@ async def _list_files_via_bash(
 
 async def _read_file_via_download(
     port: int, file_path: str, headers: dict
-) -> Optional[str]:
+) -> str | None:
     """Read a file using the agent server's download API.
 
     The agent server expects absolute paths for file download.
@@ -241,7 +236,7 @@ async def list_files(
     request: Request,
     port: int,
     conversation_id: str,
-    path: Optional[str] = Query(None),
+    path: str | None = Query(None),
 ) -> JSONResponse:
     """List files in the workspace for a V1 conversation.
 
@@ -281,6 +276,96 @@ async def select_file(
         )
 
     return JSONResponse(content={'code': content})
+
+
+@router.get('/{port:int}/api/git/changes/{path:path}')
+async def get_git_changes(
+    request: Request,
+    port: int,
+    path: str,
+) -> JSONResponse:
+    """Get git changes for a V1 conversation.
+
+    This endpoint checks if the specified path is a git repository and returns
+    the list of changed files. For newly initialized repos (no commits), returns
+    all untracked files as 'added'.
+    """
+    from urllib.parse import unquote
+
+    # URL decode the path (e.g., %2Fworkspace -> /workspace)
+    decoded_path = unquote(path)
+    _logger.info(f'Getting git changes for path: {decoded_path}')
+
+    headers = _copy_auth_headers(request)
+
+    # First check if the directory is a git repository
+    check_git_cmd = f'cd {decoded_path} 2>/dev/null && git rev-parse --is-inside-work-tree 2>/dev/null'
+    result = await _execute_bash_command(port, check_git_cmd, headers)
+
+    if not result or result.get('stdout', '').strip() != 'true':
+        _logger.info(f'Path {decoded_path} is not a git repository')
+        return JSONResponse(
+            status_code=404,
+            content={'error': 'Not a git repository'},
+        )
+
+    # Get git status - use porcelain v1 format for machine-readable output
+    git_status_cmd = f'cd {decoded_path} && git status --porcelain 2>/dev/null'
+    result = await _execute_bash_command(port, git_status_cmd, headers)
+
+    if not result:
+        return JSONResponse(
+            status_code=500,
+            content={'error': 'Failed to get git status'},
+        )
+
+    stdout = result.get('stdout', '')
+    changes = []
+
+    # Parse git status porcelain output
+    # Format: XY filename
+    # X = index status, Y = work tree status
+    # ?? = untracked, A = added, M = modified, D = deleted, R = renamed
+    status_map = {
+        'A': 'ADDED',
+        'M': 'MODIFIED',
+        'D': 'DELETED',
+        'R': 'RENAMED',
+        'C': 'COPIED',
+        'U': 'UPDATED',
+    }
+
+    for line in stdout.strip().split('\n'):
+        if not line or len(line) < 3:
+            continue
+
+        status_code = line[:2]
+        file_path = line[3:].strip()
+
+        # Handle renamed files (format: "R  old -> new")
+        if ' -> ' in file_path:
+            file_path = file_path.split(' -> ')[-1]
+
+        # Map status code to V1 status
+        v1_status = 'MODIFIED'  # Default
+        if status_code == '??':
+            v1_status = 'ADDED'  # Untracked files are treated as added
+        else:
+            # Take the first non-space character as the primary status
+            for char in status_code:
+                if char in status_map:
+                    v1_status = status_map[char]
+                    break
+
+        changes.append(
+            {
+                'path': file_path,
+                'status': v1_status,
+            }
+        )
+
+    _logger.info(f'Found {len(changes)} git changes in {decoded_path}')
+    return JSONResponse(content=changes)
 
 
 @router.api_route(
