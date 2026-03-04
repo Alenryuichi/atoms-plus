@@ -7,7 +7,15 @@ WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
 
-COPY frontend ./
+# Copy frontend source files, excluding node_modules and build artifacts
+COPY frontend/src ./src
+COPY frontend/public ./public
+COPY frontend/scripts ./scripts
+COPY frontend/.eslintrc frontend/.prettierrc.json ./
+COPY frontend/tsconfig.json frontend/vite.config.ts frontend/vite-env.d.ts ./
+COPY frontend/tailwind.config.js frontend/react-router.config.ts ./
+COPY frontend/global.d.ts frontend/components.json ./
+
 RUN npm run build
 
 FROM python:3.13.7-slim-trixie AS base
