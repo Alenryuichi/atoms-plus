@@ -1,34 +1,42 @@
 ---
 name: supabase
-type: knowledge
-version: 1.0.0
+type: task
+version: 2.0.0
 agent: CodeActAgent
 triggers:
 - supabase
 - database
-- 数据库
 - auth
-- 认证
-- 用户登录
+- login
+- signup
+- user authentication
 ---
 
-# Supabase 集成指南
+# Supabase Integration
 
-Atoms Plus 深度集成 Supabase，提供数据库、认证和存储服务。
+When the user needs database or authentication, set up Supabase integration.
 
-## 环境配置
+## Smart Defaults
 
-在项目根目录创建 `.env.local` 文件：
+- **Client**: `@supabase/supabase-js` (always)
+- **Auth**: Email/password (default), add OAuth if requested
+- **RLS**: Always enable Row Level Security
 
+## Workflow
+
+### Step 1: Install & Configure
+
+```bash
+npm install @supabase/supabase-js
+```
+
+Create `.env.local`:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key  # 仅服务端使用
 ```
 
-## 客户端初始化
-
-### Next.js / React
+### Step 2: Create Client
 
 ```typescript
 // lib/supabase.ts
@@ -40,128 +48,129 @@ export const supabase = createClient(
 );
 ```
 
-### Nuxt 3
+### Step 3: Database Operations
 
 ```typescript
-// plugins/supabase.ts
-import { createClient } from '@supabase/supabase-js';
-
-export default defineNuxtPlugin(() => {
-  const config = useRuntimeConfig();
-  const supabase = createClient(
-    config.public.supabaseUrl,
-    config.public.supabaseKey
-  );
-  
-  return {
-    provide: { supabase }
-  };
-});
-```
-
-## 数据库操作
-
-### 查询数据
-
-```typescript
-// 获取所有记录
+// Create
 const { data, error } = await supabase
-  .from('products')
-  .select('*');
+  .from('items')
+  .insert({ name: 'New Item' })
+  .select()
+  .single();
 
-// 带条件查询
+// Read
 const { data } = await supabase
-  .from('products')
-  .select('id, name, price')
-  .eq('category', 'electronics')
-  .order('created_at', { ascending: false })
-  .limit(10);
-```
+  .from('items')
+  .select('*')
+  .order('created_at', { ascending: false });
 
-### 插入数据
+// Update
+const { data } = await supabase
+  .from('items')
+  .update({ name: 'Updated' })
+  .eq('id', itemId)
+  .select()
+  .single();
 
-```typescript
-const { data, error } = await supabase
-  .from('products')
-  .insert({ name: 'New Product', price: 99.99 })
-  .select();
-```
-
-### 更新数据
-
-```typescript
-const { data, error } = await supabase
-  .from('products')
-  .update({ price: 149.99 })
-  .eq('id', productId)
-  .select();
-```
-
-### 删除数据
-
-```typescript
-const { error } = await supabase
-  .from('products')
+// Delete
+await supabase
+  .from('items')
   .delete()
-  .eq('id', productId);
+  .eq('id', itemId);
 ```
 
-## 用户认证
-
-### 邮箱登录
+### Step 4: Authentication (if needed)
 
 ```typescript
-// 注册
+// Sign up
 const { data, error } = await supabase.auth.signUp({
   email: 'user@example.com',
   password: 'password123'
 });
 
-// 登录
+// Sign in
 const { data, error } = await supabase.auth.signInWithPassword({
   email: 'user@example.com',
   password: 'password123'
 });
 
-// 登出
+// Sign out
 await supabase.auth.signOut();
-```
 
-### OAuth 登录
+// Get current user
+const { data: { user } } = await supabase.auth.getUser();
 
-```typescript
-const { data, error } = await supabase.auth.signInWithOAuth({
+// OAuth (GitHub example)
+await supabase.auth.signInWithOAuth({
   provider: 'github',
-  options: {
-    redirectTo: `${window.location.origin}/auth/callback`
-  }
+  options: { redirectTo: `${window.location.origin}/auth/callback` }
 });
 ```
 
-### 获取当前用户
-
-```typescript
-const { data: { user } } = await supabase.auth.getUser();
-```
-
-## Row Level Security (RLS)
-
-在 Supabase Dashboard 中启用 RLS 并创建策略：
+### Step 5: Row Level Security
 
 ```sql
--- 用户只能查看自己的数据
-CREATE POLICY "Users can view own data" ON products
+-- Enable RLS
+ALTER TABLE items ENABLE ROW LEVEL SECURITY;
+
+-- Users can only see their own items
+CREATE POLICY "Users view own items" ON items
   FOR SELECT USING (auth.uid() = user_id);
 
--- 用户只能创建自己的数据
-CREATE POLICY "Users can insert own data" ON products
+-- Users can only insert their own items
+CREATE POLICY "Users insert own items" ON items
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Users can only update their own items
+CREATE POLICY "Users update own items" ON items
+  FOR UPDATE USING (auth.uid() = user_id);
+
+-- Users can only delete their own items
+CREATE POLICY "Users delete own items" ON items
+  FOR DELETE USING (auth.uid() = user_id);
 ```
 
-## 最佳实践
+### Step 6: Report
 
-1. **始终启用 RLS** - 保护数据安全
-2. **使用服务端 API** - 敏感操作在服务端执行
-3. **处理错误** - 检查所有操作的 `error` 返回值
-4. **类型安全** - 使用 `supabase gen types` 生成 TypeScript 类型
+```
+✅ Supabase integrated!
 
+📁 Files created:
+- lib/supabase.ts (client)
+- .env.local (config)
+
+🔐 Security:
+- ✅ RLS policies recommended
+- ✅ Anon key for client (safe)
+- ⚠️ Service role key for server only
+
+📚 Next steps:
+1. Create tables in Supabase Dashboard
+2. Enable RLS on all tables
+3. Add auth callback route (if using OAuth)
+```
+
+## React Hooks Pattern
+
+```typescript
+// hooks/useItems.ts
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+
+export function useItems() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase
+      .from('items')
+      .select('*')
+      .then(({ data }) => {
+        setItems(data || []);
+        setLoading(false);
+      });
+  }, []);
+
+  return { items, loading };
+}
+```

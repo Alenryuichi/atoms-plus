@@ -1,98 +1,149 @@
 ---
-name: component_generator
+name: component-generator
 type: task
-version: 1.0.0
+version: 2.0.0
 agent: CodeActAgent
 triggers:
-- /component
-inputs:
-- name: COMPONENT_NAME
-  description: "组件名称（如 Button, UserCard, NavBar）"
-- name: FRAMEWORK
-  description: "框架类型: react | vue | both"
-- name: FEATURES
-  description: "功能特性（可选）: responsive, dark-mode, animated"
+- create component
+- generate component
+- make component
+- build component
+- add component
 ---
 
-# 前端组件生成器
+# Component Generator
 
-你是一个专业的前端组件生成专家。请根据用户提供的需求生成高质量的 UI 组件。
+When the user asks to create a UI component, generate a complete, styled, accessible component.
 
-## 用户输入
+## Smart Defaults
 
-- **组件名称**: ${COMPONENT_NAME}
-- **目标框架**: ${FRAMEWORK}
-- **功能特性**: ${FEATURES}
+- **Framework**: React (default) or Vue 3
+- **Styling**: Tailwind CSS (always)
+- **Language**: TypeScript (always)
+- **Location**: `src/components/` or `components/`
 
-## 生成规范
+## Workflow
 
-### React 组件规范
+### Step 1: Clarify (Max 1 question)
 
-```typescript
-// 使用函数式组件 + TypeScript
-interface ${COMPONENT_NAME}Props {
-  // 定义 props 类型
+If component purpose is unclear, ask: "What should this component do?"
+
+Infer from name:
+- "Button" → clickable, variants (primary/secondary/danger)
+- "Card" → container with header/content/footer
+- "Modal" → overlay dialog with close button
+- "Form" → inputs with validation and submit
+
+### Step 2: Generate Component
+
+**React Component:**
+
+```tsx
+// components/ComponentName.tsx
+import { useState } from 'react';
+
+interface ComponentNameProps {
+  // Define props
+  children?: React.ReactNode;
+  variant?: 'primary' | 'secondary';
+  onClick?: () => void;
 }
 
-export function ${COMPONENT_NAME}({ ...props }: ${COMPONENT_NAME}Props) {
+export function ComponentName({ 
+  children, 
+  variant = 'primary',
+  onClick 
+}: ComponentNameProps) {
   return (
-    // JSX 内容
+    <div 
+      className={`
+        rounded-lg p-4 
+        ${variant === 'primary' ? 'bg-blue-500 text-white' : 'bg-gray-100'}
+        hover:opacity-90 transition-opacity
+      `}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+    >
+      {children}
+    </div>
   );
 }
 ```
 
-### Vue 组件规范
+**Vue Component:**
 
 ```vue
+<!-- components/ComponentName.vue -->
 <script setup lang="ts">
-// 使用 Composition API + TypeScript
 interface Props {
-  // 定义 props 类型
+  variant?: 'primary' | 'secondary';
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  variant: 'primary'
+});
+
+const emit = defineEmits<{
+  click: [];
+}>();
 </script>
 
 <template>
-  <!-- 模板内容 -->
+  <div 
+    :class="[
+      'rounded-lg p-4 hover:opacity-90 transition-opacity',
+      variant === 'primary' ? 'bg-blue-500 text-white' : 'bg-gray-100'
+    ]"
+    @click="emit('click')"
+  >
+    <slot />
+  </div>
 </template>
-
-<style scoped>
-/* 使用 scoped 样式 */
-</style>
 ```
 
-## 样式规范
+### Step 3: Add to Index (if exists)
 
-1. **优先使用 Tailwind CSS** - 使用 utility classes
-2. **响应式设计** - 使用 `sm:`, `md:`, `lg:` 断点
-3. **暗色模式** - 使用 `dark:` 前缀
-4. **可访问性** - 添加 `aria-*` 属性和 `role`
-
-## 组件结构
-
-```
-components/
-├── ${COMPONENT_NAME}/
-│   ├── index.tsx (或 .vue)
-│   ├── ${COMPONENT_NAME}.types.ts
-│   ├── ${COMPONENT_NAME}.stories.tsx (Storybook)
-│   └── ${COMPONENT_NAME}.test.tsx
+```typescript
+// components/index.ts
+export { ComponentName } from './ComponentName';
 ```
 
-## 生成步骤
+### Step 4: Create Usage Example
 
-1. 确认组件需求和设计
-2. 创建组件文件结构
-3. 实现组件逻辑和样式
-4. 添加 TypeScript 类型定义
-5. 编写基础测试用例
-6. 生成 Storybook 故事（如果项目使用 Storybook）
+```tsx
+// Example usage:
+import { ComponentName } from '@/components/ComponentName';
 
-## 示例组件
+<ComponentName variant="primary" onClick={() => console.log('clicked')}>
+  Click me
+</ComponentName>
+```
 
-如果用户没有提供足够信息，请询问：
-- 组件的主要用途是什么？
-- 需要哪些交互功能？
-- 是否有参考设计或类似组件？
+### Step 5: Report
 
+```
+✅ Component created!
+
+📁 File: components/ComponentName.tsx
+
+Features:
+- ✅ TypeScript props interface
+- ✅ Tailwind styling
+- ✅ Variant support
+- ✅ Accessibility (role, tabIndex)
+- ✅ Hover states
+
+Usage:
+import { ComponentName } from '@/components/ComponentName';
+<ComponentName variant="primary">Content</ComponentName>
+```
+
+## Accessibility Checklist
+
+Always include:
+- `role` attribute for interactive elements
+- `tabIndex={0}` for keyboard navigation
+- `aria-label` for icon-only buttons
+- Sufficient color contrast
+- Focus states (`focus:ring-2`)
