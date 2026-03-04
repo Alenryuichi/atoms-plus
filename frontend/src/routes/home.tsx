@@ -6,6 +6,7 @@ import { TaskSuggestions } from "#/components/features/home/tasks/task-suggestio
 import { GitRepository } from "#/types/git";
 import { NewConversation } from "#/components/features/home/new-conversation/new-conversation";
 import { RecentConversations } from "#/components/features/home/recent-conversations/recent-conversations";
+import { ScaffoldProjectCard } from "#/components/features/scaffolding";
 
 <PrefetchPageLinks page="/conversations/:conversationId" />;
 
@@ -28,6 +29,15 @@ function HomeScreen() {
         >
           <RepoConnector onRepoSelection={(repo) => setSelectedRepo(repo)} />
           <NewConversation />
+        </div>
+      </div>
+
+      <div className="pt-4 flex justify-center">
+        <div
+          className="flex flex-col gap-5 px-6 sm:max-w-full sm:min-w-full md:flex-row lg:px-0 lg:max-w-[703px] lg:min-w-[703px]"
+          data-testid="home-screen-scaffold-section"
+        >
+          <ScaffoldProjectCard />
         </div>
       </div>
 

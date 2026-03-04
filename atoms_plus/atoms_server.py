@@ -33,6 +33,7 @@ from openhands.server.app import app as base_app
 from atoms_plus.race_mode.api import router as race_router
 from atoms_plus.roles.api import router as roles_router
 from atoms_plus.orchestrator.api import router as orchestrator_router
+from atoms_plus.scaffolding.api import router as scaffolding_router
 
 # ==================== 注册扩展路由 ====================
 # 注意：路由必须在导入 listen.py 之前注册，因为 listen.py 会包装 base_app
@@ -49,6 +50,10 @@ base_app.include_router(roles_router)
 # 路由前缀: /api/v1/orchestrator/*
 base_app.include_router(orchestrator_router)
 
+# Scaffolding API - 项目脚手架
+# 路由前缀: /api/v1/scaffolding/*
+base_app.include_router(scaffolding_router, prefix="/api/v1")
+
 
 # ==================== 扩展端点 ====================
 
@@ -58,7 +63,7 @@ def atoms_plus_info():
     """Atoms Plus 信息端点"""
     return {
         "name": "Atoms Plus",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "description": "OpenHands 扩展层 - 复刻 Atoms.dev 功能",
         "features": [
             {
@@ -75,6 +80,11 @@ def atoms_plus_info():
                 "name": "Orchestrator",
                 "path": "/api/v1/orchestrator",
                 "description": "多角色并行协调",
+            },
+            {
+                "name": "Scaffolding",
+                "path": "/api/v1/scaffolding",
+                "description": "项目脚手架生成 (React/Next.js/Vue/Nuxt)",
             },
         ],
     }

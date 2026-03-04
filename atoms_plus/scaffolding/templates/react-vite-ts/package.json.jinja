@@ -1,0 +1,47 @@
+{
+  "name": "{{ project_name }}",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "{{ description }}",
+  "author": "{{ author }}",
+  "scripts": {
+    "dev": "vite",
+    "build": "{% if use_typescript %}tsc -b && {% endif %}vite build",
+    "preview": "vite preview"{% if use_eslint %},
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"{% endif %}{% if use_testing %},
+    "test": "vitest",
+    "test:ui": "vitest --ui"{% endif %}
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0"{% if use_supabase %},
+    "@supabase/supabase-js": "^2.45.0"{% endif %}{% if use_i18n %},
+    "react-i18next": "^14.1.0",
+    "i18next": "^23.11.0"{% endif %}
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "vite": "^5.4.10"{% if use_typescript %},
+    "typescript": "^5.6.3"{% endif %}{% if ui_library == "tailwind" or ui_library == "shadcn" %},
+    "tailwindcss": "^3.4.14",
+    "postcss": "^8.4.47",
+    "autoprefixer": "^10.4.20"{% endif %}{% if use_eslint %},
+    "eslint": "^9.13.0",
+    "@eslint/js": "^9.13.0",
+    "typescript-eslint": "^8.11.0",
+    "eslint-plugin-react-hooks": "^5.0.0"{% endif %}{% if use_testing %},
+    "vitest": "^2.1.4",
+    "@vitest/ui": "^2.1.4",
+    "@testing-library/react": "^16.0.1",
+    "jsdom": "^25.0.1"{% endif %}{% if ui_library == "shadcn" %},
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.4",
+    "lucide-react": "^0.454.0"{% endif %}
+  }
+}
+

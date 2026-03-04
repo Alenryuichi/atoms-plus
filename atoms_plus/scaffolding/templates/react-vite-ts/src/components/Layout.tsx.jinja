@@ -1,0 +1,58 @@
+{% raw %}import { Outlet } from 'react-router-dom'{% endraw %}
+{% if use_dark_mode %}
+{% raw %}import { useState, useEffect } from 'react'{% endraw %}
+{% endif %}
+
+export default function Layout() {
+{% if use_dark_mode %}
+{% raw %}  const [isDark, setIsDark] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theme')
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const dark = saved === 'dark' || (!saved && prefersDark)
+    setIsDark(dark)
+    document.documentElement.classList.toggle('dark', dark)
+  }, [])
+
+  const toggleTheme = () => {
+    const newDark = !isDark
+    setIsDark(newDark)
+    localStorage.setItem('theme', newDark ? 'dark' : 'light')
+    document.documentElement.classList.toggle('dark', newDark)
+  }{% endraw %}
+{% endif %}
+
+  return (
+    <div className="min-h-screen">
+{% if ui_library == "tailwind" or ui_library == "shadcn" %}
+      <header className="border-b">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <h1 className="text-xl font-semibold">{{ project_name_pascal }}</h1>
+          <nav className="flex items-center gap-4">
+{% if use_dark_mode %}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-md hover:bg-accent"
+              aria-label="Toggle theme"
+            >
+              {% raw %}{isDark ? '☀️' : '🌙'}{% endraw %}
+            </button>
+{% endif %}
+          </nav>
+        </div>
+      </header>
+{% else %}
+      {% raw %}<header style={{ borderBottom: '1px solid #eee', padding: '1rem' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>{% endraw %}
+          <h1 {% raw %}style={{ fontSize: '1.25rem', fontWeight: '600' }}{% endraw %}>{{ project_name_pascal }}</h1>
+        </div>
+      </header>
+{% endif %}
+      <main>
+        <Outlet />
+      </main>
+    </div>
+  )
+}
+

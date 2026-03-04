@@ -1,0 +1,13 @@
+{% if ui_library == "tailwind" %}
+import type { Config } from 'tailwindcss'
+
+export default {
+  {% if use_dark_mode %}darkMode: 'class',{% endif %}
+  content: [],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+} satisfies Config
+{% endif %}
+

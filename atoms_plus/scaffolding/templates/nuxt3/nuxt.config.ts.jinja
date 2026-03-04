@@ -1,0 +1,42 @@
+// https://nuxt.com/docs/api/configuration/nuxt-config
+export default defineNuxtConfig({
+  devtools: { enabled: true },
+  
+  modules: [
+{% if ui_library == "tailwind" %}
+    '@nuxtjs/tailwindcss',
+{% endif %}
+{% if ui_library == "primevue" %}
+    '@primevue/nuxt-module',
+{% endif %}
+{% if use_supabase %}
+    '@nuxtjs/supabase',
+{% endif %}
+  ],
+
+{% if use_supabase %}
+  supabase: {
+    redirectOptions: {
+      login: '/login',
+      callback: '/confirm',
+      exclude: ['/', '/about'],
+    },
+  },
+
+  runtimeConfig: {
+    public: {
+      supabaseUrl: '{{ supabase_url }}',
+      supabaseKey: '{{ supabase_anon_key }}',
+    },
+  },
+{% endif %}
+
+{% if ui_library == "primevue" %}
+  primevue: {
+    autoImport: true,
+  },
+{% endif %}
+
+  compatibilityDate: '2024-11-01',
+})
+

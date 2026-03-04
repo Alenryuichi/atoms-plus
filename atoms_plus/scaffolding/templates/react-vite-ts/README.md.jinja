@@ -1,0 +1,66 @@
+# {{ project_name_pascal }}
+
+{{ description }}
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js {{ node_version }}+
+- {{ package_manager }}
+
+### Installation
+
+```bash
+{{ package_manager }} install
+```
+
+### Development
+
+```bash
+{{ package_manager }} run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+### Build
+
+```bash
+{{ package_manager }} run build
+```
+
+{% if use_testing %}
+### Testing
+
+```bash
+{{ package_manager }} run test
+```
+{% endif %}
+
+## 🛠️ Tech Stack
+
+- **Framework**: React 18
+- **Build Tool**: Vite
+{% if use_typescript %}- **Language**: TypeScript{% endif %}
+{% if ui_library == "tailwind" or ui_library == "shadcn" %}- **Styling**: Tailwind CSS{% endif %}
+{% if ui_library == "shadcn" %}- **Components**: shadcn/ui{% endif %}
+{% if use_supabase %}- **Database**: Supabase{% endif %}
+{% if use_testing %}- **Testing**: Vitest{% endif %}
+
+## 📁 Project Structure
+
+```
+{{ project_name }}/
+├── src/
+│   ├── components/    # Reusable components
+│   ├── pages/         # Page components
+│   ├── lib/           # Utilities and helpers
+│   └── main.tsx       # App entry point
+├── public/            # Static assets
+└── package.json
+```
+
+---
+
+Generated with ❤️ by [Atoms Plus](https://github.com/your-username/atoms-plus)
+

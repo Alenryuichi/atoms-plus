@@ -1,0 +1,62 @@
+<script setup lang="ts">
+{% if use_dark_mode %}
+{% raw %}const colorMode = useColorMode()
+const toggleDark = () => {
+  colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
+}{% endraw %}
+{% endif %}
+</script>
+
+<template>
+{% if ui_library == "tailwind" %}
+  <div class="min-h-screen bg-white dark:bg-gray-950">
+    <header class="border-b border-gray-200 dark:border-gray-800">
+      <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+        <NuxtLink to="/" class="text-xl font-semibold">
+          {{ project_name_pascal }}
+        </NuxtLink>
+        <nav class="flex items-center gap-4">
+{% if use_dark_mode %}
+          <button
+            @click="toggleDark"
+            class="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+            aria-label="Toggle theme"
+          >
+            {% raw %}{{ colorMode.value === 'dark' ? '☀️' : '🌙' }}{% endraw %}
+          </button>
+{% endif %}
+        </nav>
+      </div>
+    </header>
+    <main>
+      <slot />
+    </main>
+  </div>
+{% else %}
+  <div>
+    <header class="header">
+      <NuxtLink to="/" class="logo">{{ project_name_pascal }}</NuxtLink>
+    </header>
+    <main>
+      <slot />
+    </main>
+  </div>
+{% endif %}
+</template>
+
+{% if ui_library != "tailwind" %}
+<style scoped>
+.header {
+  border-bottom: 1px solid #eee;
+  padding: 1rem;
+}
+
+.logo {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: inherit;
+}
+</style>
+{% endif %}
+

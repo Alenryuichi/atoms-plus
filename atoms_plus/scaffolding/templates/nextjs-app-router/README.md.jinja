@@ -1,0 +1,63 @@
+# {{ project_name_pascal }}
+
+{{ description }}
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js {{ node_version }}+
+- {{ package_manager }}
+
+### Installation
+
+```bash
+{{ package_manager }} install
+```
+
+### Development
+
+```bash
+{{ package_manager }} run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Build
+
+```bash
+{{ package_manager }} run build
+{{ package_manager }} run start
+```
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 14 (App Router)
+{% if use_typescript %}- **Language**: TypeScript{% endif %}
+{% if ui_library == "tailwind" or ui_library == "shadcn" %}- **Styling**: Tailwind CSS{% endif %}
+{% if ui_library == "shadcn" %}- **Components**: shadcn/ui{% endif %}
+{% if use_supabase %}- **Database**: Supabase{% endif %}
+
+## 📁 Project Structure
+
+```
+{{ project_name }}/
+├── app/
+│   ├── layout.tsx     # Root layout
+│   ├── page.tsx       # Home page
+│   └── globals.css    # Global styles
+├── components/        # Reusable components
+├── lib/              # Utilities and helpers
+└── package.json
+```
+
+## 🚢 Deploy
+
+Deploy with [Vercel](https://vercel.com/new):
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
+
+---
+
+Generated with ❤️ by [Atoms Plus](https://github.com/your-username/atoms-plus)
+

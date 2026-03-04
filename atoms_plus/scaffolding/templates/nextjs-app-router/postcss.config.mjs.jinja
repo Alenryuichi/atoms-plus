@@ -1,0 +1,12 @@
+{% if ui_library == "tailwind" or ui_library == "shadcn" %}
+/** @type {import('postcss-load-config').Config} */
+const config = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+
+export default config
+{% endif %}
+

@@ -1,0 +1,15 @@
+{% if ui_library == "tailwind" or ui_library == "shadcn" %}
+/** @type {import('tailwindcss').Config} */
+export default {
+  {% if use_dark_mode %}darkMode: 'class',{% endif %}
+  content: [
+    "./index.html",
+    "./src/**/*.{vue,js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+{% endif %}
+

@@ -1,0 +1,68 @@
+{% if ui_library == "tailwind" or ui_library == "shadcn" %}
+export default function Home() {
+  return (
+    <main className="min-h-screen flex flex-col items-center justify-center p-8">
+      <div className="max-w-2xl text-center space-y-6">
+        <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
+          Welcome to {{ project_name_pascal }}
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          {{ description }}
+        </p>
+        <div className="flex gap-4 justify-center">
+          <a
+            href="https://nextjs.org/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background shadow-sm hover:bg-foreground/90"
+          >
+            Next.js Docs
+          </a>
+          <a
+            href="https://vercel.com/new"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-md border border-foreground/20 px-4 py-2 text-sm font-semibold shadow-sm hover:bg-foreground/5"
+          >
+            Deploy on Vercel
+          </a>
+        </div>
+      </div>
+    </main>
+  )
+}
+{% else %}
+export default function Home() {
+  return (
+    {% raw %}<main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+      <div style={{ maxWidth: '600px', textAlign: 'center' }}>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>{% endraw %}
+          Welcome to {{ project_name_pascal }}
+        </h1>
+        {% raw %}<p style={{ fontSize: '1.125rem', color: '#666', marginBottom: '2rem' }}>{% endraw %}
+          {{ description }}
+        </p>
+        {% raw %}<div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+          <a
+            href="https://nextjs.org/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ padding: '0.5rem 1rem', backgroundColor: '#000', color: 'white', borderRadius: '6px', textDecoration: 'none' }}
+          >
+            Next.js Docs
+          </a>
+          <a
+            href="https://vercel.com/new"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ padding: '0.5rem 1rem', border: '1px solid #ddd', borderRadius: '6px', textDecoration: 'none', color: 'inherit' }}
+          >
+            Deploy on Vercel
+          </a>
+        </div>
+      </div>
+    </main>{% endraw %}
+  )
+}
+{% endif %}
+

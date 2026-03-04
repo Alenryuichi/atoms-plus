@@ -1,0 +1,92 @@
+<script setup lang="ts">
+</script>
+
+<template>
+{% if ui_library == "tailwind" or ui_library == "shadcn" %}
+  <div class="min-h-screen flex flex-col items-center justify-center p-8">
+    <div class="max-w-2xl text-center space-y-6">
+      <h1 class="text-4xl font-bold tracking-tight sm:text-6xl">
+        Welcome to {{ project_name_pascal }}
+      </h1>
+      <p class="text-lg text-gray-600 dark:text-gray-400">
+        {{ description }}
+      </p>
+      <div class="flex gap-4 justify-center">
+        <a
+          href="https://vuejs.org"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500"
+        >
+          Learn Vue
+        </a>
+        <a
+          href="https://vite.dev"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+        >
+          Vite Docs
+        </a>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="home">
+    <h1>Welcome to {{ project_name_pascal }}</h1>
+    <p>{{ description }}</p>
+    <div class="links">
+      <a href="https://vuejs.org" target="_blank" rel="noopener">Learn Vue</a>
+      <a href="https://vite.dev" target="_blank" rel="noopener">Vite Docs</a>
+    </div>
+  </div>
+{% endif %}
+</template>
+
+{% if ui_library != "tailwind" and ui_library != "shadcn" %}
+<style scoped>
+.home {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+.home h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.home p {
+  font-size: 1.125rem;
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.links {
+  display: flex;
+  gap: 1rem;
+}
+
+.links a {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+.links a:first-child {
+  background-color: #42b883;
+  color: white;
+}
+
+.links a:last-child {
+  border: 1px solid #ddd;
+  color: inherit;
+}
+</style>
+{% endif %}
+
