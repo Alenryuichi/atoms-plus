@@ -60,9 +60,9 @@ RUN mkdir -p $FILE_STORE_PATH
 RUN mkdir -p $WORKSPACE_BASE
 
 # CACHE_BUST: Change this value to force rebuild of apt-get layer
-ARG CACHE_BUST_APT=2026-03-03-chromium-v3
+ARG CACHE_BUST_APT=2026-03-04-add-git
 RUN apt-get update -y \
-    && apt-get install -y curl ssh sudo tmux \
+    && apt-get install -y curl ssh sudo tmux git \
     # Playwright/Chromium dependencies
     && apt-get install -y \
         libnss3 libnspr4 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 \

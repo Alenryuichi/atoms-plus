@@ -98,9 +98,56 @@ class ProcessSandboxService(SandboxService):
         raise SandboxError('No available ports found')
 
     def _create_sandbox_directory(self, sandbox_id: str) -> str:
-        """Create a dedicated directory for the sandbox."""
+        """Create a dedicated directory for the sandbox and initialize git.
+
+        This ensures each sandbox has:
+        1. A dedicated working directory for file isolation
+        2. A git repository initialized for the 'Changes' tab to work
+        """
         sandbox_dir = os.path.join(self.base_working_dir, sandbox_id)
         os.makedirs(sandbox_dir, exist_ok=True)
+
+        # Initialize git repository if git is available
+        # This is required for the frontend "Changes" tab to work
+        git_dir = os.path.join(sandbox_dir, '.git')
+        if not os.path.exists(git_dir):
+            try:
+                result = subprocess.run(
+                    ['git', 'init'],
+                    cwd=sandbox_dir,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                if result.returncode == 0:
+                    _logger.info(f'Initialized git repository in {sandbox_dir}')
+                    # Configure git user for commits
+                    subprocess.run(
+                        ['git', 'config', 'user.email', 'agent@openhands.ai'],
+                        cwd=sandbox_dir,
+                        capture_output=True,
+                        timeout=5,
+                    )
+                    subprocess.run(
+                        ['git', 'config', 'user.name', 'OpenHands Agent'],
+                        cwd=sandbox_dir,
+                        capture_output=True,
+                        timeout=5,
+                    )
+                else:
+                    _logger.warning(
+                        f'git init failed in {sandbox_dir}: {result.stderr}'
+                    )
+            except FileNotFoundError:
+                _logger.warning(
+                    'git command not found - Changes tab may not work. '
+                    'Install git in the container to enable this feature.'
+                )
+            except subprocess.TimeoutExpired:
+                _logger.warning(f'git init timed out in {sandbox_dir}')
+            except Exception as e:
+                _logger.warning(f'Failed to initialize git in {sandbox_dir}: {e}')
+
         return sandbox_dir
 
     async def _start_agent_process(

@@ -78,6 +78,19 @@ npx vercel deploy --prod --yes
 
 当前使用 Railway 的 GitHub 集成自动部署。推送到 `main` 分支后自动触发。
 
+## ⚠️ V0 vs V1 架构 (重要)
+
+**V1 是当前使用的架构，V0 是遗留代码 (计划 2026-04-01 删除)**
+
+| 组件 | V0 (不要修改) | V1 (修改这里) |
+|------|--------------|--------------|
+| 对话管理 | `openhands/server/` | `openhands/app_server/` |
+| Runtime | `LocalRuntime` | `ProcessSandboxService` |
+| 工作目录 | `/workspace` | `/tmp/openhands-sandboxes/{id}` |
+| Git 初始化 | `runtime/base.py` | `sandbox/process_sandbox_service.py` |
+
+**关键：`RUNTIME=local` 时，V1 使用 `ProcessSandboxService`，不是 `LocalRuntime`！**
+
 ## 项目结构
 
 ```
