@@ -1,17 +1,15 @@
 # Atoms Plus Role System - API Endpoints
 """
-FastAPI router for role management.
+FastAPI router for role management with AUTO-ROUTING support.
 """
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
 
-from atoms_plus.roles.base import AgentRole
 from atoms_plus.roles.registry import RoleRegistry
+from atoms_plus.roles.router import RoleRouter
 
-
-router = APIRouter(prefix="/api/v1/roles", tags=["roles"])
+router = APIRouter(prefix='/api/v1/roles', tags=['roles'])
 
 
 class RoleResponse(BaseModel):
@@ -42,7 +40,7 @@ class SystemPromptResponse(BaseModel):
     system_prompt: str
 
 
-@router.get("/", response_model=RoleListResponse)
+@router.get('/', response_model=RoleListResponse)
 async def list_roles():
     """
     List all available agent roles.
@@ -56,7 +54,7 @@ async def list_roles():
     )
 
 
-@router.get("/{role_id}", response_model=RoleResponse)
+@router.get('/{role_id}', response_model=RoleResponse)
 async def get_role(role_id: str):
     """
     Get details for a specific role.
@@ -74,7 +72,7 @@ async def get_role(role_id: str):
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@router.get("/{role_id}/prompt", response_model=SystemPromptResponse)
+@router.get('/{role_id}/prompt', response_model=SystemPromptResponse)
 async def get_role_prompt(role_id: str):
     """
     Get the system prompt for a specific role.
@@ -97,7 +95,7 @@ async def get_role_prompt(role_id: str):
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@router.get("/{role_id}/tools")
+@router.get('/{role_id}/tools')
 async def get_role_tools(role_id: str):
     """
     Get the tool configuration for a specific role.
@@ -111,9 +109,83 @@ async def get_role_tools(role_id: str):
     try:
         config = RoleRegistry.get_role(role_id)
         return {
-            "role_id": role_id,
-            "tools": config.get_tool_config(),
+            'role_id': role_id,
+            'tools': config.get_tool_config(),
         }
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
+
+# =============================================================================
+# AUTO-ROUTING ENDPOINTS
+# =============================================================================
+
+
+class AutoRouteRequest(BaseModel):
+    """Request model for auto-routing."""
+
+    user_input: str
+
+
+class AutoRouteResponse(BaseModel):
+    """Response model for auto-routing."""
+
+    role_id: str
+    role_name: str
+    role_title: str
+    avatar: str
+    confidence: float
+    matched_keywords: list[str]
+    reason: str
+    system_prompt: str
+
+
+@router.post('/auto-detect', response_model=AutoRouteResponse)
+async def auto_detect_role(request: AutoRouteRequest):
+    """
+    Automatically detect the best role for a given user input.
+
+    This is the main endpoint for the auto-routing system.
+    The system analyzes the user's input and returns the best matching role.
+
+    Args:
+        request: Contains the user's input text
+
+    Returns:
+        The detected role with confidence score and system prompt
+
+    Example:
+        POST /api/v1/roles/auto-detect
+        {"user_input": "设计一个电商平台的微服务架构"}
+
+        Response:
+        {
+            "role_id": "architect",
+            "role_name": "Alex",
+            "role_title": "Software Architect",
+            "avatar": "🏗️",
+            "confidence": 0.85,
+            "matched_keywords": ["架构", "设计", "微服务"],
+            "reason": "System architecture and design tasks",
+            "system_prompt": "..."
+        }
+    """
+    # Detect the best role
+    route_result = RoleRouter.detect_role(request.user_input)
+
+    # Get role configuration
+    config = RoleRegistry.get_role(route_result.role)
+
+    # Get system prompt
+    system_prompt = RoleRegistry.get_system_prompt(route_result.role)
+
+    return AutoRouteResponse(
+        role_id=route_result.role.value,
+        role_name=config.name,
+        role_title=config.role,
+        avatar=config.avatar,
+        confidence=route_result.confidence,
+        matched_keywords=route_result.matched_keywords,
+        reason=route_result.reason,
+        system_prompt=system_prompt,
+    )

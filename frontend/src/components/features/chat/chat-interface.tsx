@@ -38,6 +38,7 @@ import { useTaskPolling } from "#/hooks/query/use-task-polling";
 import { useConversationWebSocket } from "#/contexts/conversation-websocket-context";
 import ChatStatusIndicator from "./chat-status-indicator";
 import { getStatusColor, getStatusText } from "#/utils/utils";
+import { AutoRoleIndicator } from "#/components/features/auto-role";
 
 function getEntryPoint(
   hasRepository: boolean | null,
@@ -305,6 +306,8 @@ export function ChatInterface() {
         <div className="flex flex-col gap-2 px-2 pb-2">
           <div className="flex justify-between relative">
             <div className="flex items-end gap-2">
+              {/* Atoms Plus: Auto Role Indicator - 自动角色指示器 */}
+              <AutoRoleIndicator showDetails={false} />
               <ConfirmationModeEnabled />
               {isStartingStatus && (
                 <ChatStatusIndicator
