@@ -1,0 +1,150 @@
+###################### Atoms Plus MCP Configuration ######################
+#
+# 推荐的 MCP 服务器配置，用于增强 Agent 的低代码开发能力
+# 复制所需配置到 config.toml 中使用
+#
+##############################################################################
+
+#################################### MCP #####################################
+# Model Context Protocol (MCP) 服务器配置
+##############################################################################
+[mcp]
+
+# ============================================================================
+# 1. 文件系统服务器 - 项目文件操作
+# ============================================================================
+# 提供文件读写、目录列表、文件搜索等能力
+# 安装: npm install -g @modelcontextprotocol/server-filesystem
+#
+# stdio_servers = [
+#     {
+#         name = "filesystem",
+#         command = "npx",
+#         args = ["@modelcontextprotocol/server-filesystem", "/workspace"]
+#     }
+# ]
+
+# ============================================================================
+# 2. Git 服务器 - 版本控制操作
+# ============================================================================
+# 提供 Git 操作能力：commit, push, branch, diff 等
+# 安装: npm install -g @modelcontextprotocol/server-git
+#
+# stdio_servers = [
+#     {
+#         name = "git",
+#         command = "npx",
+#         args = ["@modelcontextprotocol/server-git", "--repository", "/workspace"]
+#     }
+# ]
+
+# ============================================================================
+# 3. PostgreSQL/Supabase 服务器 - 数据库操作
+# ============================================================================
+# 提供数据库查询、Schema 管理能力
+# 安装: pip install mcp-server-postgres
+#
+# stdio_servers = [
+#     {
+#         name = "postgres",
+#         command = "uvx",
+#         args = ["mcp-server-postgres"],
+#         env = {
+#             POSTGRES_URL = "postgresql://user:pass@host:5432/db"
+#         }
+#     }
+# ]
+
+# ============================================================================
+# 4. Fetch 服务器 - HTTP 请求能力
+# ============================================================================
+# 提供 HTTP 请求能力，用于 API 测试和数据获取
+# 安装: pip install mcp-server-fetch
+#
+# stdio_servers = [
+#     {
+#         name = "fetch",
+#         command = "uvx",
+#         args = ["mcp-server-fetch"]
+#     }
+# ]
+
+# ============================================================================
+# 5. Puppeteer 服务器 - 浏览器自动化
+# ============================================================================
+# 提供浏览器自动化能力，用于截图、UI 测试
+# 安装: npm install -g @modelcontextprotocol/server-puppeteer
+#
+# stdio_servers = [
+#     {
+#         name = "puppeteer",
+#         command = "npx",
+#         args = ["@modelcontextprotocol/server-puppeteer"]
+#     }
+# ]
+
+# ============================================================================
+# 完整配置示例（开发环境）
+# ============================================================================
+stdio_servers = [
+    # 文件系统
+    {
+        name = "filesystem",
+        command = "npx",
+        args = ["@modelcontextprotocol/server-filesystem", "/workspace"]
+    },
+    # Git 版本控制
+    {
+        name = "git",
+        command = "npx",
+        args = ["@modelcontextprotocol/server-git", "--repository", "/workspace"]
+    },
+    # HTTP 请求
+    {
+        name = "fetch",
+        command = "uvx",
+        args = ["mcp-server-fetch"]
+    }
+]
+
+# ============================================================================
+# 远程 MCP 服务器配置（生产环境）
+# ============================================================================
+# 使用 SHTTP 协议连接远程 MCP 服务器
+#
+# shttp_servers = [
+#     {
+#         url = "https://your-mcp-server.example.com/mcp/shttp",
+#         api_key = "your-api-key",
+#         timeout = 180  # 3 分钟超时
+#     }
+# ]
+
+#################################### LLM #####################################
+# Atoms Plus 推荐的 LLM 配置
+##############################################################################
+[llm]
+# 阿里百炼 (Qwen)
+model = "qwen-plus"
+base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+api_key = ""  # 设置 LLM_API_KEY 环境变量
+
+# 或使用 OpenAI
+# model = "gpt-4o"
+# api_key = ""
+
+# 或使用 Anthropic Claude
+# model = "claude-sonnet-4-20250514"
+# api_key = ""
+
+#################################### Agent ###################################
+# Agent 配置
+##############################################################################
+[agent]
+enable_browsing = true
+enable_jupyter = true
+enable_cmd = true
+enable_editor = true
+enable_think = true
+enable_prompt_extensions = true  # 启用 Microagents
+
