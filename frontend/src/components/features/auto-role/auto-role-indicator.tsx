@@ -11,6 +11,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider,
 } from "#/components/ui/tooltip";
 import type { AutoDetectResponse } from "#/api/role-service/role-service.types";
 import { autoDetectRole } from "#/api/role-service/role-service.api";
@@ -100,53 +101,57 @@ export function AutoRoleIndicator({
   const gradientClass = roleColors[currentRole.role_id] || roleColors.engineer;
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div
-          className={cn(
-            "flex items-center gap-2 px-3 py-1.5 rounded-full cursor-default",
-            "bg-gradient-to-r",
-            gradientClass,
-            "text-white text-sm font-medium",
-            "shadow-lg shadow-black/20",
-            "transition-all duration-300",
-            isDetecting && "opacity-70 animate-pulse",
-            className,
-          )}
-        >
-          <span className="text-lg">{currentRole.avatar}</span>
-          {showDetails ? (
-            <div className="flex flex-col">
-              <span className="text-xs font-bold">{currentRole.role_name}</span>
-              <span className="text-[10px] opacity-80">
-                {currentRole.role_title}
-              </span>
-            </div>
-          ) : (
-            <span>{currentRole.role_name}</span>
-          )}
-          {isDetecting && (
-            <span className="w-2 h-2 bg-white rounded-full animate-ping" />
-          )}
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>
-        <div className="text-sm p-1">
-          <div className="font-medium">
-            {currentRole.role_name} - {currentRole.role_title}
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div
+            className={cn(
+              "flex items-center gap-2 px-3 py-1.5 rounded-full cursor-default",
+              "bg-gradient-to-r",
+              gradientClass,
+              "text-white text-sm font-medium",
+              "shadow-lg shadow-black/20",
+              "transition-all duration-300",
+              isDetecting && "opacity-70 animate-pulse",
+              className,
+            )}
+          >
+            <span className="text-lg">{currentRole.avatar}</span>
+            {showDetails ? (
+              <div className="flex flex-col">
+                <span className="text-xs font-bold">
+                  {currentRole.role_name}
+                </span>
+                <span className="text-[10px] opacity-80">
+                  {currentRole.role_title}
+                </span>
+              </div>
+            ) : (
+              <span>{currentRole.role_name}</span>
+            )}
+            {isDetecting && (
+              <span className="w-2 h-2 bg-white rounded-full animate-ping" />
+            )}
           </div>
-          <div className="text-xs opacity-75 mt-1">{currentRole.reason}</div>
-          {currentRole.matched_keywords.length > 0 && (
-            <div className="text-xs opacity-60 mt-1">
-              {currentRole.matched_keywords.slice(0, 3).join(", ")}
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="text-sm p-1">
+            <div className="font-medium">
+              {currentRole.role_name} - {currentRole.role_title}
             </div>
-          )}
-          <div className="text-xs mt-1">
-            {Math.round(currentRole.confidence * 100)}%
+            <div className="text-xs opacity-75 mt-1">{currentRole.reason}</div>
+            {currentRole.matched_keywords.length > 0 && (
+              <div className="text-xs opacity-60 mt-1">
+                {currentRole.matched_keywords.slice(0, 3).join(", ")}
+              </div>
+            )}
+            <div className="text-xs mt-1">
+              {Math.round(currentRole.confidence * 100)}%
+            </div>
           </div>
-        </div>
-      </TooltipContent>
-    </Tooltip>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
