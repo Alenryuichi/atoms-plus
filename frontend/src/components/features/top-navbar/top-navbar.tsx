@@ -7,8 +7,6 @@ import { useGitUser } from "#/hooks/query/use-git-user";
 import { UserActions } from "../sidebar/user-actions";
 import { CreditsDisplay } from "../sidebar/credits-display";
 import { OpenHandsLogoButton } from "#/components/shared/buttons/openhands-logo-button";
-import { NewProjectButton } from "#/components/shared/buttons/new-project-button";
-import { ConversationPanelButton } from "#/components/shared/buttons/conversation-panel-button";
 import { SettingsModal } from "#/components/shared/modals/settings/settings-modal";
 import { useSettings } from "#/hooks/query/use-settings";
 import { ConversationPanel } from "../conversation-panel/conversation-panel";
@@ -129,31 +127,76 @@ function MobileMenuAuthed({
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        "fixed top-14 left-0 right-0 z-40",
-        "bg-neutral-900/95 backdrop-blur-md border-b border-neutral-700/40",
+        "fixed top-16 left-0 right-0 z-40",
+        "bg-[#0a0a0b]/98 backdrop-blur-xl border-b border-neutral-800/50",
         "p-4 md:hidden",
       )}
     >
       <nav className="flex flex-col gap-3">
-        <div className="flex items-center justify-between py-2">
-          <span className="text-sm font-medium text-neutral-400">
-            {t(I18nKey.CONVERSATION$START_NEW)}
-          </span>
-          <NewProjectButton disabled={!isEmailVerified} />
-        </div>
-        <div className="flex items-center justify-between py-2">
-          <span className="text-sm font-medium text-neutral-400">
-            {t(I18nKey.SIDEBAR$CONVERSATIONS)}
-          </span>
-          <ConversationPanelButton
-            isOpen={conversationPanelIsOpen}
-            onClick={() =>
-              isEmailVerified && setConversationPanelIsOpen((prev) => !prev)
-            }
-            disabled={!isEmailVerified}
-          />
-        </div>
-        <div className="border-t border-neutral-700/40 pt-3 mt-2">
+        {/* New Project Button - Mobile */}
+        <NavLink
+          to="/"
+          className={cn(
+            "flex items-center justify-center gap-2 px-4 py-3 rounded-lg",
+            "bg-gradient-to-r from-indigo-600 to-purple-600",
+            "text-white font-medium text-sm",
+            "transition-all duration-200",
+            !isEmailVerified && "opacity-50 pointer-events-none",
+          )}
+          onClick={(e) => !isEmailVerified && e.preventDefault()}
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          <span>{t(I18nKey.CONVERSATION$START_NEW)}</span>
+        </NavLink>
+
+        {/* Conversations Button - Mobile */}
+        <button
+          type="button"
+          onClick={() =>
+            isEmailVerified && setConversationPanelIsOpen((prev) => !prev)
+          }
+          disabled={!isEmailVerified}
+          className={cn(
+            "flex items-center justify-center gap-2 px-4 py-3 rounded-lg",
+            "bg-neutral-800/80 hover:bg-neutral-700/80",
+            "text-neutral-300 hover:text-white",
+            "font-medium text-sm",
+            "border border-neutral-700/50",
+            "transition-all duration-200",
+            conversationPanelIsOpen && "bg-neutral-700/80 text-white",
+            !isEmailVerified && "opacity-50 cursor-not-allowed",
+          )}
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+          <span>{t(I18nKey.SIDEBAR$CONVERSATIONS)}</span>
+        </button>
+
+        {/* User Section */}
+        <div className="border-t border-neutral-800/50 pt-4 mt-2">
           <div className="flex items-center justify-between">
             <CreditsDisplay />
             <UserActions
@@ -382,43 +425,98 @@ export function TopNavbar() {
     );
   }
 
-  // Authenticated navigation (app mode)
+  // Authenticated navigation (app mode) - atoms.dev style
   return (
     <>
       <header
         aria-label={t(I18nKey.SIDEBAR$NAVIGATION_LABEL)}
         className={cn(
           "fixed top-0 left-0 right-0 z-50",
-          "h-14 px-4 md:px-6",
-          "bg-neutral-900/80 backdrop-blur-md border-b border-neutral-700/40",
+          "h-16 px-4 md:px-8 lg:px-12",
+          "bg-[#0a0a0b]/95 backdrop-blur-xl border-b border-neutral-800/50",
           "flex items-center justify-between",
         )}
       >
         {/* Left: Logo */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <OpenHandsLogoButton />
           </motion.div>
         </div>
 
-        {/* Center: Navigation (Desktop) */}
-        <nav className="hidden md:flex items-center gap-2">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <NewProjectButton disabled={!isEmailVerified} />
+        {/* Center: Navigation Actions (Desktop) */}
+        <nav className="hidden md:flex items-center gap-3">
+          {/* New Project Button - atoms.dev style */}
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <NavLink
+              to="/"
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg",
+                "bg-gradient-to-r from-indigo-600 to-purple-600",
+                "hover:from-indigo-500 hover:to-purple-500",
+                "text-white font-medium text-sm",
+                "shadow-lg shadow-indigo-500/20",
+                "transition-all duration-200",
+                !isEmailVerified && "opacity-50 pointer-events-none",
+              )}
+              onClick={(e) => !isEmailVerified && e.preventDefault()}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              <span>{t(I18nKey.CONVERSATION$START_NEW)}</span>
+            </NavLink>
           </motion.div>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <ConversationPanelButton
-              isOpen={conversationPanelIsOpen}
+
+          {/* Conversations Button - atoms.dev style */}
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <button
+              type="button"
               onClick={() =>
                 isEmailVerified && setConversationPanelIsOpen((prev) => !prev)
               }
               disabled={!isEmailVerified}
-            />
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg",
+                "bg-neutral-800/80 hover:bg-neutral-700/80",
+                "text-neutral-300 hover:text-white",
+                "font-medium text-sm",
+                "border border-neutral-700/50 hover:border-neutral-600/50",
+                "transition-all duration-200",
+                conversationPanelIsOpen && "bg-neutral-700/80 text-white",
+                !isEmailVerified && "opacity-50 cursor-not-allowed",
+              )}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+              <span>{t(I18nKey.SIDEBAR$CONVERSATIONS)}</span>
+            </button>
           </motion.div>
         </nav>
 
         {/* Right: User Actions (Desktop) */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-4">
           <CreditsDisplay />
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <UserActions
@@ -435,7 +533,7 @@ export function TopNavbar() {
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden"
+          className="md:hidden text-white hover:bg-white/10"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
         >
