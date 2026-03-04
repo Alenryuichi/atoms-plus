@@ -4,7 +4,7 @@
  * 用于与后端预热池服务通信
  */
 
-import { request } from "./request";
+import { openHands } from "./open-hands-axios";
 
 export interface WarmPoolStatus {
   enabled: boolean;
@@ -42,16 +42,20 @@ export interface WarmPoolHealth {
  * 获取预热池状态
  */
 export async function getWarmPoolStatus(): Promise<WarmPoolStatus> {
-  const response = await request("/api/v1/warm-pool/status");
-  return response.json();
+  const { data } = await openHands.get<WarmPoolStatus>(
+    "/api/v1/warm-pool/status"
+  );
+  return data;
 }
 
 /**
  * 获取预热池健康状态
  */
 export async function getWarmPoolHealth(): Promise<WarmPoolHealth> {
-  const response = await request("/api/v1/warm-pool/health");
-  return response.json();
+  const { data } = await openHands.get<WarmPoolHealth>(
+    "/api/v1/warm-pool/health"
+  );
+  return data;
 }
 
 /**
@@ -61,10 +65,10 @@ export async function startWarmPool(): Promise<{
   status: string;
   message: string;
 }> {
-  const response = await request("/api/v1/warm-pool/start", {
-    method: "POST",
-  });
-  return response.json();
+  const { data } = await openHands.post<{ status: string; message: string }>(
+    "/api/v1/warm-pool/start"
+  );
+  return data;
 }
 
 /**
@@ -74,10 +78,10 @@ export async function stopWarmPool(): Promise<{
   status: string;
   message: string;
 }> {
-  const response = await request("/api/v1/warm-pool/stop", {
-    method: "POST",
-  });
-  return response.json();
+  const { data } = await openHands.post<{ status: string; message: string }>(
+    "/api/v1/warm-pool/stop"
+  );
+  return data;
 }
 
 /**
@@ -88,8 +92,10 @@ export async function replenishWarmPool(): Promise<{
   message: string;
   current_status: WarmPoolStatus;
 }> {
-  const response = await request("/api/v1/warm-pool/replenish", {
-    method: "POST",
-  });
-  return response.json();
+  const { data } = await openHands.post<{
+    status: string;
+    message: string;
+    current_status: WarmPoolStatus;
+  }>("/api/v1/warm-pool/replenish");
+  return data;
 }
