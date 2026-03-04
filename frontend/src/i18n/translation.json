@@ -18258,5 +18258,15 @@
     "en": "Ready",
     "zh-CN": "就绪",
     "ja": "準備完了"
+  },
+  "WARM_POOL$FAST_START_AVAILABLE": {
+    "en": "Fast start available",
+    "zh-CN": "快速启动可用",
+    "ja": "高速起動可能"
+  },
+  "WARM_POOL$WARMING_UP": {
+    "en": "Warming up...",
+    "zh-CN": "正在预热...",
+    "ja": "ウォームアップ中..."
   }
 }

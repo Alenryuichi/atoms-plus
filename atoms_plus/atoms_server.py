@@ -34,6 +34,7 @@ from atoms_plus.race_mode.api import router as race_router
 from atoms_plus.roles.api import router as roles_router
 from atoms_plus.orchestrator.api import router as orchestrator_router
 from atoms_plus.scaffolding.api import router as scaffolding_router
+from atoms_plus.warm_pool.api import router as warm_pool_router
 
 # ==================== 注册扩展路由 ====================
 # 注意：路由必须在导入 listen.py 之前注册，因为 listen.py 会包装 base_app
@@ -54,6 +55,10 @@ base_app.include_router(orchestrator_router)
 # 路由前缀: /api/v1/scaffolding/*
 base_app.include_router(scaffolding_router, prefix="/api/v1")
 
+# Warm Pool API - Runtime 预热池
+# 路由前缀: /api/v1/warm-pool/*
+base_app.include_router(warm_pool_router, prefix="/api/v1")
+
 
 # ==================== 扩展端点 ====================
 
@@ -63,7 +68,7 @@ def atoms_plus_info():
     """Atoms Plus 信息端点"""
     return {
         "name": "Atoms Plus",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "description": "OpenHands 扩展层 - 复刻 Atoms.dev 功能",
         "features": [
             {
@@ -86,6 +91,11 @@ def atoms_plus_info():
                 "path": "/api/v1/scaffolding",
                 "description": "项目脚手架生成 (React/Next.js/Vue/Nuxt)",
             },
+            {
+                "name": "Warm Pool",
+                "path": "/api/v1/warm-pool",
+                "description": "Runtime 预热池 - 消除启动等待时间",
+            },
         ],
     }
 
@@ -93,7 +103,44 @@ def atoms_plus_info():
 @base_app.get("/atoms-plus/health")
 def atoms_plus_health():
     """健康检查端点"""
-    return {"status": "ok", "service": "atoms-plus"}
+    from atoms_plus.warm_pool import warm_pool_manager
+
+    pool_status = warm_pool_manager.get_status()
+    return {
+        "status": "ok",
+        "service": "atoms-plus",
+        "warm_pool": {
+            "enabled": pool_status.enabled,
+            "ready_instances": pool_status.ready_instances,
+            "total_instances": pool_status.total_instances,
+        },
+    }
+
+
+# ==================== 启动钩子 ====================
+
+@base_app.on_event("startup")
+async def startup_warm_pool():
+    """应用启动时初始化预热池"""
+    from atoms_plus.warm_pool import warm_pool_manager
+
+    # 检查环境变量是否启用预热池
+    if os.environ.get("WARM_POOL_ENABLED", "true").lower() == "true":
+        print("🔥 Starting Warm Pool...")
+        await warm_pool_manager.start()
+        print("✅ Warm Pool started")
+    else:
+        print("⏸️ Warm Pool is disabled")
+
+
+@base_app.on_event("shutdown")
+async def shutdown_warm_pool():
+    """应用关闭时停止预热池"""
+    from atoms_plus.warm_pool import warm_pool_manager
+
+    print("🛑 Stopping Warm Pool...")
+    await warm_pool_manager.stop()
+    print("✅ Warm Pool stopped")
 
 
 # ==================== 应用导出 ====================

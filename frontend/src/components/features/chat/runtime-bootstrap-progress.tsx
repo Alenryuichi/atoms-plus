@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useEffect, useState, useMemo } from "react";
 import { I18nKey } from "#/i18n/declaration";
 import type { RuntimeStatus } from "#/types/runtime-status";
+import { useWarmPoolHealth } from "#/hooks/query/use-warm-pool";
 
 // 启动阶段配置
 const BOOTSTRAP_STAGES = [
@@ -98,6 +99,9 @@ export function RuntimeBootstrapProgress({
   const { t } = useTranslation();
   const [tipIndex, setTipIndex] = useState(0);
   const [simulatedProgress, setSimulatedProgress] = useState(0);
+
+  // 获取预热池状态（静默失败，不影响主流程）
+  const { data: warmPoolHealth } = useWarmPoolHealth({ enabled: true });
 
   // 计算当前进度
   const currentStage = useMemo(() => {
@@ -222,6 +226,28 @@ export function RuntimeBootstrapProgress({
           💡 {t(TIPS[tipIndex])}
         </motion.p>
       </AnimatePresence>
+
+      {/* Warm Pool Status (only show when available) */}
+      {warmPoolHealth && warmPoolHealth.enabled && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center gap-2 px-3 py-1.5 bg-neutral-800/50 rounded-full text-xs"
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
+              warmPoolHealth.ready_instances > 0
+                ? "bg-green-500 animate-pulse"
+                : "bg-yellow-500"
+            }`}
+          />
+          <span className="text-neutral-400">
+            {warmPoolHealth.ready_instances > 0
+              ? t(I18nKey.WARM_POOL$FAST_START_AVAILABLE)
+              : t(I18nKey.WARM_POOL$WARMING_UP)}
+          </span>
+        </motion.div>
+      )}
     </div>
   );
 }
