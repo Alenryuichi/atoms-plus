@@ -195,6 +195,50 @@ function MobileMenuAuthed({
           <span>{t(I18nKey.SIDEBAR$CONVERSATIONS)}</span>
         </button>
 
+        {/* Divider */}
+        <div className="border-t border-neutral-800/50 pt-3 mt-1" />
+
+        {/* Pricing Link - Mobile */}
+        <NavLink
+          to="/pricing"
+          className="flex items-center justify-center py-2 text-sm font-medium text-neutral-300 hover:text-white transition-colors"
+        >
+          {t(I18nKey.ATOMS$NAV_PRICING)}
+        </NavLink>
+
+        {/* Resources Links - Mobile (expanded list instead of dropdown) */}
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider px-2">
+            {t(I18nKey.ATOMS$NAV_RESOURCES)}
+          </span>
+          {RESOURCES_ITEMS.map((item) => (
+            <NavLink
+              key={item.href}
+              to={item.href}
+              target={item.external ? "_blank" : undefined}
+              rel={item.external ? "noopener noreferrer" : undefined}
+              className="flex items-center justify-between py-2 px-2 text-sm text-neutral-400 hover:text-white transition-colors rounded-lg hover:bg-neutral-800/50"
+            >
+              <span>{t(item.labelKey)}</span>
+              {item.external && (
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+              )}
+            </NavLink>
+          ))}
+        </div>
+
         {/* User Section */}
         <div className="border-t border-neutral-800/50 pt-4 mt-2">
           <div className="flex items-center justify-between">
@@ -230,7 +274,7 @@ function MobileMenuLanding({
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        "fixed top-14 left-0 right-0 z-40",
+        "fixed top-16 left-0 right-0 z-40",
         "bg-neutral-900/95 backdrop-blur-md border-b border-neutral-700/40",
         "p-4 md:hidden",
       )}
@@ -445,7 +489,21 @@ export function TopNavbar() {
         </div>
 
         {/* Center: Navigation Actions (Desktop) */}
-        <nav className="hidden md:flex items-center gap-3">
+        <nav className="hidden md:flex items-center gap-4">
+          {/* Pricing Link */}
+          <NavLink
+            to="/pricing"
+            className="text-sm font-medium text-neutral-300 hover:text-white transition-colors"
+          >
+            {t(I18nKey.ATOMS$NAV_PRICING)}
+          </NavLink>
+
+          {/* Resources Dropdown */}
+          <ResourcesDropdown t={t} />
+
+          {/* Divider */}
+          <div className="h-5 w-px bg-neutral-700/50" />
+
           {/* New Project Button - atoms.dev style */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <NavLink
