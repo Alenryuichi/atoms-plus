@@ -143,6 +143,14 @@ class WebSession:
         initial_message: MessageAction | None,
         replay_json: str | None,
     ) -> None:
+        # Send immediate acknowledgment to user that their request is being processed
+        # This provides instant feedback before the potentially slow initialization starts
+        self.queue_status_message(
+            'info',
+            RuntimeStatus.MESSAGE_RECEIVED,
+            'Processing your request...',
+        )
+
         self.agent_session.event_stream.add_event(
             AgentStateChangedObservation('', AgentState.LOADING),
             EventSource.ENVIRONMENT,

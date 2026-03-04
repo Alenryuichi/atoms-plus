@@ -7279,7 +7279,7 @@
     "es": "Actualmente no hay un plan para este repositorio",
     "tr": "Şu anda bu depo için bir plan yok"
   },
-    "SIDEBAR$NAVIGATION_LABEL": {
+  "SIDEBAR$NAVIGATION_LABEL": {
     "en": "Sidebar navigation",
     "zh-CN": "侧边栏导航",
     "zh-TW": "側邊欄導航",
@@ -17931,7 +17931,9 @@
   },
   "ATOMS$PRICING_BADGE": { "en": "Simple Pricing" },
   "ATOMS$PRICING_HERO_TITLE": { "en": "Choose your plan" },
-  "ATOMS$PRICING_HERO_SUBTITLE": { "en": "Start building for free, upgrade when you're ready" },
+  "ATOMS$PRICING_HERO_SUBTITLE": {
+    "en": "Start building for free, upgrade when you're ready"
+  },
   "ATOMS$PRICING_FREE_TITLE": { "en": "Free" },
   "ATOMS$PRICING_PRO_TITLE": { "en": "Pro 20" },
   "ATOMS$PRICING_PRO_BADGE": { "en": "Most Popular" },
@@ -17950,40 +17952,206 @@
   "ATOMS$PRICING_CTA_MAX": { "en": "Go Max" },
   "ATOMS$RESOURCES_FILTER_ALL": { "en": "All" },
   "ATOMS$RESOURCES_USECASES_TITLE": { "en": "Use Cases" },
-  "ATOMS$RESOURCES_USECASES_SUBTITLE": { "en": "Discover what you can build with Atoms Plus" },
+  "ATOMS$RESOURCES_USECASES_SUBTITLE": {
+    "en": "Discover what you can build with Atoms Plus"
+  },
   "ATOMS$RESOURCES_USECASE_SAAS_TITLE": { "en": "SaaS Subscription Platform" },
-  "ATOMS$RESOURCES_USECASE_SAAS_DESC": { "en": "Build subscription-based software products with recurring billing and user management." },
+  "ATOMS$RESOURCES_USECASE_SAAS_DESC": {
+    "en": "Build subscription-based software products with recurring billing and user management."
+  },
   "ATOMS$RESOURCES_USECASE_ECOMMERCE_TITLE": { "en": "E-commerce Store" },
-  "ATOMS$RESOURCES_USECASE_ECOMMERCE_DESC": { "en": "Create online stores with product catalogs, shopping carts, and checkout flows." },
+  "ATOMS$RESOURCES_USECASE_ECOMMERCE_DESC": {
+    "en": "Create online stores with product catalogs, shopping carts, and checkout flows."
+  },
   "ATOMS$RESOURCES_USECASE_DASHBOARD_TITLE": { "en": "Admin Dashboard" },
-  "ATOMS$RESOURCES_USECASE_DASHBOARD_DESC": { "en": "Build internal admin panels with data visualization and management tools." },
+  "ATOMS$RESOURCES_USECASE_DASHBOARD_DESC": {
+    "en": "Build internal admin panels with data visualization and management tools."
+  },
   "ATOMS$RESOURCES_USECASE_PORTFOLIO_TITLE": { "en": "Portfolio Website" },
-  "ATOMS$RESOURCES_USECASE_PORTFOLIO_DESC": { "en": "Showcase your work with a stunning personal portfolio site." },
+  "ATOMS$RESOURCES_USECASE_PORTFOLIO_DESC": {
+    "en": "Showcase your work with a stunning personal portfolio site."
+  },
   "ATOMS$RESOURCES_USECASE_API_TITLE": { "en": "REST API Backend" },
-  "ATOMS$RESOURCES_USECASE_API_DESC": { "en": "Create scalable API backends with authentication and database integration." },
+  "ATOMS$RESOURCES_USECASE_API_DESC": {
+    "en": "Create scalable API backends with authentication and database integration."
+  },
   "ATOMS$RESOURCES_USECASE_MOBILE_TITLE": { "en": "Mobile App" },
-  "ATOMS$RESOURCES_USECASE_MOBILE_DESC": { "en": "Build cross-platform mobile applications with React Native." },
+  "ATOMS$RESOURCES_USECASE_MOBILE_DESC": {
+    "en": "Build cross-platform mobile applications with React Native."
+  },
   "ATOMS$RESOURCES_USECASE_READ_MORE": { "en": "Read more" },
   "ATOMS$RESOURCES_VIDEOS_TITLE": { "en": "Video Tutorials" },
-  "ATOMS$RESOURCES_VIDEOS_SUBTITLE": { "en": "Learn how to build with Atoms Plus through step-by-step videos" },
+  "ATOMS$RESOURCES_VIDEOS_SUBTITLE": {
+    "en": "Learn how to build with Atoms Plus through step-by-step videos"
+  },
   "ATOMS$RESOURCES_VIDEOS_FEATURED": { "en": "Featured" },
   "ATOMS$RESOURCES_VIDEOS_RECENT": { "en": "Recent Videos" },
-  "ATOMS$RESOURCES_VIDEO_GETTING_STARTED": { "en": "Getting Started with Atoms Plus" },
+  "ATOMS$RESOURCES_VIDEO_GETTING_STARTED": {
+    "en": "Getting Started with Atoms Plus"
+  },
   "ATOMS$RESOURCES_VIDEO_BUILD_SAAS": { "en": "Build a SaaS in 30 Minutes" },
   "ATOMS$RESOURCES_VIDEO_DEPLOY": { "en": "Deploy Your First App" },
   "ATOMS$RESOURCES_VIDEO_RACE_MODE": { "en": "Race Mode Deep Dive" },
   "ATOMS$RESOURCES_VIDEO_TEMPLATES": { "en": "Using Templates Effectively" },
-  "ATOMS$RESOURCES_VIDEO_ADVANCED": { "en": "Advanced AI Prompting Techniques" },
+  "ATOMS$RESOURCES_VIDEO_ADVANCED": {
+    "en": "Advanced AI Prompting Techniques"
+  },
   "ATOMS$RESOURCES_BLOG_TITLE": { "en": "Blog" },
-  "ATOMS$RESOURCES_BLOG_SUBTITLE": { "en": "Latest updates, tutorials, and insights from the Atoms Plus team" },
+  "ATOMS$RESOURCES_BLOG_SUBTITLE": {
+    "en": "Latest updates, tutorials, and insights from the Atoms Plus team"
+  },
   "ATOMS$RESOURCES_BLOG_FEATURED": { "en": "Featured" },
   "ATOMS$RESOURCES_BLOG_READ_MORE": { "en": "Read more" },
-  "ATOMS$RESOURCES_BLOG_RACE_MODE_TITLE": { "en": "Introducing Race Mode: Multi-Model AI Competition" },
-  "ATOMS$RESOURCES_BLOG_RACE_MODE_EXCERPT": { "en": "Run multiple AI models simultaneously and pick the best result. A game-changer for quality." },
-  "ATOMS$RESOURCES_BLOG_METAGPT_TITLE": { "en": "MetaGPT Integration: Multi-Agent Collaboration" },
-  "ATOMS$RESOURCES_BLOG_METAGPT_EXCERPT": { "en": "How we integrated MetaGPT for software engineering team simulation." },
-  "ATOMS$RESOURCES_BLOG_PRACTICES_TITLE": { "en": "Best Practices for AI-Assisted Development" },
-  "ATOMS$RESOURCES_BLOG_PRACTICES_EXCERPT": { "en": "Tips and tricks to get the most out of your AI coding assistant." },
-  "ATOMS$RESOURCES_BLOG_FUTURE_TITLE": { "en": "The Future of AI-Powered Coding" },
-  "ATOMS$RESOURCES_BLOG_FUTURE_EXCERPT": { "en": "Our vision for the next generation of AI development tools." }
+  "ATOMS$RESOURCES_BLOG_RACE_MODE_TITLE": {
+    "en": "Introducing Race Mode: Multi-Model AI Competition"
+  },
+  "ATOMS$RESOURCES_BLOG_RACE_MODE_EXCERPT": {
+    "en": "Run multiple AI models simultaneously and pick the best result. A game-changer for quality."
+  },
+  "ATOMS$RESOURCES_BLOG_METAGPT_TITLE": {
+    "en": "MetaGPT Integration: Multi-Agent Collaboration"
+  },
+  "ATOMS$RESOURCES_BLOG_METAGPT_EXCERPT": {
+    "en": "How we integrated MetaGPT for software engineering team simulation."
+  },
+  "ATOMS$RESOURCES_BLOG_PRACTICES_TITLE": {
+    "en": "Best Practices for AI-Assisted Development"
+  },
+  "ATOMS$RESOURCES_BLOG_PRACTICES_EXCERPT": {
+    "en": "Tips and tricks to get the most out of your AI coding assistant."
+  },
+  "ATOMS$RESOURCES_BLOG_FUTURE_TITLE": {
+    "en": "The Future of AI-Powered Coding"
+  },
+  "ATOMS$RESOURCES_BLOG_FUTURE_EXCERPT": {
+    "en": "Our vision for the next generation of AI development tools."
+  },
+  "STATUS$MESSAGE_RECEIVED": {
+    "en": "Processing your request...",
+    "ja": "リクエストを処理中...",
+    "zh-CN": "正在处理您的请求...",
+    "zh-TW": "正在處理您的請求...",
+    "ko-KR": "요청 처리 중...",
+    "no": "Behandler forespørselen din...",
+    "it": "Elaborazione della richiesta...",
+    "pt": "Processando sua solicitação...",
+    "es": "Procesando su solicitud...",
+    "ar": "جاري معالجة طلبك...",
+    "fr": "Traitement de votre demande...",
+    "tr": "İsteğiniz işleniyor...",
+    "de": "Ihre Anfrage wird verarbeitet...",
+    "uk": "Обробка вашого запиту..."
+  },
+  "STATUS$INITIALIZING_AGENT": {
+    "en": "Initializing agent...",
+    "ja": "エージェントを初期化中...",
+    "zh-CN": "正在初始化代理...",
+    "zh-TW": "正在初始化代理...",
+    "ko-KR": "에이전트 초기화 중...",
+    "no": "Initialiserer agent...",
+    "it": "Inizializzazione dell'agente...",
+    "pt": "Inicializando agente...",
+    "es": "Inicializando agente...",
+    "ar": "جاري تهيئة الوكيل...",
+    "fr": "Initialisation de l'agent...",
+    "tr": "Ajan başlatılıyor...",
+    "de": "Agent wird initialisiert...",
+    "uk": "Ініціалізація агента..."
+  },
+  "STATUS$CONNECTING_RUNTIME": {
+    "en": "Connecting to runtime...",
+    "ja": "ランタイムに接続中...",
+    "zh-CN": "正在连接运行时...",
+    "zh-TW": "正在連接運行時...",
+    "ko-KR": "런타임에 연결 중...",
+    "no": "Kobler til kjøretidsmiljø...",
+    "it": "Connessione al runtime...",
+    "pt": "Conectando ao ambiente de execução...",
+    "es": "Conectando al entorno de ejecución...",
+    "ar": "جاري الاتصال ببيئة التشغيل...",
+    "fr": "Connexion à l'environnement d'exécution...",
+    "tr": "Çalışma ortamına bağlanılıyor...",
+    "de": "Verbindung zur Laufzeitumgebung wird hergestellt...",
+    "uk": "Підключення до середовища виконання..."
+  },
+  "STATUS$CLONING_REPOSITORY": {
+    "en": "Cloning repository...",
+    "ja": "リポジトリをクローン中...",
+    "zh-CN": "正在克隆仓库...",
+    "zh-TW": "正在克隆倉庫...",
+    "ko-KR": "저장소 복제 중...",
+    "no": "Kloner depot...",
+    "it": "Clonazione del repository...",
+    "pt": "Clonando repositório...",
+    "es": "Clonando repositorio...",
+    "ar": "جاري استنساخ المستودع...",
+    "fr": "Clonage du dépôt...",
+    "tr": "Depo kopyalanıyor...",
+    "de": "Repository wird geklont...",
+    "uk": "Клонування репозиторію..."
+  },
+  "STATUS$LOADING_MICROAGENTS": {
+    "en": "Loading workspace tools...",
+    "ja": "ワークスペースツールを読み込み中...",
+    "zh-CN": "正在加载工作区工具...",
+    "zh-TW": "正在加載工作區工具...",
+    "ko-KR": "워크스페이스 도구 로드 중...",
+    "no": "Laster arbeidsområdeverktøy...",
+    "it": "Caricamento degli strumenti dell'area di lavoro...",
+    "pt": "Carregando ferramentas do workspace...",
+    "es": "Cargando herramientas del espacio de trabajo...",
+    "ar": "جاري تحميل أدوات مساحة العمل...",
+    "fr": "Chargement des outils de l'espace de travail...",
+    "tr": "Çalışma alanı araçları yükleniyor...",
+    "de": "Workspace-Tools werden geladen...",
+    "uk": "Завантаження інструментів робочої області..."
+  },
+  "STATUS$LOADING_MCP_TOOLS": {
+    "en": "Loading MCP tools...",
+    "ja": "MCPツールを読み込み中...",
+    "zh-CN": "正在加载MCP工具...",
+    "zh-TW": "正在加載MCP工具...",
+    "ko-KR": "MCP 도구 로드 중...",
+    "no": "Laster MCP-verktøy...",
+    "it": "Caricamento degli strumenti MCP...",
+    "pt": "Carregando ferramentas MCP...",
+    "es": "Cargando herramientas MCP...",
+    "ar": "جاري تحميل أدوات MCP...",
+    "fr": "Chargement des outils MCP...",
+    "tr": "MCP araçları yükleniyor...",
+    "de": "MCP-Tools werden geladen...",
+    "uk": "Завантаження інструментів MCP..."
+  },
+  "STATUS$PREPARING_WORKSPACE": {
+    "en": "Preparing workspace...",
+    "ja": "ワークスペースを準備中...",
+    "zh-CN": "正在准备工作区...",
+    "zh-TW": "正在準備工作區...",
+    "ko-KR": "워크스페이스 준비 중...",
+    "no": "Forbereder arbeidsområde...",
+    "it": "Preparazione dell'area di lavoro...",
+    "pt": "Preparando workspace...",
+    "es": "Preparando espacio de trabajo...",
+    "ar": "جاري إعداد مساحة العمل...",
+    "fr": "Préparation de l'espace de travail...",
+    "tr": "Çalışma alanı hazırlanıyor...",
+    "de": "Workspace wird vorbereitet...",
+    "uk": "Підготовка робочої області..."
+  },
+  "STATUS$AGENT_READY": {
+    "en": "Agent is ready!",
+    "ja": "エージェントの準備ができました！",
+    "zh-CN": "代理已就绪！",
+    "zh-TW": "代理已就緒！",
+    "ko-KR": "에이전트 준비 완료!",
+    "no": "Agenten er klar!",
+    "it": "L'agente è pronto!",
+    "pt": "O agente está pronto!",
+    "es": "¡El agente está listo!",
+    "ar": "الوكيل جاهز!",
+    "fr": "L'agent est prêt !",
+    "tr": "Ajan hazır!",
+    "de": "Agent ist bereit!",
+    "uk": "Агент готовий!"
+  }
 }

@@ -95,6 +95,11 @@ class AgentSession:
         self.llm_registry = llm_registry
         self.conversation_stats = conversation_stats
 
+    def _emit_status(self, status: RuntimeStatus, message: str = '') -> None:
+        """Helper to emit progressive status updates to the client."""
+        if self._status_callback:
+            self._status_callback('info', status, message)
+
     async def start(
         self,
         runtime_name: str,
@@ -140,6 +145,11 @@ class AgentSession:
             custom_secrets=custom_secrets if custom_secrets else {}  # type: ignore[arg-type]
         )
         try:
+            # Emit immediate status to show responsiveness
+            self._emit_status(
+                RuntimeStatus.INITIALIZING_AGENT, 'Initializing agent session...'
+            )
+
             runtime_connected = await self._create_runtime(
                 runtime_name=runtime_name,
                 config=config,
@@ -161,6 +171,11 @@ class AgentSession:
             if custom_secrets:
                 self.event_stream.set_secrets(custom_secrets_handler.get_env_vars())
 
+            # Emit status for microagent loading
+            self._emit_status(
+                RuntimeStatus.LOADING_MICROAGENTS, 'Loading workspace tools...'
+            )
+
             self.memory = await self._create_memory(
                 selected_repository=selected_repository,
                 repo_directory=repo_directory,
@@ -173,6 +188,9 @@ class AgentSession:
             # NOTE: this needs to happen before controller is created
             # so MCP tools can be included into the SystemMessageAction
             if self.runtime and runtime_connected and agent.config.enable_mcp:
+                self._emit_status(
+                    RuntimeStatus.LOADING_MCP_TOOLS, 'Loading MCP tools...'
+                )
                 await add_mcp_tools_to_agent(agent, self.runtime, self.memory)
 
             if replay_json:
@@ -195,6 +213,9 @@ class AgentSession:
                     agent_to_llm_config=agent_to_llm_config,
                     agent_configs=agent_configs,
                 )
+
+            # Emit ready status
+            self._emit_status(RuntimeStatus.AGENT_READY, 'Agent is ready!')
 
             if not self._closed:
                 if initial_message:
@@ -327,6 +348,9 @@ class AgentSession:
         custom_secrets_handler = Secrets(custom_secrets=custom_secrets or {})  # type: ignore[arg-type]
         env_vars = custom_secrets_handler.get_env_vars()
 
+        # Emit connecting status
+        self._emit_status(RuntimeStatus.CONNECTING_RUNTIME, 'Connecting to runtime...')
+
         self.logger.debug(f'Initializing runtime `{runtime_name}` now...')
         runtime_cls = get_runtime_cls(runtime_name)
         if runtime_cls == RemoteRuntime:
@@ -380,11 +404,25 @@ class AgentSession:
                 )
             return False
 
+        # Emit status for repository cloning if applicable
+        if selected_repository:
+            self._emit_status(
+                RuntimeStatus.CLONING_REPOSITORY,
+                f'Cloning repository {selected_repository}...',
+            )
+
         await self.runtime.clone_or_init_repo(
             git_provider_tokens, selected_repository, selected_branch
         )
-        await call_sync_from_async(self.runtime.maybe_run_setup_script)
-        await call_sync_from_async(self.runtime.maybe_setup_git_hooks)
+
+        # Emit status for workspace preparation
+        self._emit_status(RuntimeStatus.PREPARING_WORKSPACE, 'Preparing workspace...')
+
+        # Run setup scripts and git hooks in parallel for faster initialization
+        await asyncio.gather(
+            call_sync_from_async(self.runtime.maybe_run_setup_script),
+            call_sync_from_async(self.runtime.maybe_setup_git_hooks),
+        )
 
         self.logger.debug(
             f'Runtime initialized with plugins: {[plugin.name for plugin in self.runtime.plugins]}'
