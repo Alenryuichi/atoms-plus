@@ -35,6 +35,8 @@ export function useCredits(options: UseCreditsOptions = {}) {
     staleTime: 1000 * 60, // 1 minute
     gcTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: true,
+    // Disable toast errors - we have fallback handling in the API service
+    meta: { disableToast: true },
   });
 }
 
@@ -54,5 +56,7 @@ export function useCreditTransactions(options: UseCreditsOptions = {}) {
     enabled: enabled && isSupabaseConfigured() && isAuthenticated && !!userId,
     staleTime: 1000 * 30, // 30 seconds
     gcTime: 1000 * 60 * 5, // 5 minutes
+    // Disable toast errors - graceful fallback to empty array
+    meta: { disableToast: true },
   });
 }
