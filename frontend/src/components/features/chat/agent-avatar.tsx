@@ -11,14 +11,20 @@ interface AgentAvatarProps {
   className?: string;
 }
 
+// Atoms Plus: Dark theme role colors matching atoms.dev
 const roleColors: Record<string, string> = {
-  Coder:
-    "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
-  Planner:
-    "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
-  Designer: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300",
-  Reviewer:
-    "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  Coder: "bg-indigo-500/20 text-indigo-300 border border-indigo-500/30",
+  Planner: "bg-purple-500/20 text-purple-300 border border-purple-500/30",
+  Designer: "bg-pink-500/20 text-pink-300 border border-pink-500/30",
+  Reviewer: "bg-amber-500/20 text-amber-300 border border-amber-500/30",
+};
+
+// Atoms Plus: Avatar gradient backgrounds
+const roleGradients: Record<string, string> = {
+  Coder: "bg-gradient-to-br from-indigo-500 to-blue-600",
+  Planner: "bg-gradient-to-br from-purple-500 to-violet-600",
+  Designer: "bg-gradient-to-br from-pink-500 to-rose-600",
+  Reviewer: "bg-gradient-to-br from-amber-500 to-orange-600",
 };
 
 const sizeClasses = {
@@ -44,19 +50,32 @@ export function AgentAvatar({
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <Avatar className={cn(sizeClasses[size], "border-2 border-primary/20")}>
+      {/* Atoms Plus: Gradient avatar with subtle ring */}
+      <Avatar
+        className={cn(
+          sizeClasses[size],
+          "ring-2 ring-[var(--atoms-border)] ring-offset-2 ring-offset-[var(--atoms-bg-secondary)]",
+        )}
+      >
         {imageUrl && <AvatarImage src={imageUrl} alt={name} />}
-        <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
+        <AvatarFallback
+          className={cn(
+            roleGradients[role],
+            "text-white font-semibold text-sm",
+          )}
+        >
           {initials}
         </AvatarFallback>
       </Avatar>
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-semibold text-foreground">{name}</span>
+        <span className="text-sm font-semibold text-[var(--atoms-text-primary)]">
+          {name}
+        </span>
         {showBadge && (
           <Badge
             variant="secondary"
             className={cn(
-              "text-xs px-2 py-0.5 font-medium w-fit",
+              "text-xs px-2 py-0.5 font-medium w-fit rounded-full",
               roleColors[role],
             )}
           >

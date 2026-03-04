@@ -63,13 +63,14 @@ export function ChatInputContainer({
     <div
       ref={chatContainerRef}
       className={cn(
-        // Modern chat input styling matching reference design
-        "bg-card border border-border/50 shadow-sm",
+        // Atoms Plus: Modern dark input styling matching atoms.dev
+        "bg-[var(--atoms-bg-card)] border border-[var(--atoms-border)]",
         "box-border content-stretch flex flex-col items-start justify-center",
-        "p-4 pt-3 relative rounded-xl w-full",
-        "transition-colors duration-200",
-        "focus-within:border-primary/40 focus-within:shadow-md",
-        conversationMode === "plan" && "border-primary/50",
+        "p-4 pt-3 relative rounded-2xl w-full",
+        "transition-all duration-200 ease-out",
+        "focus-within:border-[var(--atoms-accent-primary)]/50 focus-within:shadow-lg focus-within:shadow-[var(--atoms-accent-primary)]/5",
+        conversationMode === "plan" &&
+          "border-[var(--atoms-accent-secondary)]/50",
       )}
       onDragOver={(e) => onDragOver(e, disabled)}
       onDragLeave={(e) => onDragLeave(e, disabled)}

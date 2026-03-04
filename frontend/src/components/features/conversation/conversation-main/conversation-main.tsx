@@ -39,6 +39,8 @@ export function ConversationMain() {
   return (
     <div
       className={cn(
+        // Atoms Plus: Dark charcoal background matching atoms.dev
+        "bg-[var(--atoms-bg-primary)]",
         isMobile
           ? "relative flex-1 flex flex-col"
           : "h-full flex flex-col overflow-hidden",
@@ -56,12 +58,12 @@ export function ConversationMain() {
             : undefined
         }
       >
-        {/* Chat Panel - left side with clean background */}
+        {/* Chat Panel - left side with atoms.dev dark styling */}
         <div
           className={cn(
             "flex flex-col overflow-hidden",
-            // Modern light background with subtle border
-            "bg-background border-r border-border/30",
+            // Atoms Plus: Dark elevated background with subtle border
+            "bg-[var(--atoms-bg-secondary)] border-r border-[var(--atoms-border-subtle)]",
             isMobile
               ? getMobileChatPanelClass(isRightPanelShown)
               : "transition-all duration-300 ease-in-out",
@@ -85,10 +87,12 @@ export function ConversationMain() {
           <ResizeHandle onMouseDown={handleMouseDown} />
         )}
 
-        {/* Tab Content Panel - always mounted, styled as bottom sheet (mobile) or side panel (desktop) */}
+        {/* Tab Content Panel - atoms.dev styling */}
         <div
           className={cn(
             "transition-all duration-300 ease-in-out overflow-hidden",
+            // Atoms Plus: Elevated card background for right panel
+            "bg-[var(--atoms-bg-elevated)]",
             isMobile
               ? cn(
                   "absolute bottom-4 left-0 right-0 top-160",

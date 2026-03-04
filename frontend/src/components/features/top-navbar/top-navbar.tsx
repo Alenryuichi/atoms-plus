@@ -1,8 +1,8 @@
 import React from "react";
-import { useLocation } from "react-router";
+import { useLocation, NavLink, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import { useGitUser } from "#/hooks/query/use-git-user";
 import { UserActions } from "../sidebar/user-actions";
 import { CreditsDisplay } from "../sidebar/credits-display";
@@ -15,12 +15,96 @@ import { ConversationPanel } from "../conversation-panel/conversation-panel";
 import { ConversationPanelWrapper } from "../conversation-panel/conversation-panel-wrapper";
 import { useLogout } from "#/hooks/mutation/use-logout";
 import { useConfig } from "#/hooks/query/use-config";
+import { useIsAuthed } from "#/hooks/query/use-is-authed";
+import { useSupabaseAuth } from "#/context/supabase-auth-context";
+import { isSupabaseConfigured } from "#/lib/supabase";
 import { displayErrorToast } from "#/utils/custom-toast-handlers";
 import { I18nKey } from "#/i18n/declaration";
 import { cn } from "#/lib/utils";
 import { Button } from "#/components/ui/button";
 
-// Mobile Menu Component - defined before TopNavbar to avoid use-before-define error
+// Resources dropdown items
+const RESOURCES_ITEMS = [
+  { labelKey: I18nKey.ATOMS$NAV_BLOG, href: "/blog" },
+  { labelKey: I18nKey.ATOMS$NAV_USE_CASES, href: "/usecases" },
+  { labelKey: I18nKey.ATOMS$NAV_VIDEOS, href: "/videos" },
+  {
+    labelKey: I18nKey.ATOMS$NAV_GITHUB,
+    href: "https://github.com/All-Hands-AI/OpenHands",
+    external: true,
+  },
+];
+
+// Resources Dropdown Component
+function ResourcesDropdown({
+  t,
+}: {
+  t: ReturnType<typeof useTranslation>["t"];
+}) {
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
+      <button
+        type="button"
+        className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-neutral-300 hover:text-white transition-colors"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {t(I18nKey.ATOMS$NAV_RESOURCES)}
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 transition-transform duration-200",
+            isOpen && "rotate-180",
+          )}
+        />
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-full left-0 mt-1 min-w-[160px] rounded-lg bg-neutral-900 border border-neutral-700/50 shadow-xl py-2"
+          >
+            {RESOURCES_ITEMS.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                target={item.external ? "_blank" : undefined}
+                rel={item.external ? "noopener noreferrer" : undefined}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors"
+              >
+                {t(item.labelKey)}
+                {item.external && (
+                  <svg
+                    className="h-3 w-3 opacity-50"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                )}
+              </a>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// Mobile Menu for authenticated users
 interface MobileMenuProps {
   isEmailVerified: boolean;
   conversationPanelIsOpen: boolean;
@@ -30,7 +114,7 @@ interface MobileMenuProps {
   t: ReturnType<typeof useTranslation>["t"];
 }
 
-function MobileMenu({
+function MobileMenuAuthed({
   isEmailVerified,
   conversationPanelIsOpen,
   setConversationPanelIsOpen,
@@ -46,19 +130,19 @@ function MobileMenu({
       transition={{ duration: 0.2 }}
       className={cn(
         "fixed top-14 left-0 right-0 z-40",
-        "bg-card/95 backdrop-blur-md border-b border-border/40",
+        "bg-neutral-900/95 backdrop-blur-md border-b border-neutral-700/40",
         "p-4 md:hidden",
       )}
     >
       <nav className="flex flex-col gap-3">
         <div className="flex items-center justify-between py-2">
-          <span className="text-sm font-medium text-muted-foreground">
+          <span className="text-sm font-medium text-neutral-400">
             {t(I18nKey.CONVERSATION$START_NEW)}
           </span>
           <NewProjectButton disabled={!isEmailVerified} />
         </div>
         <div className="flex items-center justify-between py-2">
-          <span className="text-sm font-medium text-muted-foreground">
+          <span className="text-sm font-medium text-neutral-400">
             {t(I18nKey.SIDEBAR$CONVERSATIONS)}
           </span>
           <ConversationPanelButton
@@ -69,7 +153,7 @@ function MobileMenu({
             disabled={!isEmailVerified}
           />
         </div>
-        <div className="border-t border-border/40 pt-3 mt-2">
+        <div className="border-t border-neutral-700/40 pt-3 mt-2">
           <div className="flex items-center justify-between">
             <CreditsDisplay />
             <UserActions
@@ -86,11 +170,78 @@ function MobileMenu({
   );
 }
 
+// Mobile Menu for landing page (unauthenticated)
+function MobileMenuLanding({
+  t,
+  onLogin,
+  onSignup,
+}: {
+  t: ReturnType<typeof useTranslation>["t"];
+  onLogin: () => void;
+  onSignup: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
+      className={cn(
+        "fixed top-14 left-0 right-0 z-40",
+        "bg-neutral-900/95 backdrop-blur-md border-b border-neutral-700/40",
+        "p-4 md:hidden",
+      )}
+    >
+      <nav className="flex flex-col gap-2">
+        <NavLink
+          to="/pricing"
+          className="py-3 px-4 text-sm font-medium text-neutral-300 hover:text-white hover:bg-neutral-800 rounded-lg transition-colors"
+        >
+          {t(I18nKey.ATOMS$NAV_PRICING)}
+        </NavLink>
+        <div className="border-t border-neutral-700/40 my-2" />
+        <span className="px-4 text-xs font-medium text-neutral-500 uppercase tracking-wider">
+          {t(I18nKey.ATOMS$NAV_RESOURCES)}
+        </span>
+        {RESOURCES_ITEMS.map((item) => (
+          <a
+            key={item.href}
+            href={item.href}
+            target={item.external ? "_blank" : undefined}
+            rel={item.external ? "noopener noreferrer" : undefined}
+            className="py-2 px-4 text-sm text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg transition-colors"
+          >
+            {t(item.labelKey)}
+          </a>
+        ))}
+        <div className="border-t border-neutral-700/40 my-2" />
+        <div className="flex gap-3 pt-2">
+          <Button
+            variant="ghost"
+            className="flex-1 text-neutral-300 hover:text-white"
+            onClick={onLogin}
+          >
+            {t(I18nKey.ATOMS$NAV_LOGIN)}
+          </Button>
+          <Button
+            className="flex-1 bg-white text-black hover:bg-neutral-200"
+            onClick={onSignup}
+          >
+            {t(I18nKey.ATOMS$NAV_SIGNUP)}
+          </Button>
+        </div>
+      </nav>
+    </motion.div>
+  );
+}
+
 export function TopNavbar() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { pathname } = useLocation();
   const user = useGitUser();
   const { data: config } = useConfig();
+  const { data: isAuthed } = useIsAuthed();
   const {
     data: settings,
     error: settingsError,
@@ -99,10 +250,20 @@ export function TopNavbar() {
   } = useSettings();
   const { mutate: logout } = useLogout();
 
+  // Supabase auth state
+  const { isAuthenticated: isSupabaseAuthed } = useSupabaseAuth();
+
+  // Use Supabase auth if configured, otherwise use the original auth
+  const useSupabaseAuthFlow = isSupabaseConfigured();
+  const effectiveIsAuthed = useSupabaseAuthFlow ? isSupabaseAuthed : isAuthed;
+
   const [settingsModalIsOpen, setSettingsModalIsOpen] = React.useState(false);
   const [conversationPanelIsOpen, setConversationPanelIsOpen] =
     React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
+  // Determine if we're on the landing page (home page and not authenticated)
+  const isLandingPage = pathname === "/" && !effectiveIsAuthed;
 
   React.useEffect(() => {
     if (pathname === "/settings") {
@@ -138,6 +299,90 @@ export function TopNavbar() {
 
   const isEmailVerified = settings?.email_verified !== false;
 
+  const handleLogin = () => navigate("/login");
+  const handleSignup = () => navigate("/login?signup=true");
+
+  // Landing page navigation (atoms.dev style)
+  if (isLandingPage) {
+    return (
+      <>
+        <header
+          aria-label={t(I18nKey.SIDEBAR$NAVIGATION_LABEL)}
+          className={cn(
+            "fixed top-0 left-0 right-0 z-50",
+            "h-16 px-4 md:px-8 lg:px-12",
+            "bg-transparent",
+            "flex items-center justify-between",
+          )}
+        >
+          {/* Left: Logo */}
+          <div className="flex items-center">
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <OpenHandsLogoButton />
+            </motion.div>
+          </div>
+
+          {/* Center/Right: Navigation Links (Desktop) */}
+          <nav className="hidden md:flex items-center gap-1">
+            <NavLink
+              to="/pricing"
+              className="px-4 py-2 text-sm font-medium text-neutral-300 hover:text-white transition-colors"
+            >
+              {t(I18nKey.ATOMS$NAV_PRICING)}
+            </NavLink>
+            <ResourcesDropdown t={t} />
+          </nav>
+
+          {/* Right: Auth Buttons (Desktop) */}
+          <div className="hidden md:flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-neutral-300 hover:text-white hover:bg-transparent"
+              onClick={handleLogin}
+            >
+              {t(I18nKey.ATOMS$NAV_LOGIN)}
+            </Button>
+            <Button
+              size="sm"
+              className="bg-white text-black hover:bg-neutral-200 font-medium px-4"
+              onClick={handleSignup}
+            >
+              {t(I18nKey.ATOMS$NAV_SIGNUP)}
+            </Button>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden text-white hover:bg-white/10"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </Button>
+        </header>
+
+        {/* Mobile Menu - Landing */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <MobileMenuLanding
+              t={t}
+              onLogin={handleLogin}
+              onSignup={handleSignup}
+            />
+          )}
+        </AnimatePresence>
+      </>
+    );
+  }
+
+  // Authenticated navigation (app mode)
   return (
     <>
       <header
@@ -145,7 +390,7 @@ export function TopNavbar() {
         className={cn(
           "fixed top-0 left-0 right-0 z-50",
           "h-14 px-4 md:px-6",
-          "bg-card/80 backdrop-blur-md border-b border-border/40",
+          "bg-neutral-900/80 backdrop-blur-md border-b border-neutral-700/40",
           "flex items-center justify-between",
         )}
       >
@@ -159,15 +404,7 @@ export function TopNavbar() {
         {/* Center: Navigation (Desktop) */}
         <nav className="hidden md:flex items-center gap-2">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-2"
-              disabled={!isEmailVerified}
-              asChild
-            >
-              <NewProjectButton disabled={!isEmailVerified} />
-            </Button>
+            <NewProjectButton disabled={!isEmailVerified} />
           </motion.div>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <ConversationPanelButton
@@ -210,10 +447,10 @@ export function TopNavbar() {
         </Button>
       </header>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Authenticated */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <MobileMenu
+          <MobileMenuAuthed
             isEmailVerified={isEmailVerified}
             conversationPanelIsOpen={conversationPanelIsOpen}
             setConversationPanelIsOpen={setConversationPanelIsOpen}

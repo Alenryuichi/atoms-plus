@@ -10,6 +10,10 @@ export default [
   route("onboarding", "routes/onboarding-form.tsx"),
   layout("routes/root-layout.tsx", [
     index("routes/atoms-home.tsx"),
+    route("pricing", "routes/pricing.tsx"),
+    route("usecases", "routes/usecases.tsx"),
+    route("videos", "routes/videos.tsx"),
+    route("blog", "routes/blog.tsx"),
     route("accept-tos", "routes/accept-tos.tsx"),
     route("settings", "routes/settings.tsx", [
       index("routes/llm-settings.tsx"),

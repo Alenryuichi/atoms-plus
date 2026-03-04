@@ -255,7 +255,8 @@ export function ChatInterface() {
 
   return (
     <ScrollProvider value={scrollProviderValue}>
-      <div className="h-full flex flex-col justify-between pr-0 md:pr-4 relative bg-background">
+      {/* Atoms Plus: Dark theme chat interface matching atoms.dev */}
+      <div className="h-full flex flex-col justify-between pr-0 md:pr-4 relative bg-[var(--atoms-bg-secondary)]">
         {!hasSubstantiveAgentActions &&
           !optimisticUserMessage &&
           !userEventsExist &&
@@ -266,10 +267,15 @@ export function ChatInterface() {
           )}
         {/* Note: We only hide chat suggestions when there's a user message */}
 
+        {/* Atoms Plus: Message area with custom scrollbar */}
         <div
           ref={scrollRef}
           onScroll={(e) => onChatBodyScroll(e.currentTarget)}
-          className="custom-scrollbar-always flex flex-col grow overflow-y-auto overflow-x-hidden px-4 pt-6 gap-3"
+          className="atoms-chat-scroll flex flex-col grow overflow-y-auto overflow-x-hidden px-4 pt-6 gap-4"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "var(--atoms-border) transparent",
+          }}
         >
           {isChatLoading && isReturningToConversation && (
             <ChatMessagesSkeleton />
@@ -295,9 +301,10 @@ export function ChatInterface() {
           )}
         </div>
 
-        <div className="flex flex-col gap-[6px]">
+        {/* Atoms Plus: Bottom control area */}
+        <div className="flex flex-col gap-2 px-2 pb-2">
           <div className="flex justify-between relative">
-            <div className="flex items-end gap-1">
+            <div className="flex items-end gap-2">
               <ConfirmationModeEnabled />
               {isStartingStatus && (
                 <ChatStatusIndicator

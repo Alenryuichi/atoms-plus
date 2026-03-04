@@ -14,6 +14,23 @@
   --border-editor-sidebar: #3c3c4a;
   background-color: var(--base) !important;
   --bg-neutral-muted: #afb8c133;
+
+  /* Atoms Plus: Dark charcoal theme inspired by atoms.dev */
+  --atoms-bg-primary: #0f1115;
+  --atoms-bg-secondary: #141619;
+  --atoms-bg-elevated: #1a1d22;
+  --atoms-bg-card: #1e2127;
+  --atoms-border: #2a2e35;
+  --atoms-border-subtle: #23262d;
+  --atoms-text-primary: #e8eaed;
+  --atoms-text-secondary: #9aa0a9;
+  --atoms-text-muted: #6b7280;
+  --atoms-accent-primary: #6366f1;
+  --atoms-accent-secondary: #8b5cf6;
+  --atoms-accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --atoms-success: #10b981;
+  --atoms-warning: #f59e0b;
+  --atoms-error: #ef4444;
 }
 
 body {

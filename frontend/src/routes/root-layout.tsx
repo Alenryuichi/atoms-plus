@@ -186,16 +186,24 @@ export default function MainApp() {
     setLoginMethodExists(checkLoginMethodExists());
   }, [isAuthed, checkLoginMethodExists]);
 
+  // Check if we're on the home page (which should be publicly accessible)
+  const isHomePage = pathname === "/";
+
   // Determine if we should redirect to login based on auth mode
+  // Home page should be publicly accessible to show atoms.dev style landing page
   const shouldRedirectToLogin = useSupabaseAuthFlow
-    ? // Supabase auth flow: redirect if not authenticated and not loading
-      !effectiveIsLoading && !effectiveIsAuthed && !isOnIntermediatePage
+    ? // Supabase auth flow: redirect if not authenticated and not loading, except for home page
+      !effectiveIsLoading &&
+      !effectiveIsAuthed &&
+      !isOnIntermediatePage &&
+      !isHomePage
     : // Original SAAS flow
       config.isLoading ||
       isAuthLoading ||
       (!isAuthed &&
         !isAuthError &&
         !isOnIntermediatePage &&
+        !isHomePage &&
         config.data?.app_mode === "saas" &&
         !loginMethodExists);
 

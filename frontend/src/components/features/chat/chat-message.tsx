@@ -87,17 +87,17 @@ export function ChatMessage({
       animate="visible"
       custom={type}
     >
-      {/* User message bubble */}
+      {/* Atoms Plus: User message bubble with gradient accent */}
       {isUserMessage && (
         <Card
           className={cn(
-            "px-4 py-3 border-primary/20 bg-primary/10",
+            "px-4 py-3 border-[var(--atoms-accent-primary)]/30 bg-[var(--atoms-accent-primary)]/10",
             "rounded-2xl rounded-tr-md",
-            "shadow-sm",
+            "shadow-lg shadow-[var(--atoms-accent-primary)]/5",
           )}
         >
           <div
-            className="text-sm text-foreground leading-relaxed"
+            className="text-sm text-[var(--atoms-text-primary)] leading-relaxed"
             style={{ whiteSpace: "normal", wordBreak: "break-word" }}
           >
             <MarkdownRenderer includeStandard>{message}</MarkdownRenderer>
@@ -105,18 +105,18 @@ export function ChatMessage({
         </Card>
       )}
 
-      {/* Agent message */}
+      {/* Atoms Plus: Agent message with dark styling */}
       {isAgentMessage && (
         <div
           className={cn(
             "mt-3",
-            // Planning agent has special styling
+            // Planning agent has special gradient border
             isFromPlanningAgent &&
-              "border border-primary/20 bg-primary/5 px-4 py-3 rounded-xl shadow-sm",
+              "border border-[var(--atoms-accent-secondary)]/30 bg-[var(--atoms-bg-card)] px-4 py-3 rounded-xl shadow-md",
           )}
         >
           <div
-            className="text-sm text-foreground leading-relaxed"
+            className="text-sm text-[var(--atoms-text-primary)] leading-relaxed"
             style={{ whiteSpace: "normal", wordBreak: "break-word" }}
           >
             <MarkdownRenderer includeStandard>{message}</MarkdownRenderer>
@@ -124,13 +124,13 @@ export function ChatMessage({
         </div>
       )}
 
-      {/* Hover actions */}
+      {/* Atoms Plus: Hover actions with dark styling */}
       <div
         className={cn(
           "absolute -top-2 z-10",
           isUserMessage ? "-left-2" : "-right-2",
           !isHovering ? "hidden" : "flex",
-          "items-center gap-1 bg-card rounded-lg shadow-md border border-border/50 p-1",
+          "items-center gap-1 bg-[var(--atoms-bg-card)] rounded-lg shadow-lg border border-[var(--atoms-border)] p-1",
         )}
       >
         {actions?.map((action, index) =>

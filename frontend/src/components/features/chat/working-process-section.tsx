@@ -28,10 +28,13 @@ interface WorkingProcessSectionProps {
   className?: string;
 }
 
+// Atoms Plus: Dark theme status icons
 const statusIcons = {
-  todo: <Circle className="h-4 w-4 text-muted-foreground" />,
-  in_progress: <Loader2 className="h-4 w-4 text-primary animate-spin" />,
-  done: <Check className="h-4 w-4 text-green-500" />,
+  todo: <Circle className="h-4 w-4 text-[var(--atoms-text-muted)]" />,
+  in_progress: (
+    <Loader2 className="h-4 w-4 text-[var(--atoms-accent-primary)] animate-spin" />
+  ),
+  done: <Check className="h-4 w-4 text-[var(--atoms-success)]" />,
 };
 
 export function WorkingProcessSection({
@@ -50,28 +53,34 @@ export function WorkingProcessSection({
   const displayTitle = title || t(I18nKey.COMMON$WORKING_PROCESS);
 
   return (
-    <Card className={cn("border-border/50 shadow-card", className)}>
+    // Atoms Plus: Dark card styling matching atoms.dev
+    <Card
+      className={cn(
+        "bg-[var(--atoms-bg-card)] border-[var(--atoms-border)] rounded-xl",
+        className,
+      )}
+    >
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CardHeader className="p-4 pb-2">
-          <CollapsibleTrigger className="flex items-center justify-between w-full group">
+          <CollapsibleTrigger className="flex items-center justify-between w-full group cursor-pointer">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-foreground">
+              <span className="text-sm font-semibold text-[var(--atoms-text-primary)]">
                 {displayTitle}
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-[var(--atoms-text-muted)] bg-[var(--atoms-bg-elevated)] px-2 py-0.5 rounded-full">
                 {completedCount}/{tasks.length} {t(I18nKey.COMMON$COMPLETED)}
               </span>
             </div>
             {isOpen ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+              <ChevronUp className="h-4 w-4 text-[var(--atoms-text-muted)] group-hover:text-[var(--atoms-text-primary)] transition-colors" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+              <ChevronDown className="h-4 w-4 text-[var(--atoms-text-muted)] group-hover:text-[var(--atoms-text-primary)] transition-colors" />
             )}
           </CollapsibleTrigger>
-          {/* Progress bar */}
-          <div className="mt-2 h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+          {/* Atoms Plus: Gradient progress bar */}
+          <div className="mt-3 h-1 w-full bg-[var(--atoms-bg-elevated)] rounded-full overflow-hidden">
             <div
-              className="h-full bg-primary transition-all duration-300 ease-out rounded-full"
+              className="h-full bg-gradient-to-r from-[var(--atoms-accent-primary)] to-[var(--atoms-accent-secondary)] transition-all duration-300 ease-out rounded-full"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -79,35 +88,37 @@ export function WorkingProcessSection({
 
         <CollapsibleContent>
           <CardContent className="p-4 pt-2 space-y-3">
-            {/* Task list */}
-            <div className="space-y-2">
+            {/* Atoms Plus: Task list with bullet styling */}
+            <div className="space-y-1">
               {tasks.map((task) => (
                 <div
                   key={task.id}
                   className={cn(
-                    "flex items-start gap-3 p-2 rounded-lg transition-colors",
-                    task.status === "done" && "opacity-60",
-                    task.status === "in_progress" && "bg-primary/5",
+                    "flex items-start gap-3 p-2 rounded-lg transition-all duration-200",
+                    task.status === "done" && "opacity-50",
+                    task.status === "in_progress" &&
+                      "bg-[var(--atoms-accent-primary)]/5 border-l-2 border-[var(--atoms-accent-primary)]",
                   )}
                 >
                   <div className="mt-0.5">
                     <Checkbox
                       checked={task.status === "done"}
                       disabled
-                      className="data-[state=checked]:bg-primary"
+                      className="border-[var(--atoms-border)] data-[state=checked]:bg-[var(--atoms-accent-primary)] data-[state=checked]:border-[var(--atoms-accent-primary)]"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p
                       className={cn(
-                        "text-sm text-foreground",
-                        task.status === "done" && "line-through",
+                        "text-sm text-[var(--atoms-text-primary)]",
+                        task.status === "done" &&
+                          "line-through text-[var(--atoms-text-muted)]",
                       )}
                     >
                       {task.title}
                     </p>
                     {task.notes && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className="text-xs text-[var(--atoms-text-muted)] mt-0.5">
                         {task.notes}
                       </p>
                     )}
@@ -117,15 +128,15 @@ export function WorkingProcessSection({
               ))}
             </div>
 
-            {/* Action buttons */}
+            {/* Atoms Plus: Action buttons with accent styling */}
             {(onEditPlans || onApprove) && (
-              <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+              <div className="flex items-center gap-2 pt-3 border-t border-[var(--atoms-border)]">
                 {onEditPlans && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={onEditPlans}
-                    className="text-xs"
+                    className="text-xs border-[var(--atoms-border)] text-[var(--atoms-text-secondary)] hover:bg-[var(--atoms-bg-elevated)] hover:text-[var(--atoms-text-primary)]"
                   >
                     {t(I18nKey.COMMON$EDIT_PLANS)}
                   </Button>
@@ -134,7 +145,7 @@ export function WorkingProcessSection({
                   <Button
                     size="sm"
                     onClick={onApprove}
-                    className="text-xs bg-primary hover:bg-primary/90"
+                    className="text-xs bg-[var(--atoms-accent-primary)] hover:bg-[var(--atoms-accent-primary)]/90 text-white"
                   >
                     {t(I18nKey.COMMON$APPROVE)}
                   </Button>
