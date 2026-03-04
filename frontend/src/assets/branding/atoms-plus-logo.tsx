@@ -1,4 +1,4 @@
-import atomsPlusLogo from "./atoms-plus-logo.png";
+import AtomsPlusLogoSvg from "./atoms-plus-logo.svg?react";
 
 interface AtomsPlusLogoProps {
   width?: number;
@@ -12,13 +12,12 @@ export function AtomsPlusLogo({
   className = "",
 }: AtomsPlusLogoProps) {
   return (
-    <img
-      src={atomsPlusLogo}
-      alt="Atoms Plus"
+    <AtomsPlusLogoSvg
       width={width}
       height={height}
       className={className}
-      style={{ objectFit: "contain" }}
+      aria-label="Atoms Plus"
+      role="img"
     />
   );
 }

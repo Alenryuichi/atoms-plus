@@ -408,22 +408,6 @@ export default function AtomsHome() {
             </div>
           </div>
         </motion.div>
-
-        {/* Footer */}
-        <motion.p
-          className="text-sm text-neutral-500 text-center mt-16"
-          variants={itemVariants}
-        >
-          {t(I18nKey.ATOMS$FOOTER_POWERED_BY)}{" "}
-          <a
-            href="https://github.com/All-Hands-AI/OpenHands"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-indigo-400 hover:text-indigo-300 hover:underline transition-colors"
-          >
-            {t(I18nKey.BRANDING$OPENHANDS)}
-          </a>
-        </motion.p>
       </motion.div>
     </div>
   );
