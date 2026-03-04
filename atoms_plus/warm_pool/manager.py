@@ -1,330 +1,142 @@
 """
-Warm Pool Manager - 预热池管理器
+Warm Pool Manager - 预热池状态监控器
 
-核心功能：
-1. 管理预热 runtime 实例的生命周期
-2. 提供快速获取预热实例的接口
-3. 后台自动补充已消耗的实例
-4. 清理过期/空闲实例
+此模块作为 OpenHands LocalRuntime 内置 warm server 功能的状态监控层。
+LocalRuntime 已经内置了预热功能，通过以下环境变量控制：
+- INITIAL_NUM_WARM_SERVERS: 启动时创建的预热服务器数量
+- DESIRED_NUM_WARM_SERVERS: 期望维持的预热服务器数量
+
+本模块提供：
+1. 查询 LocalRuntime 的 warm server 状态
+2. 提供统一的 API 接口
+3. 不实际管理 warm server 的生命周期（由 LocalRuntime 负责）
 """
 
-import asyncio
 import os
-import uuid
-from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import Any
 
 from openhands.core.logger import openhands_logger as logger
 
-from .models import WarmPoolConfig, WarmPoolStatus, WarmRuntime, WarmRuntimeState
-
-if TYPE_CHECKING:
-    from openhands.storage.data_models.settings import Settings
+from .models import WarmPoolConfig, WarmPoolStatus
 
 
 class WarmPoolManager:
     """
-    预热池管理器
-    
-    使用单例模式，在应用启动时初始化并开始预热
+    预热池状态监控器
+
+    这是一个轻量级的状态监控类，读取 LocalRuntime 的内置 warm server 状态
     """
-    
+
     _instance: "WarmPoolManager | None" = None
-    
+
     def __init__(self, config: WarmPoolConfig | None = None):
         self.config = config or WarmPoolConfig()
-        self._pool: dict[str, WarmRuntime] = {}  # pool_id -> WarmRuntime
-        self._lock = asyncio.Lock()
-        self._replenish_task: asyncio.Task | None = None
-        self._cleanup_task: asyncio.Task | None = None
         self._initialized = False
-        
-        # 统计信息
-        self._total_acquisitions = 0
-        self._successful_acquisitions = 0
-        self._fallback_acquisitions = 0
-        self._total_init_time_ms = 0
-        self._init_count = 0
-        
-        # 外部依赖（延迟注入）
-        self._conversation_manager = None
-        self._file_store = None
-        self._sio = None
-        self._server_config = None
-    
+
     @classmethod
     def get_instance(cls, config: WarmPoolConfig | None = None) -> "WarmPoolManager":
         """获取单例实例"""
         if cls._instance is None:
             cls._instance = cls(config)
         return cls._instance
-    
-    def inject_dependencies(
-        self,
-        conversation_manager,
-        file_store,
-        sio,
-        server_config,
-    ):
-        """注入外部依赖（在应用启动时调用）"""
-        self._conversation_manager = conversation_manager
-        self._file_store = file_store
-        self._sio = sio
-        self._server_config = server_config
-    
+
     async def start(self):
-        """启动预热池（开始后台任务）"""
-        if not self.config.enabled:
-            logger.info("Warm pool is disabled")
-            return
-            
+        """
+        启动预热池监控
+
+        注意：实际的 warm server 由 LocalRuntime 在其 setup() 方法中创建，
+        此方法仅标记监控器为已初始化状态
+        """
         if self._initialized:
-            logger.warning("Warm pool already initialized")
+            logger.warning("Warm pool monitor already initialized")
             return
-        
+
+        # 读取环境变量配置
+        initial_num = os.getenv("INITIAL_NUM_WARM_SERVERS", "0")
+        desired_num = os.getenv("DESIRED_NUM_WARM_SERVERS", "0")
+
         logger.info(
-            f"Starting warm pool: min={self.config.min_pool_size}, "
-            f"max={self.config.max_pool_size}"
+            f"Warm pool monitor starting - LocalRuntime config: "
+            f"INITIAL_NUM_WARM_SERVERS={initial_num}, "
+            f"DESIRED_NUM_WARM_SERVERS={desired_num}"
         )
-        
+
         self._initialized = True
-        
-        # 启动后台任务
-        self._replenish_task = asyncio.create_task(self._replenish_loop())
-        self._cleanup_task = asyncio.create_task(self._cleanup_loop())
-        
-        # 初始预热
-        await self._ensure_min_pool_size()
-    
+        logger.info("Warm pool monitor started")
+
     async def stop(self):
-        """停止预热池"""
-        logger.info("Stopping warm pool...")
-        
-        if self._replenish_task:
-            self._replenish_task.cancel()
-            self._replenish_task = None
-        
-        if self._cleanup_task:
-            self._cleanup_task.cancel()
-            self._cleanup_task = None
-        
-        # 清理所有预热实例
-        async with self._lock:
-            for warm_runtime in list(self._pool.values()):
-                await self._destroy_warm_runtime(warm_runtime)
-            self._pool.clear()
-        
+        """停止预热池监控"""
+        logger.info("Warm pool monitor stopping...")
         self._initialized = False
-        logger.info("Warm pool stopped")
-    
-    async def acquire(
-        self,
-        conversation_id: str,
-        user_id: str | None,
-        settings: "Settings | None" = None,
-    ) -> WarmRuntime | None:
-        """
-        获取一个预热好的 runtime
-        
-        Returns:
-            WarmRuntime: 预热好的 runtime，如果没有可用的则返回 None
-        """
-        self._total_acquisitions += 1
-        
-        if not self.config.enabled or not self._initialized:
-            self._fallback_acquisitions += 1
-            return None
-        
-        async with self._lock:
-            # 查找第一个就绪的实例
-            for warm_runtime in self._pool.values():
-                if warm_runtime.is_available():
-                    warm_runtime.assign(conversation_id, user_id)
-                    self._successful_acquisitions += 1
-                    logger.info(
-                        f"Acquired warm runtime {warm_runtime.pool_id} "
-                        f"for conversation {conversation_id}"
-                    )
-                    # 触发补充
-                    asyncio.create_task(self._schedule_replenish())
-                    return warm_runtime
-        
-        # 没有可用的预热实例
-        self._fallback_acquisitions += 1
-        logger.info(
-            f"No warm runtime available for conversation {conversation_id}, "
-            "falling back to normal creation"
-        )
-        return None
+        logger.info("Warm pool monitor stopped")
 
     def get_status(self) -> WarmPoolStatus:
-        """获取预热池状态"""
-        instances = []
+        """
+        获取预热池状态
+
+        从 LocalRuntime 的 _WARM_SERVERS 全局变量读取状态
+        """
+        # 尝试读取 LocalRuntime 的内置状态
         ready_count = 0
-        initializing_count = 0
-        assigned_count = 0
+        instances: list[dict[str, Any]] = []
 
-        for wr in self._pool.values():
-            if wr.state == WarmRuntimeState.READY:
-                ready_count += 1
-            elif wr.state == WarmRuntimeState.INITIALIZING:
-                initializing_count += 1
-            elif wr.state == WarmRuntimeState.ASSIGNED:
-                assigned_count += 1
+        try:
+            # 动态导入以避免循环依赖
+            from openhands.runtime.impl.local.local_runtime import (
+                _WARM_SERVERS,
+                _RUNNING_SERVERS,
+            )
 
-            instances.append({
-                "pool_id": wr.pool_id,
-                "state": wr.state.value,
-                "created_at": wr.created_at.isoformat() if wr.created_at else None,
-                "ready_at": wr.ready_at.isoformat() if wr.ready_at else None,
-                "initialization_time_ms": wr.initialization_time_ms,
-            })
+            ready_count = len(_WARM_SERVERS)
 
-        avg_init_time = (
-            self._total_init_time_ms / self._init_count
-            if self._init_count > 0 else 0.0
-        )
+            # 构建实例信息
+            for i, server_info in enumerate(_WARM_SERVERS):
+                instances.append({
+                    "pool_id": f"warm-server-{i}",
+                    "state": "ready",
+                    "port": server_info.execution_server_port,
+                    "vscode_port": server_info.vscode_port,
+                })
+
+            logger.debug(
+                f"Warm pool status: {ready_count} ready servers, "
+                f"{len(_RUNNING_SERVERS)} running conversations"
+            )
+
+        except ImportError:
+            logger.warning("LocalRuntime not available, warm server status unavailable")
+        except Exception as e:
+            logger.error(f"Error reading warm server status: {e}")
+
+        # 读取环境变量配置
+        initial_num = int(os.getenv("INITIAL_NUM_WARM_SERVERS", "0"))
+        desired_num = int(os.getenv("DESIRED_NUM_WARM_SERVERS", "0"))
+
+        # 判断是否启用
+        enabled = initial_num > 0 or desired_num > 0
 
         return WarmPoolStatus(
-            enabled=self.config.enabled,
-            total_instances=len(self._pool),
+            enabled=enabled,
+            total_instances=ready_count,
             ready_instances=ready_count,
-            initializing_instances=initializing_count,
-            assigned_instances=assigned_count,
-            min_pool_size=self.config.min_pool_size,
-            max_pool_size=self.config.max_pool_size,
-            total_acquisitions=self._total_acquisitions,
-            successful_acquisitions=self._successful_acquisitions,
-            fallback_acquisitions=self._fallback_acquisitions,
-            avg_initialization_time_ms=avg_init_time,
+            initializing_instances=0,  # LocalRuntime 不暴露此状态
+            assigned_instances=0,  # 分配后从 _WARM_SERVERS 移除
+            min_pool_size=initial_num,
+            max_pool_size=desired_num,
+            total_acquisitions=0,  # LocalRuntime 不暴露此统计
+            successful_acquisitions=0,
+            fallback_acquisitions=0,
+            avg_initialization_time_ms=0.0,
             instances=instances,
         )
 
-    async def _ensure_min_pool_size(self):
-        """确保池中至少有 min_pool_size 个就绪实例"""
-        async with self._lock:
-            ready_count = sum(
-                1 for wr in self._pool.values()
-                if wr.state in (WarmRuntimeState.READY, WarmRuntimeState.INITIALIZING)
-            )
-
-            needed = self.config.min_pool_size - ready_count
-            if needed > 0:
-                logger.info(f"Need to create {needed} warm runtime(s)")
-                for _ in range(needed):
-                    asyncio.create_task(self._create_warm_runtime())
-
-    async def _schedule_replenish(self):
-        """延迟补充池"""
-        await asyncio.sleep(self.config.replenish_delay_seconds)
-        await self._ensure_min_pool_size()
-
-    async def _replenish_loop(self):
-        """后台补充循环"""
-        while True:
-            try:
-                await asyncio.sleep(30)  # 每30秒检查一次
-                await self._ensure_min_pool_size()
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                logger.error(f"Error in replenish loop: {e}")
-
-    async def _cleanup_loop(self):
-        """后台清理循环"""
-        while True:
-            try:
-                await asyncio.sleep(60)  # 每60秒检查一次
-                await self._cleanup_expired()
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                logger.error(f"Error in cleanup loop: {e}")
-
-    async def _cleanup_expired(self):
-        """清理过期的预热实例"""
-        now = datetime.utcnow()
-        to_remove = []
-
-        async with self._lock:
-            for pool_id, wr in self._pool.items():
-                # 跳过已分配的
-                if wr.state == WarmRuntimeState.ASSIGNED:
-                    continue
-
-                # 检查是否过期
-                if wr.ready_at:
-                    idle_seconds = (now - wr.ready_at).total_seconds()
-                    if idle_seconds > self.config.max_idle_time_seconds:
-                        to_remove.append(pool_id)
-                        continue
-
-                # 检查生命周期
-                if wr.created_at:
-                    lifetime = (now - wr.created_at).total_seconds()
-                    if lifetime > self.config.max_lifetime_seconds:
-                        to_remove.append(pool_id)
-
-        for pool_id in to_remove:
-            logger.info(f"Cleaning up expired warm runtime: {pool_id}")
-            await self._remove_warm_runtime(pool_id)
-
-    async def _create_warm_runtime(self) -> WarmRuntime | None:
-        """创建一个新的预热 runtime"""
-        pool_id = f"warm-{uuid.uuid4().hex[:8]}"
-
-        warm_runtime = WarmRuntime(
-            pool_id=pool_id,
-            state=WarmRuntimeState.INITIALIZING,
-            created_at=datetime.utcnow(),
-        )
-
-        async with self._lock:
-            if len(self._pool) >= self.config.max_pool_size:
-                logger.warning("Pool is at max capacity, skipping creation")
-                return None
-            self._pool[pool_id] = warm_runtime
-
+    def is_warm_pool_available(self) -> bool:
+        """检查是否有可用的预热实例"""
         try:
-            logger.info(f"Creating warm runtime: {pool_id}")
-            # TODO: 实际创建 runtime 的逻辑
-            # 这里需要调用 conversation_manager 的方法来创建 session
-            # 但不关联到任何特定对话
-
-            # 模拟初始化时间（实际实现时移除）
-            await asyncio.sleep(2)
-
-            warm_runtime.mark_ready()
-            self._init_count += 1
-            self._total_init_time_ms += warm_runtime.initialization_time_ms
-
-            logger.info(
-                f"Warm runtime ready: {pool_id} "
-                f"(init time: {warm_runtime.initialization_time_ms}ms)"
-            )
-            return warm_runtime
-
-        except Exception as e:
-            logger.error(f"Failed to create warm runtime {pool_id}: {e}")
-            warm_runtime.state = WarmRuntimeState.ERROR
-            await self._remove_warm_runtime(pool_id)
-            return None
-
-    async def _remove_warm_runtime(self, pool_id: str):
-        """移除并销毁预热 runtime"""
-        async with self._lock:
-            warm_runtime = self._pool.pop(pool_id, None)
-
-        if warm_runtime:
-            await self._destroy_warm_runtime(warm_runtime)
-
-    async def _destroy_warm_runtime(self, warm_runtime: WarmRuntime):
-        """销毁预热 runtime 释放资源"""
-        logger.info(f"Destroying warm runtime: {warm_runtime.pool_id}")
-        # TODO: 实际清理 runtime 资源
-        # if warm_runtime.session:
-        #     await warm_runtime.session.close()
-        warm_runtime.state = WarmRuntimeState.EXPIRED
+            from openhands.runtime.impl.local.local_runtime import _WARM_SERVERS
+            return len(_WARM_SERVERS) > 0
+        except Exception:
+            return False
 
 
 # 全局单例

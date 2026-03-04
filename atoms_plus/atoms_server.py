@@ -121,26 +121,34 @@ def atoms_plus_health():
 
 @base_app.on_event("startup")
 async def startup_warm_pool():
-    """应用启动时初始化预热池"""
+    """
+    应用启动时初始化 warm pool 监控
+
+    注意：实际的 warm server 由 LocalRuntime 在 setup() 中创建，
+    通过环境变量控制：
+    - INITIAL_NUM_WARM_SERVERS: 启动时创建的预热服务器数量
+    - DESIRED_NUM_WARM_SERVERS: 期望维持的预热服务器数量
+    """
     from atoms_plus.warm_pool import warm_pool_manager
 
-    # 检查环境变量是否启用预热池
-    if os.environ.get("WARM_POOL_ENABLED", "true").lower() == "true":
-        print("🔥 Starting Warm Pool...")
-        await warm_pool_manager.start()
-        print("✅ Warm Pool started")
-    else:
-        print("⏸️ Warm Pool is disabled")
+    initial = os.getenv("INITIAL_NUM_WARM_SERVERS", "0")
+    desired = os.getenv("DESIRED_NUM_WARM_SERVERS", "0")
+
+    print(f"🔥 Warm Pool Config: INITIAL={initial}, DESIRED={desired}")
+    print("   (Managed by LocalRuntime - see openhands/runtime/impl/local/)")
+
+    await warm_pool_manager.start()
+    print("✅ Warm Pool monitor started")
 
 
 @base_app.on_event("shutdown")
 async def shutdown_warm_pool():
-    """应用关闭时停止预热池"""
+    """应用关闭时停止 warm pool 监控"""
     from atoms_plus.warm_pool import warm_pool_manager
 
-    print("🛑 Stopping Warm Pool...")
+    print("🛑 Stopping Warm Pool monitor...")
     await warm_pool_manager.stop()
-    print("✅ Warm Pool stopped")
+    print("✅ Warm Pool monitor stopped")
 
 
 # ==================== 应用导出 ====================
