@@ -1,32 +1,25 @@
 """
-Atoms Plus Warm Pool - Runtime 预热池
+Atoms Plus Warm Pool - Runtime 预热池状态监控
 
-提供预先初始化的 runtime 实例，消除用户创建新对话时的启动等待时间。
-
-架构设计：
-1. WarmPoolManager - 管理预热实例池的生命周期
-2. WarmRuntime - 封装预热的 runtime 实例状态
-3. 后台任务 - 自动补充已消耗的预热实例
+本模块作为 OpenHands LocalRuntime 内置 warm server 功能的状态监控层。
+实际的 warm server 管理由 LocalRuntime 负责，通过环境变量配置：
+- INITIAL_NUM_WARM_SERVERS: 启动时创建的预热服务器数量
+- DESIRED_NUM_WARM_SERVERS: 期望维持的预热服务器数量
 
 使用方式：
     from atoms_plus.warm_pool import warm_pool_manager
-    
-    # 获取一个预热好的 runtime
-    warm_runtime = await warm_pool_manager.acquire()
-    
-    # 如果没有可用的预热 runtime，返回 None
-    if warm_runtime is None:
-        # 回退到正常的 runtime 创建流程
-        ...
+
+    # 获取预热池状态
+    status = warm_pool_manager.get_status()
+    print(f"Ready instances: {status.ready_instances}")
 """
 
 from .manager import WarmPoolManager, warm_pool_manager
-from .models import WarmRuntime, WarmPoolConfig, WarmPoolStatus
+from .models import WarmPoolConfig, WarmPoolStatus
 
 __all__ = [
     "WarmPoolManager",
-    "warm_pool_manager", 
-    "WarmRuntime",
+    "warm_pool_manager",
     "WarmPoolConfig",
     "WarmPoolStatus",
 ]
