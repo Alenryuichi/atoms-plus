@@ -29,16 +29,16 @@ interface AutoRoleIndicatorProps {
   debounceMs?: number;
 }
 
-// 角色颜色映射
+// 角色颜色映射 - 使用中性灰色调，仅 team_leader 保留 amber 强调色
 const roleColors: Record<string, string> = {
-  engineer: "from-indigo-500 to-blue-600",
-  architect: "from-purple-500 to-violet-600",
-  product_manager: "from-pink-500 to-rose-600",
-  data_analyst: "from-cyan-500 to-teal-600",
-  deep_researcher: "from-emerald-500 to-green-600",
-  project_manager: "from-amber-500 to-orange-600",
-  seo_specialist: "from-yellow-500 to-lime-600",
-  team_leader: "from-red-500 to-pink-600",
+  architect: "from-slate-500 to-slate-600",
+  product_manager: "from-zinc-500 to-zinc-600",
+  engineer: "from-stone-500 to-stone-600",
+  data_analyst: "from-neutral-500 to-neutral-600",
+  deep_researcher: "from-gray-500 to-gray-600",
+  project_manager: "from-slate-600 to-slate-700",
+  seo_specialist: "from-zinc-600 to-zinc-700",
+  team_leader: "from-amber-500/70 to-amber-600/70",
 };
 
 // 默认角色状态

@@ -251,10 +251,9 @@ export default function MainApp() {
     <div
       data-testid="root-layout"
       className={cn(
-        // Use h-screen instead of min-h-screen to ensure exact viewport height
-        // This allows flex-1 children to calculate proper heights
-        // Use bg-base to match html/body background and avoid white edges
-        "h-screen lg:min-w-5xl flex flex-col bg-base overflow-hidden",
+        // Use min-h-dvh for proper mobile viewport handling (iOS Safari)
+        // dvh = dynamic viewport height, accounts for browser chrome
+        "min-h-dvh lg:min-w-5xl flex flex-col bg-base overflow-hidden",
         isMobileDevice() && "overflow-hidden",
       )}
     >

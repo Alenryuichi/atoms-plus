@@ -11,17 +11,17 @@
 
 @plugin "tailwindcss-animate";
 
-/* ATOMS PLUS DESIGN TOKENS - Inspired by reference design */
+/* ATOMS PLUS DESIGN TOKENS - Premium dark theme with warm accent */
 @theme {
-  /* Primary Colors - Indigo/Blue accent from reference */
-  --color-primary: #6366f1;
-  --color-primary-hover: #4f46e5;
-  --color-primary-light: #818cf8;
-  --color-primary-dark: #4338ca;
+  /* Primary Colors - Amber/Gold accent (desaturated, warm) */
+  --color-primary: #d4a855;
+  --color-primary-hover: #c99a45;
+  --color-primary-light: #e4c078;
+  --color-primary-dark: #b08a3a;
 
-  /* Secondary - Purple gradient for premium features */
-  --color-secondary: #8b5cf6;
-  --color-secondary-hover: #7c3aed;
+  /* Secondary - Neutral slate for secondary actions */
+  --color-secondary: #475569;
+  --color-secondary-hover: #64748b;
 
   /* Brand Colors - Keep logo gold for brand recognition */
   --color-logo: #cfb755;
@@ -59,13 +59,13 @@
   /* Chat Specific */
   --color-chat-user: #f1f5f9;
   --color-chat-assistant: #eff6ff;
-  --color-chat-accent: #6366f1;
+  --color-chat-accent: #d4a855;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-card: 0 2px 8px -2px rgb(0 0 0 / 0.08), 0 4px 12px -4px rgb(0 0 0 / 0.12);
+  /* Shadows - tinted to match dark charcoal theme */
+  --shadow-sm: 0 1px 2px 0 rgb(15 17 21 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(15 17 21 / 0.4), 0 2px 4px -2px rgb(15 17 21 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(15 17 21 / 0.5), 0 4px 6px -4px rgb(15 17 21 / 0.4);
+  --shadow-card: 0 2px 8px -2px rgb(15 17 21 / 0.4), 0 4px 12px -4px rgb(15 17 21 / 0.5);
 
   /* Border Radius */
   --radius-sm: 6px;
@@ -533,4 +533,128 @@
   --sidebar-accent-foreground: oklch(0.98 0 0);
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: oklch(0.65 0.2 265);
+}
+
+/* Grain overlay for premium texture */
+.grain-overlay::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  mix-blend-mode: overlay;
+}
+
+/* Premium hover state for cards */
+.card-premium {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -8px rgb(15 17 21 / 0.5), 0 0 0 1px rgb(212 168 85 / 0.1);
+}
+
+/* Skeleton loading animation - more subtle */
+.skeleton-premium {
+  background: linear-gradient(
+    90deg,
+    var(--atoms-bg-elevated) 0%,
+    var(--atoms-bg-card) 50%,
+    var(--atoms-bg-elevated) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Tabular numbers for data displays */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* =============================================================
+   REACT BITS - SPOTLIGHT CARD
+   Premium hover spotlight effect for cards
+   ============================================================= */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  --spotlight-color: rgba(212, 168, 85, 0.15);
+}
+
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at var(--mouse-x) var(--mouse-y),
+    var(--spotlight-color),
+    transparent 80%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.spotlight-card:hover::before,
+.spotlight-card:focus-within::before {
+  opacity: 0.6;
+}
+
+/* Ensure card content stays above spotlight */
+.spotlight-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* =============================================================
+   REACT BITS - STAR BORDER
+   Premium animated star border effect for buttons
+   ============================================================= */
+@keyframes star-movement-bottom {
+  0% {
+    transform: translate(0%, 0%);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-100%, 0%);
+    opacity: 0;
+  }
+}
+
+@keyframes star-movement-top {
+  0% {
+    transform: translate(0%, 0%);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(100%, 0%);
+    opacity: 0;
+  }
+}
+
+.animate-star-movement-bottom {
+  animation: star-movement-bottom linear infinite alternate;
+}
+
+.animate-star-movement-top {
+  animation: star-movement-top linear infinite alternate;
 }

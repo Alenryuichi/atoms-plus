@@ -20,6 +20,7 @@ import { displayErrorToast } from "#/utils/custom-toast-handlers";
 import { I18nKey } from "#/i18n/declaration";
 import { cn } from "#/lib/utils";
 import { Button } from "#/components/ui/button";
+import { LanguageSwitcher } from "#/components/shared/language-switcher";
 
 // Resources dropdown items
 const RESOURCES_ITEMS = [
@@ -239,6 +240,14 @@ function MobileMenuAuthed({
           ))}
         </div>
 
+        {/* Language Switcher */}
+        <div className="flex items-center justify-between px-2 py-2">
+          <span className="text-sm text-neutral-400">
+            {t(I18nKey.SETTINGS$LANGUAGE)}
+          </span>
+          <LanguageSwitcher variant="full" />
+        </div>
+
         {/* User Section */}
         <div className="border-t border-neutral-800/50 pt-4 mt-2">
           <div className="flex items-center justify-between">
@@ -301,6 +310,14 @@ function MobileMenuLanding({
             {t(item.labelKey)}
           </a>
         ))}
+        <div className="border-t border-neutral-700/40 my-2" />
+        {/* Language Switcher */}
+        <div className="flex items-center justify-between px-4 py-2">
+          <span className="text-sm text-neutral-400">
+            {t(I18nKey.SETTINGS$LANGUAGE)}
+          </span>
+          <LanguageSwitcher variant="full" />
+        </div>
         <div className="border-t border-neutral-700/40 my-2" />
         <div className="flex gap-3 pt-2">
           <Button
@@ -422,6 +439,7 @@ export function TopNavbar() {
 
           {/* Right: Auth Buttons (Desktop) */}
           <div className="hidden md:flex items-center gap-3">
+            <LanguageSwitcher />
             <Button
               variant="ghost"
               size="sm"
@@ -510,10 +528,9 @@ export function TopNavbar() {
               to="/"
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg",
-                "bg-gradient-to-r from-indigo-600 to-purple-600",
-                "hover:from-indigo-500 hover:to-purple-500",
+                "bg-[var(--atoms-accent-primary)] hover:bg-[var(--atoms-accent-hover)]",
                 "text-white font-medium text-sm",
-                "shadow-lg shadow-indigo-500/20",
+                "shadow-lg shadow-amber-500/20",
                 "transition-all duration-200",
                 !isEmailVerified && "opacity-50 pointer-events-none",
               )}
@@ -575,6 +592,7 @@ export function TopNavbar() {
 
         {/* Right: User Actions (Desktop) */}
         <div className="hidden md:flex items-center gap-4">
+          <LanguageSwitcher />
           <CreditsDisplay />
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <UserActions

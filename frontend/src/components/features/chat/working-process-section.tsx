@@ -80,7 +80,7 @@ export function WorkingProcessSection({
           {/* Atoms Plus: Gradient progress bar */}
           <div className="mt-3 h-1 w-full bg-[var(--atoms-bg-elevated)] rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-[var(--atoms-accent-primary)] to-[var(--atoms-accent-secondary)] transition-all duration-300 ease-out rounded-full"
+              className="h-full bg-[var(--atoms-accent-primary)] transition-all duration-300 ease-out rounded-full"
               style={{ width: `${progress}%` }}
             />
           </div>

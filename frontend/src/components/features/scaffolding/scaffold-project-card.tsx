@@ -2,13 +2,14 @@
 import React, { useState } from "react";
 import { BrandButton } from "../settings/brand-button";
 import { ScaffoldWizard } from "./scaffold-wizard";
+import { SpotlightCard } from "#/components/ui/spotlight-card";
 
 export function ScaffoldProjectCard() {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   return (
     <>
-      <section className="w-full min-h-[286px] md:min-h-auto flex flex-col rounded-[12px] p-[20px] gap-[10px] border border-[#727987] bg-[#26282D] relative">
+      <SpotlightCard className="w-full min-h-[280px] md:min-h-auto flex flex-col rounded-xl p-5 gap-3 border border-[var(--atoms-border-subtle)] bg-[var(--atoms-bg-card)] relative transition-all duration-300 hover:border-[var(--atoms-border)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-[10px]">
             <span className="text-lg">🚀</span>
@@ -24,16 +25,16 @@ export function ScaffoldProjectCard() {
           </span>
         </div>
         <div className="flex flex-wrap gap-2 mt-2">
-          <span className="px-2 py-0.5 text-xs rounded bg-[#61DAFB]/20 text-[#61DAFB]">
+          <span className="px-2.5 py-1 text-xs font-medium rounded-md bg-sky-500/15 text-sky-400 border border-sky-500/20">
             React
           </span>
-          <span className="px-2 py-0.5 text-xs rounded bg-white/10 text-white">
+          <span className="px-2.5 py-1 text-xs font-medium rounded-md bg-white/10 text-white/90 border border-white/10">
             Next.js
           </span>
-          <span className="px-2 py-0.5 text-xs rounded bg-[#42B883]/20 text-[#42B883]">
+          <span className="px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
             Vue
           </span>
-          <span className="px-2 py-0.5 text-xs rounded bg-[#00DC82]/20 text-[#00DC82]">
+          <span className="px-2.5 py-1 text-xs font-medium rounded-md bg-green-500/15 text-green-400 border border-green-500/20">
             Nuxt
           </span>
         </div>
@@ -46,7 +47,7 @@ export function ScaffoldProjectCard() {
         >
           Create Project
         </BrandButton>
-      </section>
+      </SpotlightCard>
 
       <ScaffoldWizard
         isOpen={isWizardOpen}

@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCreateConversation } from "#/hooks/mutation/use-create-conversation";
 import { LoadingSpinner } from "#/components/shared/loading-spinner";
+import { ShuffleText } from "#/components/ui/shuffle-text";
+import { StarBorder } from "#/components/ui/star-border";
 import { I18nKey } from "#/i18n/declaration";
 
 // Animation variants
@@ -229,9 +231,13 @@ export default function AtomsHome() {
         >
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight">
             {t(I18nKey.ATOMS$HERO_TITLE_PREFIX)}{" "}
-            <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              {t(I18nKey.ATOMS$HERO_TITLE_HIGHLIGHT)}
-            </span>
+            <ShuffleText
+              text={t(I18nKey.ATOMS$HERO_TITLE_HIGHLIGHT)}
+              className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 bg-clip-text text-transparent"
+              tag="span"
+              duration={40}
+              triggerOnHover
+            />
           </h1>
           <p className="text-lg md:text-xl text-neutral-400 max-w-2xl mx-auto leading-relaxed">
             {t(I18nKey.ATOMS$HERO_SUBTITLE)}
@@ -259,38 +265,45 @@ export default function AtomsHome() {
                 disabled={isCreating}
                 aria-label={t(I18nKey.ATOMS$INPUT_PLACEHOLDER)}
               />
-              <motion.button
+              <StarBorder
+                as="button"
                 type="button"
                 onClick={() => handleSubmit(inputValue)}
                 disabled={!inputValue.trim() || isCreating}
-                className="mr-3 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:from-neutral-700 disabled:to-neutral-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-300 flex items-center gap-2 shadow-lg shadow-indigo-500/20"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                className="mr-3"
+                color="#d4a855"
+                speed="4s"
               >
-                {isCreating ? (
-                  <>
-                    <LoadingSpinner size="small" />
-                    <span>{t(I18nKey.ATOMS$BUTTON_CREATING)}</span>
-                  </>
-                ) : (
-                  <>
-                    <span>{t(I18nKey.ATOMS$BUTTON_START)}</span>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M14 5l7 7m0 0l-7 7m7-7H3"
-                      />
-                    </svg>
-                  </>
-                )}
-              </motion.button>
+                <motion.span
+                  className="flex items-center gap-2 font-semibold"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {isCreating ? (
+                    <>
+                      <LoadingSpinner size="small" />
+                      <span>{t(I18nKey.ATOMS$BUTTON_CREATING)}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{t(I18nKey.ATOMS$BUTTON_START)}</span>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M14 5l7 7m0 0l-7 7m7-7H3"
+                        />
+                      </svg>
+                    </>
+                  )}
+                </motion.span>
+              </StarBorder>
             </div>
           </div>
         </motion.div>
