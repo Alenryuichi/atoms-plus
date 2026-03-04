@@ -56,6 +56,8 @@ export function UserActions({ onLogout, user, isLoading }: UserActionsProps) {
       {(shouldShowUserActions || isOSS) && (
         <div
           className={cn(
+            // Position the dropdown container at top-right of avatar
+            "absolute top-full right-0",
             "opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto",
             showMenu && "opacity-100 pointer-events-auto",
             // Invisible hover bridge: extends hover zone to create a "safe corridor"
