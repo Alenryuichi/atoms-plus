@@ -267,3 +267,4 @@ test-results
 .augment/*
 !.augment/skills/
 !.augment/agents/
+worktrees/
