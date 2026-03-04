@@ -1,56 +1,50 @@
 ---
-name: one-sentence-app
+name: vibe-coding
 type: repo
 version: 2.0.0
 agent: CodeActAgent
 ---
 
-# 一句话生成 Web 应用
+# Vibe Coding: One-Sentence Web App Generation
 
-当用户用自然语言描述想要的应用时（如"创建一个待办事项应用"），你应该自动完成整个流程。
+When the user describes an app in natural language (e.g., "Create a todo app"), you execute the complete workflow autonomously.
 
-## 触发场景
+## Core Philosophy
 
-当用户的消息包含以下意图时激活：
-- "创建一个...应用/网站/项目"
-- "帮我做一个..."
-- "我想要一个..."
-- "Create a ... app"
-- "Build me a ..."
-- "Make a ..."
+1. **Fast delivery** — Start building immediately, ask minimal questions
+2. **Fully functional** — Generate working code, not templates
+3. **Instant feedback** — Always run `npm run dev` and report the preview URL
+4. **Smart defaults** — React + Vite + TypeScript + Tailwind unless user specifies otherwise
 
-## 执行流程
+## Execution Workflow
 
-### 第 1 步：理解需求（不超过 2 轮对话）
+### Step 1: Clarify (Max 1-2 questions)
 
-如果用户需求不够清晰，**最多问 1-2 个问题**：
+If the user's request is vague, ask **at most 1-2 clarifying questions**:
 
 ```
-必须明确的：
-- 应用的核心功能是什么？
+MUST clarify:
+- What is the core functionality?
 
-可以推断的（用户没说就用默认值）：
-- 框架：默认 React + Vite
-- 样式：默认 Tailwind CSS
-- 语言：默认 TypeScript
+INFER from context (use defaults if not specified):
+- Framework: React + Vite (default)
+- Styling: Tailwind CSS (default)
+- Language: TypeScript (default)
 ```
 
-**不要过度询问**。用户说"待办事项应用"，你就知道需要：添加、删除、标记完成。
+**Do NOT over-ask.** "Todo app" implies: add, delete, mark complete. Start building.
 
-### 第 2 步：创建项目
+### Step 2: Create Project
 
-使用 Vite 创建项目（最快的方式）：
+Use Vite for the fastest setup:
 
 ```bash
-# React 项目
 npm create vite@latest my-app -- --template react-ts
 cd my-app
 
-# 安装 Tailwind CSS
 npm install -D tailwindcss postcss autoprefixer
 npx tailwindcss init -p
 
-# 配置 tailwind.config.js
 cat > tailwind.config.js << 'EOF'
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -60,7 +54,6 @@ export default {
 }
 EOF
 
-# 配置 src/index.css
 cat > src/index.css << 'EOF'
 @tailwind base;
 @tailwind components;
@@ -68,11 +61,11 @@ cat > src/index.css << 'EOF'
 EOF
 ```
 
-### 第 3 步：实现功能
+### Step 3: Implement Features
 
-直接编写代码实现用户需要的功能。**不要只生成模板，要生成完整可用的代码。**
+Write complete, functional code. **Not boilerplate — real features.**
 
-示例 - 待办事项应用的 `src/App.tsx`：
+Example `src/App.tsx` for a todo app:
 
 ```tsx
 import { useState } from 'react'
@@ -104,33 +97,25 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-md mx-auto bg-white rounded-lg shadow p-6">
-        <h1 className="text-2xl font-bold mb-4">待办事项</h1>
+        <h1 className="text-2xl font-bold mb-4">Todo List</h1>
         <div className="flex gap-2 mb-4">
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && addTodo()}
-            placeholder="添加新任务..."
+            placeholder="Add a task..."
             className="flex-1 px-3 py-2 border rounded"
           />
-          <button onClick={addTodo} className="px-4 py-2 bg-blue-500 text-white rounded">
-            添加
+          <button onClick={addTodo} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            Add
           </button>
         </div>
         <ul className="space-y-2">
           {todos.map(todo => (
             <li key={todo.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-              <input
-                type="checkbox"
-                checked={todo.completed}
-                onChange={() => toggleTodo(todo.id)}
-              />
-              <span className={todo.completed ? 'line-through text-gray-400' : ''}>
-                {todo.text}
-              </span>
-              <button onClick={() => deleteTodo(todo.id)} className="ml-auto text-red-500">
-                删除
-              </button>
+              <input type="checkbox" checked={todo.completed} onChange={() => toggleTodo(todo.id)} />
+              <span className={todo.completed ? 'line-through text-gray-400' : ''}>{todo.text}</span>
+              <button onClick={() => deleteTodo(todo.id)} className="ml-auto text-red-500 hover:text-red-700">Delete</button>
             </li>
           ))}
         </ul>
@@ -140,45 +125,45 @@ export default function App() {
 }
 ```
 
-### 第 4 步：安装依赖并启动
+### Step 4: Install & Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-### 第 5 步：告诉用户结果
+### Step 5: Report Results
 
 ```
-✅ 应用已创建完成！
+✅ App created successfully!
 
-📁 项目位置: /workspace/my-app
-🚀 开发服务器: http://localhost:5173
+📁 Location: /workspace/my-app
+🚀 Dev server: http://localhost:5173
 
-功能：
-- ✅ 添加待办事项
-- ✅ 标记完成
-- ✅ 删除任务
+Features implemented:
+- ✅ Add tasks
+- ✅ Mark complete
+- ✅ Delete tasks
 
-下一步你可以：
-- 修改样式
-- 添加数据持久化（localStorage 或 Supabase）
-- 添加更多功能
+Next steps:
+- Customize styling
+- Add persistence (localStorage or Supabase)
+- Add more features
 ```
 
-## 框架选择指南
+## Framework Selection
 
-| 用户说的 | 使用的框架 |
-|---------|-----------|
-| "简单应用"、"小工具" | React + Vite |
-| "需要 SEO"、"博客"、"官网" | Next.js |
-| "后台管理"、"Dashboard" | React + Vite + shadcn/ui |
-| "Vue" | Vue 3 + Vite |
+| User Intent | Framework |
+|-------------|-----------|
+| "simple app", "small tool", "utility" | React + Vite |
+| "needs SEO", "blog", "landing page" | Next.js |
+| "admin panel", "dashboard" | React + Vite + shadcn/ui |
+| "Vue" mentioned | Vue 3 + Vite |
 
-## 关键原则
+## Best Practices (from Vibe Coding research)
 
-1. **快速交付** - 用户说一句话，你就开始做，不要问太多
-2. **完整可用** - 生成的代码是能运行的，不是半成品
-3. **启动服务** - 最后一定要运行 `npm run dev`
-4. **告知结果** - 明确告诉用户预览地址和已实现的功能
+1. **Efficient onboarding** — Use least tokens to convey maximum context
+2. **Automatic feedback loop** — Run `npm run build` or `npm run dev` after changes
+3. **Don't re-scan** — Go directly to the directories you need
+4. **Complete the loop** — Always end with a running dev server and clear summary
 
