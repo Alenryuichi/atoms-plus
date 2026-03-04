@@ -1,109 +1,74 @@
 ---
-name: atoms_plus
+name: atoms-plus
 type: repo
-version: 1.0.0
+version: 2.0.0
 agent: CodeActAgent
 ---
 
-# Atoms Plus 低代码平台
+# Atoms Plus Development Guide
 
-Atoms Plus 是一个基于 OpenHands 的 AI 辅助开发平台，目标是复刻 atoms.dev 的功能。
+You are working in the Atoms Plus repository, an AI-assisted development platform built on OpenHands.
 
-## 项目架构
+## Project Structure
 
 ```
 atoms-plus/
-├── atoms_plus/                 # Atoms Plus 扩展模块
-│   ├── atoms_server.py         # 扩展服务器入口
-│   ├── scaffolding/            # 项目脚手架系统
-│   │   ├── api.py              # API 路由
-│   │   ├── generator.py        # 项目生成器
-│   │   ├── models.py           # 数据模型
-│   │   └── templates/          # 项目模板
-│   ├── race_mode/              # 多模型竞速功能
-│   └── roles/                  # Agent 角色系统
-├── frontend/                   # OpenHands 前端
-│   └── src/components/features/scaffolding/  # 脚手架 UI
-├── openhands/                  # OpenHands 核心代码
-└── .openhands/microagents/     # 自定义 Skills
+├── atoms_plus/           # Backend extensions
+│   ├── atoms_server.py   # Entry point (Railway runs this)
+│   ├── scaffolding/      # Project scaffolding API
+│   ├── race_mode/        # Multi-model racing
+│   └── roles/            # Agent role system
+├── frontend/             # React frontend (Vercel)
+├── openhands/            # OpenHands core (don't modify)
+└── .openhands/microagents/  # Custom skills
 ```
 
-## 核心功能
+## Quick Commands
 
-### 1. 项目脚手架系统
-
-支持一键生成 React/Next.js/Vue/Nuxt 项目：
-
-```python
-from atoms_plus.scaffolding import ProjectGenerator, ProjectConfig, ProjectType
-
-config = ProjectConfig(
-    name='my-app',
-    project_type=ProjectType.NEXTJS,
-    features=[FeatureSet.TYPESCRIPT, FeatureSet.SUPABASE]
-)
-result = ProjectGenerator().generate(config)
-```
-
-### 2. Race Mode（多模型竞速）
-
-同时调用多个 LLM 模型，选择最佳结果：
-- 后端代码: `atoms_plus/race_mode/`
-- 前端 UI: 待实现
-
-### 3. Agent 角色系统
-
-预定义的专业角色：
-- Coder（代码编写）
-- Designer（UI 设计）
-- Planner（架构规划）
-
-## 部署信息
-
-| 环境 | URL | 平台 |
-|------|-----|------|
-| 前端 | https://frontend-ten-beta-79.vercel.app | Vercel |
-| 后端 | https://openhands-production-c7c2.up.railway.app | Railway |
-| 数据库 | akvsldogobzimfbtrdha.supabase.co | Supabase |
-
-## 开发指南
-
-### 启动后端
+### Backend Development
 
 ```bash
-cd atoms-plus
+# Run backend locally
 uvicorn atoms_plus.atoms_server:app --host 0.0.0.0 --port 3000 --reload
+
+# Run tests
+poetry run pytest tests/unit/test_xxx.py
+
+# Lint before commit
+pre-commit run --config ./dev_config/python/.pre-commit-config.yaml
 ```
 
-### 启动前端
+### Frontend Development
 
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev          # Start dev server
+npm run lint:fix     # Fix lint issues
+npm run build        # Production build
 ```
 
-### 运行测试
+## Deployment
 
-```bash
-# 后端测试
-poetry run pytest tests/unit/test_xxx.py
+| Service | Platform | URL |
+|---------|----------|-----|
+| Frontend | Vercel | https://frontend-ten-beta-79.vercel.app |
+| Backend | Railway | https://openhands-production-c7c2.up.railway.app |
+| Database | Supabase | https://akvsldogobzimfbtrdha.supabase.co |
 
-# 前端测试
-cd frontend && npm run test
-```
+## Key APIs
 
-## 技术栈
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/atoms-plus` | GET | Version info |
+| `/api/v1/scaffolding/templates` | GET | Project templates |
+| `/api/v1/scaffolding/generate` | POST | Generate project |
+| `/api/v1/roles/auto-detect` | POST | Detect best role |
+| `/api/v1/race/start` | POST | Start model race |
 
-- **后端**: Python 3.12+, FastAPI, Jinja2
-- **前端**: React 18, TypeScript, Tailwind CSS, Vite
-- **数据库**: Supabase (PostgreSQL)
-- **部署**: Vercel (前端), Railway (后端)
-- **AI**: 阿里百炼 (qwen-plus), 可扩展支持其他 LLM
+## Development Rules
 
-## 相关文档
-
-- `CLAUDE.md` - 部署配置详情
-- `AGENTS.md` - OpenHands 开发指南
-- `.openhands/microagents/` - 自定义 Skills
-
+1. **V1 Architecture** - Modify `openhands/app_server/`, not `openhands/server/`
+2. **Runtime** - Use `ProcessSandboxService` when `RUNTIME=local`
+3. **CORS** - Always set `PERMITTED_CORS_ORIGINS` in Railway
+4. **Pre-commit** - Run hooks before pushing any changes

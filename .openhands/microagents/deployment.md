@@ -1,180 +1,127 @@
 ---
 name: deployment
-type: knowledge
-version: 1.0.0
+type: task
+version: 2.0.0
 agent: CodeActAgent
 triggers:
 - deploy
 - vercel
-- 部署
-- 上线
+- railway
 - netlify
-- cloudflare
+- publish
+- go live
 ---
 
-# 项目部署指南
+# Deployment Assistant
 
-Atoms Plus 支持多种部署平台，推荐使用 Vercel 进行一键部署。
+When the user wants to deploy their app, execute the deployment workflow.
 
-## Vercel 部署
+## Smart Defaults
 
-### 方式一：CLI 部署
+- **Frontend**: Vercel (default) or Netlify
+- **Backend**: Railway (default) or Render
+- **Static sites**: Cloudflare Pages
+
+## Workflow
+
+### Step 1: Detect Project Type
+
+Check for:
+- `next.config.*` → Next.js
+- `nuxt.config.*` → Nuxt 3
+- `vite.config.*` → Vite (React/Vue)
+- `package.json` with build script → Generic Node
+
+### Step 2: Pre-deployment Checks
 
 ```bash
-# 安装 Vercel CLI
+# Ensure build works locally
+npm run build
+
+# Check for TypeScript errors
+npm run type-check 2>/dev/null || true
+
+# Check environment variables
+cat .env.example 2>/dev/null || echo "No .env.example found"
+```
+
+### Step 3: Deploy to Vercel (Frontend)
+
+```bash
+# Install Vercel CLI if needed
 npm i -g vercel
 
-# 登录
-vercel login
-
-# 部署（自动检测框架）
-vercel
-
-# 部署到生产环境
+# Deploy (will prompt for login if needed)
 vercel --prod
 ```
 
-### 方式二：Git 集成
-
-1. 将项目推送到 GitHub/GitLab/Bitbucket
-2. 在 Vercel Dashboard 导入项目
-3. 配置环境变量
-4. 自动部署
-
-### 环境变量配置
-
-在 Vercel Dashboard 或使用 CLI 配置：
+### Step 4: Deploy to Railway (Backend)
 
 ```bash
-# 添加环境变量
+# Install Railway CLI if needed
+npm i -g @railway/cli
+
+# Login and deploy
+railway login
+railway up
+```
+
+### Step 5: Configure Environment Variables
+
+**Vercel:**
+```bash
+vercel env add NEXT_PUBLIC_API_URL
 vercel env add SUPABASE_URL
-vercel env add SUPABASE_ANON_KEY
-
-# 查看环境变量
-vercel env ls
 ```
 
-## Netlify 部署
-
+**Railway:**
 ```bash
-# 安装 Netlify CLI
-npm i -g netlify-cli
-
-# 登录
-netlify login
-
-# 初始化项目
-netlify init
-
-# 部署
-netlify deploy --prod
+railway variables set API_KEY=xxx
+railway variables set DATABASE_URL=xxx
 ```
 
-### netlify.toml 配置
+### Step 6: Report
 
-```toml
-[build]
-  command = "npm run build"
-  publish = "dist"  # 或 "out" for Next.js static
+```
+✅ Deployment complete!
 
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+🌐 URLs:
+- Production: https://your-app.vercel.app
+- Preview: https://your-app-git-branch.vercel.app
+
+📋 Checklist:
+- ✅ Build succeeded
+- ✅ Environment variables set
+- ✅ Domain configured (if custom)
+
+⚠️ Remember to:
+- Set up CORS for API if separate backend
+- Configure custom domain DNS
+- Enable HTTPS (automatic on Vercel/Railway)
 ```
 
-## Cloudflare Pages 部署
-
-```bash
-# 安装 Wrangler CLI
-npm i -g wrangler
-
-# 登录
-wrangler login
-
-# 创建项目
-wrangler pages project create my-project
-
-# 部署
-wrangler pages deploy dist
-```
-
-## 框架特定配置
-
-### Next.js
-
-```javascript
-// next.config.mjs
-export default {
-  output: 'standalone', // 用于 Docker 部署
-  // 或
-  output: 'export',     // 用于静态部署
-};
-```
-
-### Nuxt 3
-
-```typescript
-// nuxt.config.ts
-export default defineNuxtConfig({
-  nitro: {
-    preset: 'vercel', // 或 'netlify', 'cloudflare-pages'
-  }
-});
-```
-
-### Vite (React/Vue)
-
-```typescript
-// vite.config.ts
-export default defineConfig({
-  base: '/', // 设置基础路径
-  build: {
-    outDir: 'dist',
-  }
-});
-```
-
-## 自定义域名
+## Platform-Specific Notes
 
 ### Vercel
+- Auto-detects Next.js, Vite, Nuxt
+- Serverless functions in `/api`
+- Edge functions supported
 
-1. 在 Dashboard 进入 Project Settings > Domains
-2. 添加域名（如 `app.example.com`）
-3. 按提示配置 DNS 记录
+### Railway
+- Dockerfile or Nixpacks auto-detection
+- Persistent volumes available
+- PostgreSQL/Redis add-ons
 
-### DNS 配置示例
+### Netlify
+- Use `netlify.toml` for redirects
+- Edge functions supported
+- Form handling built-in
 
-```
-类型    名称    值
-A       @       76.76.21.21
-CNAME   www     cname.vercel-dns.com
-```
+## Common Issues
 
-## 部署检查清单
-
-- [ ] 所有环境变量已配置
-- [ ] 构建命令正确（`npm run build`）
-- [ ] 输出目录正确（`dist`/`out`/`.next`）
-- [ ] 域名 DNS 已配置
-- [ ] HTTPS 已启用
-- [ ] 404 页面已配置
-- [ ] SEO meta 标签已添加
-
-## 常见问题
-
-### 构建失败
-
-```bash
-# 本地测试构建
-npm run build
-
-# 检查 TypeScript 错误
-npm run type-check
-```
-
-### 环境变量未生效
-
-- 确保变量名以 `NEXT_PUBLIC_` 或 `VITE_` 开头（客户端可访问）
-- 重新部署以应用新变量
-
+| Issue | Solution |
+|-------|----------|
+| Build fails | Check `npm run build` locally first |
+| 404 on refresh | Add SPA redirect rule |
+| Env vars missing | Use platform dashboard or CLI |
+| CORS errors | Set `Access-Control-Allow-Origin` |
