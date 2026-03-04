@@ -39,6 +39,8 @@ import { useConversationWebSocket } from "#/contexts/conversation-websocket-cont
 import ChatStatusIndicator from "./chat-status-indicator";
 import { getStatusColor, getStatusText } from "#/utils/utils";
 import { AutoRoleIndicator } from "#/components/features/auto-role";
+import { RuntimeBootstrapProgress } from "./runtime-bootstrap-progress";
+import type { RuntimeStatus } from "#/types/runtime-status";
 
 function getEntryPoint(
   hasRepository: boolean | null,
@@ -282,7 +284,17 @@ export function ChatInterface() {
             <ChatMessagesSkeleton />
           )}
 
-          {isChatLoading && !isReturningToConversation && (
+          {/* Atoms Plus: Show RuntimeBootstrapProgress during initial task startup */}
+          {isChatLoading && !isReturningToConversation && isTask && (
+            <RuntimeBootstrapProgress
+              runtimeStatus={conversation?.runtime_status as RuntimeStatus}
+              userMessage={optimisticUserMessage || undefined}
+              taskStatus={taskStatus}
+            />
+          )}
+
+          {/* Fallback to simple spinner for non-task loading */}
+          {isChatLoading && !isReturningToConversation && !isTask && (
             <div className="flex justify-center" data-testid="loading-spinner">
               <LoadingSpinner size="small" />
             </div>

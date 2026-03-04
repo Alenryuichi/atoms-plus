@@ -18153,5 +18153,110 @@
     "tr": "Ajan hazır!",
     "de": "Agent ist bereit!",
     "uk": "Агент готовий!"
+  },
+  "RUNTIME$BUILDING": {
+    "en": "Building environment...",
+    "zh-CN": "正在构建环境...",
+    "ja": "環境を構築中..."
+  },
+  "RUNTIME$STARTING": {
+    "en": "Starting runtime...",
+    "zh-CN": "正在启动运行时...",
+    "ja": "ランタイムを起動中..."
+  },
+  "RUNTIME$STARTED": {
+    "en": "Runtime started",
+    "zh-CN": "运行时已启动",
+    "ja": "ランタイム起動完了"
+  },
+  "RUNTIME$SETTING_UP_WORKSPACE": {
+    "en": "Setting up workspace...",
+    "zh-CN": "正在配置工作区...",
+    "ja": "ワークスペースを設定中..."
+  },
+  "RUNTIME$SETTING_UP_GIT": {
+    "en": "Configuring version control...",
+    "zh-CN": "正在配置版本控制...",
+    "ja": "バージョン管理を設定中..."
+  },
+  "RUNTIME$LOADING_SKILLS": {
+    "en": "Loading AI skills...",
+    "zh-CN": "正在加载 AI 技能...",
+    "ja": "AIスキルを読み込み中..."
+  },
+  "RUNTIME$CONNECTING": {
+    "en": "Connecting to runtime...",
+    "zh-CN": "正在连接运行时...",
+    "ja": "ランタイムに接続中..."
+  },
+  "RUNTIME$LOADING_MICROAGENTS": {
+    "en": "Loading microagents...",
+    "zh-CN": "正在加载微代理...",
+    "ja": "マイクロエージェントを読み込み中..."
+  },
+  "RUNTIME$LOADING_MCP": {
+    "en": "Loading MCP tools...",
+    "zh-CN": "正在加载 MCP 工具...",
+    "ja": "MCPツールを読み込み中..."
+  },
+  "RUNTIME$PREPARING": {
+    "en": "Preparing workspace...",
+    "zh-CN": "正在准备工作区...",
+    "ja": "ワークスペースを準備中..."
+  },
+  "RUNTIME$AGENT_READY": {
+    "en": "Agent ready!",
+    "zh-CN": "代理已就绪！",
+    "ja": "エージェント準備完了！"
+  },
+  "RUNTIME$WAITING_SANDBOX": {
+    "en": "Waiting for sandbox...",
+    "zh-CN": "正在等待沙箱...",
+    "ja": "サンドボックスを待機中..."
+  },
+  "RUNTIME$INITIALIZING": {
+    "en": "Initializing...",
+    "zh-CN": "正在初始化...",
+    "ja": "初期化中..."
+  },
+  "RUNTIME$YOUR_REQUEST": {
+    "en": "Your request:",
+    "zh-CN": "您的请求：",
+    "ja": "リクエスト："
+  },
+  "RUNTIME$PLEASE_WAIT": {
+    "en": "This usually takes 20-40 seconds",
+    "zh-CN": "通常需要 20-40 秒",
+    "ja": "通常20〜40秒かかります"
+  },
+  "RUNTIME_TIP$1": {
+    "en": "You can attach files by dragging them into the chat",
+    "zh-CN": "您可以通过拖拽文件到聊天窗口来附加文件",
+    "ja": "ファイルをチャットにドラッグして添付できます"
+  },
+  "RUNTIME_TIP$2": {
+    "en": "Connect a GitHub repo for better code understanding",
+    "zh-CN": "连接 GitHub 仓库可获得更好的代码理解",
+    "ja": "GitHubリポジトリを接続するとコード理解が向上します"
+  },
+  "RUNTIME_TIP$3": {
+    "en": "Use specific instructions for better results",
+    "zh-CN": "使用具体的指令可获得更好的结果",
+    "ja": "具体的な指示でより良い結果が得られます"
+  },
+  "RUNTIME_TIP$4": {
+    "en": "You can pause and resume the agent anytime",
+    "zh-CN": "您可以随时暂停和恢复代理",
+    "ja": "エージェントはいつでも一時停止・再開できます"
+  },
+  "RUNTIME_TIP$5": {
+    "en": "Check the Changes tab to review code modifications",
+    "zh-CN": "查看「变更」标签页以审查代码修改",
+    "ja": "変更タブでコードの変更を確認できます"
+  },
+  "COMMON$READY": {
+    "en": "Ready",
+    "zh-CN": "就绪",
+    "ja": "準備完了"
   }
 }
