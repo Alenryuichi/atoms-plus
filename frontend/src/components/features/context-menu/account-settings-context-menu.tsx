@@ -50,61 +50,62 @@ export function AccountSettingsContextMenu({
     onClose();
   };
 
+  // atoms.dev dark theme menu item styles
+  const menuItemClasses =
+    "flex items-center gap-3 px-3 py-2.5 rounded-md text-neutral-300 hover:text-white hover:bg-neutral-700/50 transition-colors duration-150";
+
   return (
     <ContextMenu
       testId="account-settings-context-menu"
       ref={ref}
       alignment="right"
       position="bottom"
-      className="mt-2 right-0 min-w-[200px] z-[9999]"
+      className="mt-2 right-0 min-w-[220px] z-[9999]"
     >
       {showAddTeamMembers && (
         <ContextMenuListItem
           testId="add-team-members-button"
           onClick={handleAddTeamMembers}
-          className="flex items-center gap-2 p-2 hover:bg-[#5C5D62] rounded h-[30px]"
+          className={menuItemClasses}
         >
-          <PlusIcon width={16} height={16} />
-          <span className="text-white text-sm">
+          <PlusIcon width={16} height={16} className="text-neutral-400" />
+          <span className="text-sm font-medium">
             {t(I18nKey.SETTINGS$NAV_ADD_TEAM_MEMBERS)}
           </span>
         </ContextMenuListItem>
       )}
       {navItems.map(({ to, text, icon }) => (
-        <Link key={to} to={to} className="text-decoration-none">
+        <Link key={to} to={to} className="no-underline">
           <ContextMenuListItem
             onClick={handleNavigationClick}
-            className="flex items-center gap-2 p-2 hover:bg-[#5C5D62] rounded h-[30px]"
+            className={menuItemClasses}
           >
-            {icon}
-            <span className="text-white text-sm">{t(text)}</span>
+            <span className="text-neutral-400">{icon}</span>
+            <span className="text-sm font-medium">{t(text)}</span>
           </ContextMenuListItem>
         </Link>
       ))}
 
-      <Divider />
+      <Divider color="dark" className="my-1" />
 
       <a
         href="https://docs.openhands.dev"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-decoration-none"
+        className="no-underline"
       >
-        <ContextMenuListItem
-          onClick={onClose}
-          className="flex items-center gap-2 p-2 hover:bg-[#5C5D62] rounded h-[30px]"
-        >
-          <DocumentIcon width={16} height={16} />
-          <span className="text-white text-sm">{t(I18nKey.SIDEBAR$DOCS)}</span>
+        <ContextMenuListItem onClick={onClose} className={menuItemClasses}>
+          <DocumentIcon width={16} height={16} className="text-neutral-400" />
+          <span className="text-sm font-medium">{t(I18nKey.SIDEBAR$DOCS)}</span>
         </ContextMenuListItem>
       </a>
 
       <ContextMenuListItem
         onClick={onLogout}
-        className="flex items-center gap-2 p-2 hover:bg-[#5C5D62] rounded h-[30px]"
+        className={`${menuItemClasses} text-red-400 hover:text-red-300 hover:bg-red-500/10`}
       >
         <LogOutIcon width={16} height={16} />
-        <span className="text-white text-sm">
+        <span className="text-sm font-medium">
           {t(I18nKey.ACCOUNT_SETTINGS$LOGOUT)}
         </span>
       </ContextMenuListItem>

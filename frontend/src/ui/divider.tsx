@@ -8,6 +8,7 @@ const dividerVariants = cva("w-full", {
     },
     color: {
       light: "bg-[#5C5D62]",
+      dark: "bg-neutral-700/50",
     },
     size: {
       thin: "h-[1px]",

@@ -3,15 +3,16 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "#/utils/utils";
 
 const contextMenuVariants = cva(
-  "absolute bg-tertiary rounded-[6px] text-white overflow-hidden z-50 context-menu-box-shadow",
+  // Updated to atoms.dev dark theme style
+  "absolute bg-[#1a1d22] rounded-lg text-neutral-300 overflow-hidden z-50 border border-neutral-700/50 shadow-xl shadow-black/20",
   {
     variants: {
       size: {
         compact: "py-1 px-1",
-        default: "py-[6px] px-1",
+        default: "py-2 px-2",
       },
       layout: {
-        vertical: "flex flex-col gap-2",
+        vertical: "flex flex-col gap-1",
       },
       position: {
         top: "bottom-full",
