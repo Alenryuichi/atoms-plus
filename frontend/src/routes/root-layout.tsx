@@ -262,8 +262,8 @@ export default function MainApp() {
       <TopNavbar />
 
       {/* Main content area with top padding for fixed navbar */}
-      {/* Removed md:p-3 to prevent white edge gaps - use bg-base consistently */}
-      <main className={cn("flex-1 flex flex-col pt-16 min-h-0 p-0")}>
+      {/* pt-16 accounts for fixed h-16 navbar, px-0 pb-0 prevents white edge gaps */}
+      <main className={cn("flex-1 flex flex-col pt-16 px-0 pb-0 min-h-0")}>
         {config.data &&
           (config.data.maintenance_start_time ||
             (config.data.faulty_models &&
