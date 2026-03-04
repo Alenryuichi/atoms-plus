@@ -23,37 +23,6 @@ export interface CreditTransactionInput {
 }
 
 /**
- * Get the current user's credit balance
- */
-async function getBalance(
-  userId: string,
-): Promise<CreditBalanceResponse | null> {
-  if (!isSupabaseConfigured()) {
-    // eslint-disable-next-line no-console
-    console.warn("Supabase not configured, returning mock data");
-    return {
-      balance: 1000000, // 1M credits for demo
-      lifetime_credits: 1000000,
-      lifetime_spend: 0,
-    };
-  }
-
-  const { data, error } = await supabase
-    .from("credit_balances")
-    .select("balance, lifetime_credits, lifetime_spend")
-    .eq("user_id", userId)
-    .single();
-
-  if (error) {
-    // eslint-disable-next-line no-console
-    console.error("Error fetching credit balance:", error);
-    return null;
-  }
-
-  return data as CreditBalanceResponse;
-}
-
-/**
  * Create initial credit balance for a new user
  */
 async function initializeBalance(
@@ -82,6 +51,50 @@ async function initializeBalance(
   }
 
   return data as CreditBalance;
+}
+
+/**
+ * Get the current user's credit balance.
+ * If the user doesn't have a balance record, automatically initialize one.
+ */
+async function getBalance(
+  userId: string,
+): Promise<CreditBalanceResponse | null> {
+  if (!isSupabaseConfigured()) {
+    // eslint-disable-next-line no-console
+    console.warn("Supabase not configured, returning mock data");
+    return {
+      balance: 1000000, // 1M credits for demo
+      lifetime_credits: 1000000,
+      lifetime_spend: 0,
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("credit_balances")
+    .select("balance, lifetime_credits, lifetime_spend")
+    .eq("user_id", userId)
+    .single();
+
+  if (error) {
+    // PGRST116 = "The result contains 0 rows" - user doesn't have a balance yet
+    if (error.code === "PGRST116") {
+      // Auto-initialize balance for new user
+      const initialized = await initializeBalance(userId);
+      if (initialized) {
+        return {
+          balance: initialized.balance,
+          lifetime_credits: initialized.lifetime_credits,
+          lifetime_spend: initialized.lifetime_spend,
+        };
+      }
+    }
+    // eslint-disable-next-line no-console
+    console.error("Error fetching credit balance:", error);
+    return null;
+  }
+
+  return data as CreditBalanceResponse;
 }
 
 /**
