@@ -9,8 +9,6 @@ type StarBorderProps<T extends React.ElementType> =
     color?: string;
     speed?: React.CSSProperties["animationDuration"];
     thickness?: number;
-    /** Custom classes for inner content wrapper. Set to empty string to remove default styling. */
-    innerClassName?: string;
   };
 
 export function StarBorder<T extends React.ElementType = "button">({
@@ -19,15 +17,10 @@ export function StarBorder<T extends React.ElementType = "button">({
   color = "#d4a855", // Amber accent color
   speed = "6s",
   thickness = 1,
-  innerClassName,
   children,
   ...rest
 }: StarBorderProps<T>) {
   const Component = as || "button";
-
-  // Default inner styling, can be overridden
-  const defaultInnerClass =
-    "relative z-10 bg-gradient-to-b from-neutral-900 to-neutral-950 border border-neutral-800 text-white text-center py-3 px-6 rounded-xl";
 
   return (
     <Component
@@ -58,7 +51,7 @@ export function StarBorder<T extends React.ElementType = "button">({
         }}
       />
       {/* Content */}
-      <div className={innerClassName !== undefined ? innerClassName : defaultInnerClass}>
+      <div className="relative z-10 bg-gradient-to-b from-neutral-900 to-neutral-950 border border-neutral-800 text-white text-center py-3 px-6 rounded-xl">
         {children}
       </div>
     </Component>
