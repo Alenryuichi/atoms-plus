@@ -1,81 +1,169 @@
 ---
-name: scaffolding
-type: knowledge
-version: 1.0.0
+name: vibe-coding
+type: repo
+version: 2.0.0
 agent: CodeActAgent
-triggers:
-- scaffold
-- 脚手架
-- create project
-- new project
-- 新建项目
-- 项目生成
 ---
 
-# Atoms Plus 项目脚手架系统
+# Vibe Coding: One-Sentence Web App Generation
 
-你可以使用 Atoms Plus 的项目脚手架系统来快速生成完整的前端项目。
+When the user describes an app in natural language (e.g., "Create a todo app"), you execute the complete workflow autonomously.
 
-## 支持的项目类型
+## Core Philosophy
 
-| 类型 | 技术栈 |
-|------|--------|
-| `react_vite` | React 18 + Vite 5 + TypeScript + Tailwind CSS |
-| `nextjs` | Next.js 14 (App Router) + TypeScript + Tailwind CSS |
-| `vue_vite` | Vue 3 + Vite 5 + TypeScript + Pinia + Tailwind CSS |
-| `nuxt` | Nuxt 3 + TypeScript + Tailwind CSS |
+1. **Fast delivery** — Start building immediately, ask minimal questions
+2. **Fully functional** — Generate working code, not templates
+3. **Instant feedback** — Always run `npm run dev` and report the preview URL
+4. **Smart defaults** — React + Vite + TypeScript + Tailwind unless user specifies otherwise
 
-## 使用 Python API 生成项目
+## Execution Workflow
 
-```python
-from atoms_plus.scaffolding import ProjectGenerator, ProjectConfig, ProjectType, UILibrary, FeatureSet
+### Step 1: Clarify (Max 1-2 questions)
 
-config = ProjectConfig(
-    name='my-awesome-app',
-    project_type=ProjectType.REACT_VITE,  # 或 NEXTJS, VUE_VITE, NUXT
-    ui_library=UILibrary.TAILWIND,         # 或 SHADCN, NONE
-    features=[
-        FeatureSet.TYPESCRIPT,
-        FeatureSet.DARK_MODE,
-        FeatureSet.SUPABASE,
-        FeatureSet.AUTH,
-    ],
-    description='我的应用描述',
-    package_manager='npm'  # 或 yarn, pnpm
-)
+If the user's request is vague, ask **at most 1-2 clarifying questions**:
 
-generator = ProjectGenerator()
-result = generator.generate(config)
+```
+MUST clarify:
+- What is the core functionality?
 
-if result.success:
-    print(f'项目已生成: {result.project_path}')
-    print('下一步操作:')
-    for step in result.next_steps:
-        print(f'  - {step}')
+INFER from context (use defaults if not specified):
+- Framework: React + Vite (default)
+- Styling: Tailwind CSS (default)
+- Language: TypeScript (default)
 ```
 
-## REST API 端点
+**Do NOT over-ask.** "Todo app" implies: add, delete, mark complete. Start building.
 
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/v1/scaffolding/templates` | GET | 列出所有模板 |
-| `/api/v1/scaffolding/templates/{id}` | GET | 获取模板详情 |
-| `/api/v1/scaffolding/project-types` | GET | 支持的项目类型 |
-| `/api/v1/scaffolding/ui-libraries` | GET | 支持的 UI 库 |
-| `/api/v1/scaffolding/features` | GET | 可选功能列表 |
-| `/api/v1/scaffolding/create` | POST | 创建项目 |
+### Step 2: Create Project
 
-## 项目生成后的操作
+Use Vite for the fastest setup:
 
-1. 进入项目目录: `cd /tmp/atoms-projects/{项目名}`
-2. 安装依赖: `npm install` (或 yarn/pnpm)
-3. 启动开发服务器: `npm run dev`
-4. 构建生产版本: `npm run build`
+```bash
+npm create vite@latest my-app -- --template react-ts
+cd my-app
 
-## 最佳实践
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
 
-- 项目名称使用 kebab-case 格式（如 `my-awesome-app`）
-- 始终启用 TypeScript 以获得更好的类型安全
-- 对于需要 SEO 的项目，选择 Next.js 或 Nuxt
-- 使用 Supabase 功能时，记得配置环境变量
+cat > tailwind.config.js << 'EOF'
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  theme: { extend: {} },
+  plugins: [],
+}
+EOF
+
+cat > src/index.css << 'EOF'
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+EOF
+```
+
+### Step 3: Implement Features
+
+Write complete, functional code. **Not boilerplate — real features.**
+
+Example `src/App.tsx` for a todo app:
+
+```tsx
+import { useState } from 'react'
+
+interface Todo {
+  id: number
+  text: string
+  completed: boolean
+}
+
+export default function App() {
+  const [todos, setTodos] = useState<Todo[]>([])
+  const [input, setInput] = useState('')
+
+  const addTodo = () => {
+    if (!input.trim()) return
+    setTodos([...todos, { id: Date.now(), text: input, completed: false }])
+    setInput('')
+  }
+
+  const toggleTodo = (id: number) => {
+    setTodos(todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t))
+  }
+
+  const deleteTodo = (id: number) => {
+    setTodos(todos.filter(t => t.id !== id))
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-8">
+      <div className="max-w-md mx-auto bg-white rounded-lg shadow p-6">
+        <h1 className="text-2xl font-bold mb-4">Todo List</h1>
+        <div className="flex gap-2 mb-4">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addTodo()}
+            placeholder="Add a task..."
+            className="flex-1 px-3 py-2 border rounded"
+          />
+          <button onClick={addTodo} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            Add
+          </button>
+        </div>
+        <ul className="space-y-2">
+          {todos.map(todo => (
+            <li key={todo.id} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+              <input type="checkbox" checked={todo.completed} onChange={() => toggleTodo(todo.id)} />
+              <span className={todo.completed ? 'line-through text-gray-400' : ''}>{todo.text}</span>
+              <button onClick={() => deleteTodo(todo.id)} className="ml-auto text-red-500 hover:text-red-700">Delete</button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
+```
+
+### Step 4: Install & Run
+
+```bash
+npm install
+npm run dev
+```
+
+### Step 5: Report Results
+
+```
+✅ App created successfully!
+
+📁 Location: /workspace/my-app
+🚀 Dev server: http://localhost:5173
+
+Features implemented:
+- ✅ Add tasks
+- ✅ Mark complete
+- ✅ Delete tasks
+
+Next steps:
+- Customize styling
+- Add persistence (localStorage or Supabase)
+- Add more features
+```
+
+## Framework Selection
+
+| User Intent | Framework |
+|-------------|-----------|
+| "simple app", "small tool", "utility" | React + Vite |
+| "needs SEO", "blog", "landing page" | Next.js |
+| "admin panel", "dashboard" | React + Vite + shadcn/ui |
+| "Vue" mentioned | Vue 3 + Vite |
+
+## Best Practices (from Vibe Coding research)
+
+1. **Efficient onboarding** — Use least tokens to convey maximum context
+2. **Automatic feedback loop** — Run `npm run build` or `npm run dev` after changes
+3. **Don't re-scan** — Go directly to the directories you need
+4. **Complete the loop** — Always end with a running dev server and clear summary
 
