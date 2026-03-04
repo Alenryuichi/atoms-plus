@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCreateConversation } from "#/hooks/mutation/use-create-conversation";
 import { LoadingSpinner } from "#/components/shared/loading-spinner";
 import { I18nKey } from "#/i18n/declaration";
+import { autoDetectRole } from "#/api/role-service/role-service.api";
 
 // Animation variants
 const containerVariants = {
@@ -190,8 +191,24 @@ export default function AtomsHome() {
 
     setIsCreating(true);
     try {
+      // Atoms Plus: Auto-detect role based on user query
+      let agentRole: string | undefined;
+      try {
+        const roleResult = await autoDetectRole(query.trim());
+        agentRole = roleResult.role_id;
+        // eslint-disable-next-line no-console
+        console.log(
+          `[Atoms Plus] Auto-detected role: ${roleResult.role_name} (${roleResult.role_id})`,
+        );
+      } catch {
+        // Fall back to default role if detection fails
+        // eslint-disable-next-line no-console
+        console.log("[Atoms Plus] Role detection failed, using default");
+      }
+
       const result = await createConversation.mutateAsync({
         query: query.trim(),
+        agentRole,
       });
       const conversationId = result.conversation_id;
       navigate(`/conversations/${conversationId}`);
