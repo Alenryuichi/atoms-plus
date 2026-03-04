@@ -1,5 +1,11 @@
 import { useTranslation } from "react-i18next";
-import { Accordion, AccordionItem, Spinner } from "@heroui/react";
+import { Spinner } from "#/components/ui/spinner";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "#/components/ui/accordion";
 import { MicroagentManagementRepoMicroagents } from "./microagent-management-repo-microagents";
 import { GitRepository } from "#/types/git";
 import { TabType } from "#/types/microagent-management";
@@ -71,26 +77,19 @@ export function MicroagentManagementRepositories({
   return (
     <div className="flex flex-col gap-4 w-full">
       {/* Repositories Accordion */}
-      <Accordion
-        variant="splitted"
-        className="w-full px-0 gap-3"
-        itemClasses={{
-          base: "shadow-none bg-transparent cursor-pointer px-0",
-          trigger: "cursor-pointer gap-2 py-3",
-          indicator:
-            "flex items-center justify-center p-0.5 pr-[3px] text-white hover:bg-[#454545] rounded transition-colors duration-200 rotate-180",
-        }}
-        selectionMode="multiple"
-      >
+      <Accordion type="multiple" className="w-full space-y-3">
         {repositories.map((repository) => (
           <AccordionItem
             key={repository.id}
-            aria-label={repository.full_name}
-            title={
-              <MicroagentManagementAccordionTitle repository={repository} />
-            }
+            value={String(repository.id)}
+            className="shadow-none bg-transparent border-none px-0"
           >
-            <MicroagentManagementRepoMicroagents repository={repository} />
+            <AccordionTrigger className="cursor-pointer gap-2 py-3 hover:no-underline text-white hover:bg-[#454545] rounded transition-colors duration-200">
+              <MicroagentManagementAccordionTitle repository={repository} />
+            </AccordionTrigger>
+            <AccordionContent className="pb-4">
+              <MicroagentManagementRepoMicroagents repository={repository} />
+            </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>

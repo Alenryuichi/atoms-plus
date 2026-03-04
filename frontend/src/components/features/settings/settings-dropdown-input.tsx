@@ -1,8 +1,8 @@
-import { Autocomplete, AutocompleteItem } from "@heroui/react";
 import React, { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { OptionalTag } from "./optional-tag";
-import { cn } from "#/utils/utils";
+import { cn } from "#/lib/utils";
+import { Combobox, ComboboxItem } from "#/components/ui/combobox";
 
 interface SettingsDropdownInputProps {
   testId: string;
@@ -24,7 +24,6 @@ interface SettingsDropdownInputProps {
   defaultFilter?: (textValue: string, inputValue: string) => boolean;
   startContent?: ReactNode;
   inputWrapperClassName?: string;
-  inputClassName?: string;
 }
 
 export function SettingsDropdownInput({
@@ -47,9 +46,18 @@ export function SettingsDropdownInput({
   defaultFilter,
   startContent,
   inputWrapperClassName,
-  inputClassName,
 }: SettingsDropdownInputProps) {
   const { t } = useTranslation();
+
+  // Transform items to ComboboxItem format
+  const comboboxItems: ComboboxItem[] = items.map((item) => ({
+    value: String(item.key),
+    label: item.label,
+  }));
+
+  const handleValueChange = (value: string | null) => {
+    onSelectionChange?.(value);
+  };
 
   return (
     <label className={cn("flex flex-col gap-2.5", wrapperClassName)}>
@@ -59,41 +67,29 @@ export function SettingsDropdownInput({
           {showOptionalTag && <OptionalTag />}
         </div>
       )}
-      <Autocomplete
+      <Combobox
         aria-label={typeof label === "string" ? label : name}
         data-testid={testId}
         name={name}
-        defaultItems={items}
-        defaultSelectedKey={defaultSelectedKey}
-        selectedKey={selectedKey}
-        onSelectionChange={onSelectionChange}
+        items={comboboxItems}
+        defaultValue={defaultSelectedKey}
+        value={selectedKey}
+        onValueChange={handleValueChange}
         onInputChange={onInputChange}
         isClearable={isClearable}
-        isDisabled={isDisabled || isLoading}
+        disabled={isDisabled || isLoading}
         isLoading={isLoading}
         placeholder={isLoading ? t("HOME$LOADING") : placeholder}
         allowsCustomValue={allowsCustomValue}
-        isRequired={required}
-        className="w-full"
-        classNames={{
-          popoverContent: "bg-tertiary rounded-xl border border-[#717888]",
-        }}
-        inputProps={{
-          classNames: {
-            inputWrapper: cn(
-              "bg-tertiary border border-[#717888] h-10 w-full rounded-sm p-2 placeholder:italic",
-              inputWrapperClassName,
-            ),
-            input: inputClassName,
-          },
-        }}
+        required={required}
         defaultFilter={defaultFilter}
-        startContent={startContent || null}
-      >
-        {(item) => (
-          <AutocompleteItem key={item.key}>{item.label}</AutocompleteItem>
+        startContent={startContent}
+        triggerClassName={cn(
+          "bg-tertiary border border-neutral-600 h-10 w-full rounded-sm p-2",
+          inputWrapperClassName,
         )}
-      </Autocomplete>
+        popoverClassName="bg-tertiary rounded-xl border border-neutral-600"
+      />
     </label>
   );
 }

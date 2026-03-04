@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
-import { Spinner } from "@heroui/react";
+import { Spinner } from "#/components/ui/spinner";
 import { MicroagentManagementMicroagentCard } from "./microagent-management-microagent-card";
 import { MicroagentManagementLearnThisRepo } from "./microagent-management-learn-this-repo";
 import { useRepositoryMicroagents } from "#/hooks/query/use-repository-microagents";

@@ -1,8 +1,3 @@
-import {
-  Autocomplete,
-  AutocompleteItem,
-  AutocompleteSection,
-} from "@heroui/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { I18nKey } from "#/i18n/declaration";
@@ -16,6 +11,7 @@ import { extractModelAndProvider } from "#/utils/extract-model-and-provider";
 import { cn } from "#/utils/utils";
 import { HelpLink } from "#/ui/help-link";
 import { PRODUCT_URL } from "#/utils/constants";
+import { Combobox, ComboboxGroup } from "#/components/ui/combobox";
 
 interface ModelSelectorProps {
   isDisabled?: boolean;
@@ -63,9 +59,15 @@ export function ModelSelector({
       setSelectedModel(model);
       onDefaultValuesChanged?.(provider, model);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onDefaultValuesChanged is intentionally excluded to prevent infinite loops
   }, [currentModel]);
 
-  const handleChangeProvider = (provider: string) => {
+  const handleChangeProvider = (provider: string | null) => {
+    if (!provider) {
+      setSelectedProvider(null);
+      setLitellmId(null);
+      return;
+    }
     setSelectedProvider(provider);
     setSelectedModel(null);
 
@@ -74,7 +76,8 @@ export function ModelSelector({
     onChange?.(provider, null);
   };
 
-  const handleChangeModel = (model: string) => {
+  const handleChangeModel = (model: string | null) => {
+    if (!model) return;
     const separator = models[selectedProvider || ""]?.separator || "";
     let fullModel = selectedProvider + separator + model;
     if (selectedProvider === "openai") {
@@ -86,12 +89,83 @@ export function ModelSelector({
     onChange?.(selectedProvider, model);
   };
 
-  const clear = () => {
-    setSelectedProvider(null);
-    setLitellmId(null);
-  };
-
   const { t } = useTranslation();
+
+  // Build provider groups
+  const providerGroups: ComboboxGroup[] = React.useMemo(() => {
+    const groups: ComboboxGroup[] = [];
+
+    // Verified providers
+    const verifiedProviders = VERIFIED_PROVIDERS.filter(
+      (provider) => models[provider],
+    ).map((provider) => ({
+      value: provider,
+      label: mapProvider(provider),
+    }));
+
+    if (verifiedProviders.length > 0) {
+      groups.push({
+        label: t(I18nKey.MODEL_SELECTOR$VERIFIED),
+        items: verifiedProviders,
+      });
+    }
+
+    // Other providers
+    const otherProviders = Object.keys(models)
+      .filter((provider) => !VERIFIED_PROVIDERS.includes(provider))
+      .map((provider) => ({
+        value: provider,
+        label: mapProvider(provider),
+      }));
+
+    if (otherProviders.length > 0) {
+      groups.push({
+        label: t(I18nKey.MODEL_SELECTOR$OTHERS),
+        items: otherProviders,
+      });
+    }
+
+    return groups;
+  }, [models, t]);
+
+  // Build model groups
+  const modelGroups: ComboboxGroup[] = React.useMemo(() => {
+    const groups: ComboboxGroup[] = [];
+    const availableModels = models[selectedProvider || ""]?.models || [];
+    const verifiedModelsList = getVerifiedModels();
+
+    // Verified models
+    const verifiedModels = verifiedModelsList
+      .filter((model) => availableModels.includes(model))
+      .map((model) => ({
+        value: model,
+        label: model,
+      }));
+
+    if (verifiedModels.length > 0) {
+      groups.push({
+        label: t(I18nKey.MODEL_SELECTOR$VERIFIED),
+        items: verifiedModels,
+      });
+    }
+
+    // Other models
+    const otherModels = availableModels
+      .filter((model) => !verifiedModelsList.includes(model))
+      .map((model) => ({
+        value: model,
+        label: model,
+      }));
+
+    if (otherModels.length > 0) {
+      groups.push({
+        label: t(I18nKey.MODEL_SELECTOR$OTHERS),
+        items: otherModels,
+      });
+    }
+
+    return groups;
+  }, [models, selectedProvider, t]);
 
   return (
     <div
@@ -104,57 +178,21 @@ export function ModelSelector({
         <label className={cn("text-sm", labelClassName)}>
           {t(I18nKey.LLM$PROVIDER)}
         </label>
-        <Autocomplete
+        <Combobox
           data-testid="llm-provider-input"
-          isRequired
-          isVirtualized={false}
           name="llm-provider-input"
-          isDisabled={isDisabled}
+          disabled={isDisabled}
           aria-label={t(I18nKey.LLM$PROVIDER)}
           placeholder={t(I18nKey.LLM$SELECT_PROVIDER_PLACEHOLDER)}
           isClearable={false}
-          onSelectionChange={(e) => {
-            if (e?.toString()) handleChangeProvider(e.toString());
-          }}
-          onInputChange={(value) => !value && clear()}
-          defaultSelectedKey={selectedProvider ?? undefined}
-          selectedKey={selectedProvider}
-          classNames={{
-            popoverContent: "bg-tertiary rounded-xl border border-[#717888]",
-          }}
-          inputProps={{
-            classNames: {
-              inputWrapper:
-                "bg-tertiary border border-[#717888] h-10 w-full rounded-sm p-2 placeholder:italic",
-            },
-          }}
-        >
-          <AutocompleteSection title={t(I18nKey.MODEL_SELECTOR$VERIFIED)}>
-            {VERIFIED_PROVIDERS.filter((provider) => models[provider]).map(
-              (provider) => (
-                <AutocompleteItem
-                  data-testid={`provider-item-${provider}`}
-                  key={provider}
-                >
-                  {mapProvider(provider)}
-                </AutocompleteItem>
-              ),
-            )}
-          </AutocompleteSection>
-          {Object.keys(models).some(
-            (provider) => !VERIFIED_PROVIDERS.includes(provider),
-          ) ? (
-            <AutocompleteSection title={t(I18nKey.MODEL_SELECTOR$OTHERS)}>
-              {Object.keys(models)
-                .filter((provider) => !VERIFIED_PROVIDERS.includes(provider))
-                .map((provider) => (
-                  <AutocompleteItem key={provider}>
-                    {mapProvider(provider)}
-                  </AutocompleteItem>
-                ))}
-            </AutocompleteSection>
-          ) : null}
-        </Autocomplete>
+          required
+          onValueChange={handleChangeProvider}
+          onInputChange={(value) => !value && handleChangeProvider(null)}
+          value={selectedProvider ?? undefined}
+          groups={providerGroups}
+          triggerClassName="bg-tertiary border border-[#717888] h-10 w-full rounded-sm p-2"
+          popoverClassName="bg-tertiary rounded-xl border border-[#717888]"
+        />
       </fieldset>
 
       {selectedProvider === "openhands" && (
@@ -172,56 +210,20 @@ export function ModelSelector({
         <label className={cn("text-sm", labelClassName)}>
           {t(I18nKey.LLM$MODEL)}
         </label>
-        <Autocomplete
+        <Combobox
           data-testid="llm-model-input"
-          isRequired
-          isVirtualized={false}
           name="llm-model-input"
           aria-label={t(I18nKey.LLM$MODEL)}
           placeholder={t(I18nKey.LLM$SELECT_MODEL_PLACEHOLDER)}
           isClearable={false}
-          onSelectionChange={(e) => {
-            if (e?.toString()) handleChangeModel(e.toString());
-          }}
-          isDisabled={isDisabled || !selectedProvider}
-          selectedKey={selectedModel}
-          defaultSelectedKey={selectedModel ?? undefined}
-          classNames={{
-            popoverContent: "bg-tertiary rounded-xl border border-[#717888]",
-          }}
-          inputProps={{
-            classNames: {
-              inputWrapper:
-                "bg-tertiary border border-[#717888] h-10 w-full rounded-sm p-2 placeholder:italic",
-            },
-          }}
-        >
-          <AutocompleteSection title={t(I18nKey.MODEL_SELECTOR$VERIFIED)}>
-            {getVerifiedModels()
-              .filter((model) =>
-                models[selectedProvider || ""]?.models?.includes(model),
-              )
-              .map((model) => (
-                <AutocompleteItem key={model}>{model}</AutocompleteItem>
-              ))}
-          </AutocompleteSection>
-          {models[selectedProvider || ""]?.models?.some(
-            (model) => !getVerifiedModels().includes(model),
-          ) ? (
-            <AutocompleteSection title={t(I18nKey.MODEL_SELECTOR$OTHERS)}>
-              {models[selectedProvider || ""]?.models
-                .filter((model) => !getVerifiedModels().includes(model))
-                .map((model) => (
-                  <AutocompleteItem
-                    data-testid={`model-item-${model}`}
-                    key={model}
-                  >
-                    {model}
-                  </AutocompleteItem>
-                ))}
-            </AutocompleteSection>
-          ) : null}
-        </Autocomplete>
+          required
+          onValueChange={handleChangeModel}
+          disabled={isDisabled || !selectedProvider}
+          value={selectedModel ?? undefined}
+          groups={modelGroups}
+          triggerClassName="bg-tertiary border border-[#717888] h-10 w-full rounded-sm p-2"
+          popoverClassName="bg-tertiary rounded-xl border border-[#717888]"
+        />
       </fieldset>
     </div>
   );

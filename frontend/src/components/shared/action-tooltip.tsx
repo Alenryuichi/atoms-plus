@@ -1,5 +1,10 @@
-import { Tooltip } from "@heroui/react";
 import { useTranslation } from "react-i18next";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "#/components/ui/tooltip";
 import { I18nKey } from "#/i18n/declaration";
 import { cn } from "#/utils/utils";
 
@@ -26,21 +31,26 @@ export function ActionTooltip({ type, onClick }: ActionTooltipProps) {
     : `${t(I18nKey.BUTTON$CANCEL)} ⇧⌘⌫`;
 
   return (
-    <Tooltip content={content} closeDelay={100}>
-      <button
-        data-testid={`action-${type}-button`}
-        type="button"
-        aria-label={ariaLabel}
-        className={cn(
-          "rounded px-2 h-6.5 text-sm font-medium leading-5 cursor-pointer hover:opacity-80",
-          type === "confirm"
-            ? "bg-tertiary text-white"
-            : "bg-white text-[#0D0F11]",
-        )}
-        onClick={onClick}
-      >
-        {buttonLabel}
-      </button>
-    </Tooltip>
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            data-testid={`action-${type}-button`}
+            type="button"
+            aria-label={ariaLabel}
+            className={cn(
+              "rounded px-2 h-6.5 text-sm font-medium leading-5 cursor-pointer hover:opacity-80",
+              type === "confirm"
+                ? "bg-tertiary text-white"
+                : "bg-white text-[#0D0F11]",
+            )}
+            onClick={onClick}
+          >
+            {buttonLabel}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{content}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

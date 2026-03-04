@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Spinner } from "@heroui/react";
+import { Spinner } from "#/components/ui/spinner";
 import { useMicroagentManagementStore } from "#/stores/microagent-management-store";
 import { useRepositoryMicroagentContent } from "#/hooks/query/use-repository-microagent-content";
 import { I18nKey } from "#/i18n/declaration";
