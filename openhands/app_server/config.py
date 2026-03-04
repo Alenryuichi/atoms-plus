@@ -192,7 +192,18 @@ def config_from_env() -> AppServerConfig:
                 api_key=os.environ['SANDBOX_API_KEY'],
                 api_url=os.environ['SANDBOX_REMOTE_RUNTIME_API_URL'],
             )
-        elif os.getenv('RUNTIME') in ('local', 'daytona', 'e2b', 'modal', 'runloop'):
+        elif os.getenv('RUNTIME') == 'daytona':
+            # Use Daytona cloud sandbox service
+            from openhands.app_server.sandbox.daytona_sandbox_service import (
+                DaytonaSandboxServiceInjector,
+            )
+
+            config.sandbox = DaytonaSandboxServiceInjector(
+                api_key=os.environ.get('DAYTONA_API_KEY', ''),
+                api_url=os.environ.get('DAYTONA_API_URL', 'https://app.daytona.io/api'),
+                target=os.environ.get('DAYTONA_TARGET', 'eu'),
+            )
+        elif os.getenv('RUNTIME') in ('local', 'e2b', 'modal', 'runloop'):
             # Use ProcessSandboxService for local, process, and other third-party runtimes
             config.sandbox = ProcessSandboxServiceInjector()
         else:
@@ -245,7 +256,14 @@ def config_from_env() -> AppServerConfig:
     if config.sandbox_spec is None:
         if os.getenv('RUNTIME') == 'remote':
             config.sandbox_spec = RemoteSandboxSpecServiceInjector()
-        elif os.getenv('RUNTIME') in ('local', 'process', 'daytona', 'e2b', 'modal', 'runloop'):
+        elif os.getenv('RUNTIME') == 'daytona':
+            # Use Daytona-specific sandbox spec service
+            from openhands.app_server.sandbox.daytona_sandbox_spec_service import (
+                DaytonaSandboxSpecServiceInjector,
+            )
+
+            config.sandbox_spec = DaytonaSandboxSpecServiceInjector()
+        elif os.getenv('RUNTIME') in ('local', 'process', 'e2b', 'modal', 'runloop'):
             # Use ProcessSandboxSpecService for local, process, and third-party runtimes
             config.sandbox_spec = ProcessSandboxSpecServiceInjector()
         else:

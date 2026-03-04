@@ -85,11 +85,49 @@ npx vercel deploy --prod --yes
 | 组件 | V0 (不要修改) | V1 (修改这里) |
 |------|--------------|--------------|
 | 对话管理 | `openhands/server/` | `openhands/app_server/` |
-| Runtime | `LocalRuntime` | `ProcessSandboxService` |
-| 工作目录 | `/workspace` | `/tmp/openhands-sandboxes/{id}` |
+| Runtime | `LocalRuntime` | `ProcessSandboxService` / `DaytonaSandboxService` |
+| 工作目录 | `/workspace` | `/tmp/openhands-sandboxes/{id}` 或 Daytona 云端 |
 | Git 初始化 | `runtime/base.py` | `sandbox/process_sandbox_service.py` |
 
 **关键：`RUNTIME=local` 时，V1 使用 `ProcessSandboxService`，不是 `LocalRuntime`！**
+
+## 🚀 Daytona 云沙盒集成
+
+当 `RUNTIME=daytona` 时，使用 Daytona 云沙盒服务，提供完全隔离的云端开发环境。
+
+### 环境变量配置
+
+| 变量 | 必需 | 默认值 | 说明 |
+|------|------|--------|------|
+| `RUNTIME` | ✅ | - | 设置为 `daytona` |
+| `DAYTONA_API_KEY` | ✅ | - | Daytona API 密钥 (从 https://app.daytona.io/settings/api-keys 获取) |
+| `DAYTONA_API_URL` | ❌ | `https://app.daytona.io/api` | Daytona API URL |
+| `DAYTONA_TARGET` | ❌ | `eu` | 目标区域 (`eu` 或 `us`) |
+
+### 使用方式
+
+```bash
+# Railway 环境变量
+RUNTIME=daytona
+DAYTONA_API_KEY=your-api-key-here
+DAYTONA_TARGET=us
+
+# 本地开发
+export RUNTIME=daytona
+export DAYTONA_API_KEY=your-api-key-here
+python -m atoms_plus.atoms_server
+```
+
+### 架构对比
+
+| 特性 | ProcessSandboxService | DaytonaSandboxService |
+|------|----------------------|----------------------|
+| 隔离级别 | 进程隔离 | 云端 VM 隔离 |
+| 安全性 | 🟡 中 | 🟢 高 |
+| 工作目录 | `/tmp/openhands-sandboxes/{id}` | `/workspace/project` |
+| 端口 | 动态分配 (8000+) | 固定 (4444, 4445) |
+| VSCode 支持 | ❌ 禁用 | ✅ 启用 |
+| 持久化 | 本地文件系统 | Daytona 云存储 |
 
 ## 项目结构
 
