@@ -256,7 +256,7 @@ export function ChatInterface() {
   return (
     <ScrollProvider value={scrollProviderValue}>
       {/* Atoms Plus: Dark theme chat interface matching atoms.dev */}
-      <div className="h-full flex flex-col justify-between pr-0 md:pr-4 relative bg-[var(--atoms-bg-secondary)]">
+      <div className="h-full flex flex-col pr-0 md:pr-4 relative bg-[var(--atoms-bg-secondary)]">
         {!hasSubstantiveAgentActions &&
           !optimisticUserMessage &&
           !userEventsExist &&

@@ -57,7 +57,7 @@ export function ConversationMain() {
         {/* Chat Panel - left side with atoms.dev dark styling */}
         <div
           className={cn(
-            "flex flex-col overflow-hidden",
+            "flex flex-col overflow-hidden h-full",
             // Atoms Plus: Dark elevated background with subtle border
             "bg-[var(--atoms-bg-secondary)] border-r border-[var(--atoms-border-subtle)]",
             isMobile
