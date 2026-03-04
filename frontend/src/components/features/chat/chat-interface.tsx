@@ -284,17 +284,20 @@ export function ChatInterface() {
             <ChatMessagesSkeleton />
           )}
 
-          {/* Atoms Plus: Show RuntimeBootstrapProgress during initial task startup */}
-          {isChatLoading && !isReturningToConversation && isTask && (
-            <RuntimeBootstrapProgress
-              runtimeStatus={conversation?.runtime_status as RuntimeStatus}
-              userMessage={optimisticUserMessage || undefined}
-              taskStatus={taskStatus}
-            />
-          )}
+          {/* Atoms Plus: Show RuntimeBootstrapProgress during task startup (before messages arrive) */}
+          {isTask &&
+            !userEventsExist &&
+            taskStatus !== "READY" &&
+            taskStatus !== "ERROR" && (
+              <RuntimeBootstrapProgress
+                runtimeStatus={conversation?.runtime_status as RuntimeStatus}
+                userMessage={optimisticUserMessage || undefined}
+                taskStatus={taskStatus}
+              />
+            )}
 
           {/* Fallback to simple spinner for non-task loading */}
-          {isChatLoading && !isReturningToConversation && !isTask && (
+          {isChatLoading && !isReturningToConversation && (
             <div className="flex justify-center" data-testid="loading-spinner">
               <LoadingSpinner size="small" />
             </div>
