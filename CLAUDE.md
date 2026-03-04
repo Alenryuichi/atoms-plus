@@ -78,6 +78,35 @@ npx vercel deploy --prod --yes
 
 当前使用 Railway 的 GitHub 集成自动部署。推送到 `main` 分支后自动触发。
 
+### Daytona 测试服务 (Railway)
+
+用于测试 Daytona 沙盒集成，替代 `RUNTIME=local` 的无隔离环境。
+
+#### 环境变量 (需要在 Railway 添加)
+
+```
+RUNTIME=daytona
+DAYTONA_API_KEY=your_daytona_api_key
+DAYTONA_API_URL=https://app.daytona.io/api
+DAYTONA_TARGET=eu
+```
+
+#### 测试端点
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/v1/daytona-test/config` | GET | 检查 Daytona 配置状态 |
+| `/api/v1/daytona-test/sandbox/create` | POST | 创建测试沙盒 |
+| `/api/v1/daytona-test/sandbox/{id}` | GET | 获取沙盒信息 |
+| `/api/v1/daytona-test/sandbox/{id}` | DELETE | 删除沙盒 |
+
+#### 获取 Daytona API Key
+
+1. 访问 https://app.daytona.io
+2. 注册/登录账户
+3. 进入 Settings → API Keys
+4. 创建新的 API Key
+
 ## 项目结构
 
 ```

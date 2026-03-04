@@ -3,12 +3,11 @@
 # 这样可以启用 multiagent、race mode 等扩展功能
 
 [build]
-builder = "NIXPACKS"
+# 使用 Dockerfile 构建以确保完整的依赖安装
+builder = "DOCKERFILE"
+dockerfilePath = "containers/app/Dockerfile"
 
 [deploy]
-# 使用 Atoms Plus Server 入口点
-# 包含: /api/v1/race/*, /api/v1/orchestrator/*, /api/v1/roles/*
-startCommand = "sh -c 'uvicorn atoms_plus.atoms_server:app --host 0.0.0.0 --port ${PORT:-8080}'"
 healthcheckPath = "/atoms-plus/health"
 healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
