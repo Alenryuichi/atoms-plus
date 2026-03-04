@@ -76,12 +76,39 @@ const TEMPLATE_CATEGORIES = [
 
 // Template cards with images/previews
 const TEMPLATES = [
+  // SaaS templates
   {
     id: "investment",
     titleKey: I18nKey.ATOMS$TEMPLATE_INVESTMENT_TITLE,
     category: "saas",
     gradient: "from-blue-500/20 to-purple-500/20",
   },
+  // Internal templates
+  {
+    id: "admin-panel",
+    titleKey: I18nKey.ATOMS$TEMPLATE_ADMIN_PANEL_TITLE,
+    category: "internal",
+    gradient: "from-slate-500/20 to-zinc-500/20",
+  },
+  {
+    id: "employee-portal",
+    titleKey: I18nKey.ATOMS$TEMPLATE_EMPLOYEE_PORTAL_TITLE,
+    category: "internal",
+    gradient: "from-cyan-500/20 to-blue-500/20",
+  },
+  {
+    id: "inventory-system",
+    titleKey: I18nKey.ATOMS$TEMPLATE_INVENTORY_SYSTEM_TITLE,
+    category: "internal",
+    gradient: "from-amber-500/20 to-orange-500/20",
+  },
+  {
+    id: "hr-dashboard",
+    titleKey: I18nKey.ATOMS$TEMPLATE_HR_DASHBOARD_TITLE,
+    category: "internal",
+    gradient: "from-violet-500/20 to-purple-500/20",
+  },
+  // Personal templates
   {
     id: "manga",
     titleKey: I18nKey.ATOMS$TEMPLATE_MANGA_TITLE,
@@ -93,6 +120,18 @@ const TEMPLATES = [
     titleKey: I18nKey.ATOMS$TEMPLATE_FITNESS_TITLE,
     category: "personal",
     gradient: "from-green-500/20 to-teal-500/20",
+  },
+  {
+    id: "portfolio",
+    titleKey: I18nKey.ATOMS$TEMPLATE_PORTFOLIO_TITLE,
+    category: "personal",
+    gradient: "from-indigo-500/20 to-blue-500/20",
+  },
+  {
+    id: "blog",
+    titleKey: I18nKey.ATOMS$TEMPLATE_BLOG_TITLE,
+    category: "personal",
+    gradient: "from-emerald-500/20 to-cyan-500/20",
   },
 ];
 
@@ -266,13 +305,21 @@ export default function AtomsHome() {
               {t(I18nKey.ATOMS$TEMPLATES_TITLE)}
             </h2>
             {/* Category Tabs */}
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="flex flex-wrap justify-center gap-2" role="tablist">
               {TEMPLATE_CATEGORIES.map((category) => (
                 <button
                   key={category.id}
                   type="button"
+                  role="tab"
+                  aria-selected={activeCategory === category.id}
                   onClick={() => setActiveCategory(category.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setActiveCategory(category.id);
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-neutral-900 ${
                     activeCategory === category.id
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30"
                       : "bg-neutral-800/50 text-neutral-400 hover:bg-neutral-700/50 hover:text-white"
@@ -285,15 +332,24 @@ export default function AtomsHome() {
           </div>
 
           {/* Template Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div
+            className="grid grid-cols-1 md:grid-cols-3 gap-4"
+            role="tabpanel"
+          >
             <AnimatePresence mode="wait">
               {TEMPLATES.map((template, index) => (
                 <motion.button
                   type="button"
                   key={template.id}
                   onClick={() => handleTemplateClick(template)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleTemplateClick(template);
+                    }
+                  }}
                   disabled={isCreating}
-                  className="group relative overflow-hidden rounded-2xl bg-neutral-900/50 border border-neutral-700/30 hover:border-indigo-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="group relative overflow-hidden rounded-2xl bg-neutral-900/50 border border-neutral-700/30 hover:border-indigo-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-neutral-900"
                   variants={cardVariants}
                   initial="hidden"
                   animate="visible"

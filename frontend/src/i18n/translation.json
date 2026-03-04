@@ -17425,6 +17425,18 @@
     "tr": "Yazılar, kategoriler ve yorumlar içeren bir blog platformu",
     "uk": "Блог-платформа з постами, категоріями та коментарями"
   },
+  "ATOMS$TEMPLATE_ADMIN_PANEL_TITLE": {
+    "en": "Admin Panel"
+  },
+  "ATOMS$TEMPLATE_EMPLOYEE_PORTAL_TITLE": {
+    "en": "Employee Portal"
+  },
+  "ATOMS$TEMPLATE_INVENTORY_SYSTEM_TITLE": {
+    "en": "Inventory System"
+  },
+  "ATOMS$TEMPLATE_HR_DASHBOARD_TITLE": {
+    "en": "HR Dashboard"
+  },
   "ATOMS$STAT_GITHUB_STARS_VALUE": {
     "en": "100K+",
     "ja": "100K+",
