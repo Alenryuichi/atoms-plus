@@ -28,10 +28,10 @@
   /* Brand Colors - Keep logo gold for brand recognition */
   --color-logo: #cfb755;
 
-  /* Background Colors - Light theme from reference */
-  --color-base: #0d0f11;
+  /* Background Colors - Atoms Plus dark theme (unified with --atoms-bg-primary) */
+  --color-base: #0f1115;
   --color-base-light: #f8fafc;
-  --color-base-secondary: #24272e;
+  --color-base-secondary: #141619;
   --color-surface: #ffffff;
   --color-surface-hover: #f1f5f9;
 

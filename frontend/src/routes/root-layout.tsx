@@ -251,7 +251,10 @@ export default function MainApp() {
     <div
       data-testid="root-layout"
       className={cn(
-        "min-h-screen lg:min-w-5xl flex flex-col bg-background",
+        // Use h-screen instead of min-h-screen to ensure exact viewport height
+        // This allows flex-1 children to calculate proper heights
+        // Use bg-base to match html/body background and avoid white edges
+        "h-screen lg:min-w-5xl flex flex-col bg-base overflow-hidden",
         isMobileDevice() && "overflow-hidden",
       )}
     >
@@ -259,12 +262,8 @@ export default function MainApp() {
       <TopNavbar />
 
       {/* Main content area with top padding for fixed navbar */}
-      <main
-        className={cn(
-          "flex-1 flex flex-col pt-14",
-          pathname === "/" ? "p-0" : "p-0 md:p-3",
-        )}
-      >
+      {/* Removed md:p-3 to prevent white edge gaps - use bg-base consistently */}
+      <main className={cn("flex-1 flex flex-col pt-16 min-h-0 p-0")}>
         {config.data &&
           (config.data.maintenance_start_time ||
             (config.data.faulty_models &&
@@ -279,7 +278,7 @@ export default function MainApp() {
           )}
         <div
           id="root-outlet"
-          className="flex-1 relative overflow-auto custom-scrollbar"
+          className="flex-1 flex flex-col min-h-0 relative overflow-hidden"
         >
           <EmailVerificationGuard>
             <Outlet />

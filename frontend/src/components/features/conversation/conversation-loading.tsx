@@ -13,7 +13,8 @@ export function ConversationLoading({ className }: ConversationLoadingProps) {
   return (
     <div
       className={cn(
-        "bg-[#25272D] flex flex-col items-center justify-center h-full w-full",
+        // Atoms Plus: Use consistent dark theme variable for loading states
+        "bg-[var(--atoms-bg-elevated)] flex flex-col items-center justify-center h-full w-full",
         className,
       )}
     >

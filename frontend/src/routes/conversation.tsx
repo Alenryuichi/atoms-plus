@@ -148,10 +148,7 @@ function AppContent() {
   const content = (
     <ConversationSubscriptionsProvider>
       <EventHandler>
-        <div
-          data-testid="app-route"
-          className="p-3 md:p-0 flex flex-col h-full"
-        >
+        <div data-testid="app-route" className="flex flex-col flex-1 min-h-0">
           {/* Atoms Plus: Simplified layout - Chat + Preview only */}
           <ConversationMain />
         </div>
