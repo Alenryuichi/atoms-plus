@@ -67,6 +67,7 @@ export const useCreateConversation = () => {
           undefined, // trigger - set by backend when applicable
           parentConversationId,
           agentType,
+          agentRole, // Atoms Plus: auto-detected role
         );
 
         // Return a special task ID that the frontend will recognize

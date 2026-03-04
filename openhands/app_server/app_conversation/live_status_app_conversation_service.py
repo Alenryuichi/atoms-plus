@@ -247,12 +247,19 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
             ):
                 yield updated_task
 
+            # Atoms Plus: resolve agent_role to system_message_suffix
+            system_message_suffix = request.system_message_suffix
+            if request.agent_role and not system_message_suffix:
+                system_message_suffix = self._resolve_agent_role_prompt(
+                    request.agent_role
+                )
+
             # Build the start request
             start_conversation_request = (
                 await self._build_start_conversation_request_for_user(
                     sandbox,
                     request.initial_message,
-                    request.system_message_suffix,
+                    system_message_suffix,
                     request.git_provider,
                     working_dir,
                     request.agent_type,
@@ -895,6 +902,32 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
         _logger.info(f'Final MCP configuration: {mcp_config}')
 
         return llm, mcp_config
+
+    def _resolve_agent_role_prompt(self, agent_role: str) -> str | None:
+        """Resolve an Atoms Plus agent role ID to its system prompt.
+
+        Args:
+            agent_role: The role ID (engineer, architect, product_manager, etc.)
+
+        Returns:
+            The role's system prompt, or None if the role is not found
+        """
+        try:
+            # Import here to avoid circular imports and make this optional
+            from atoms_plus.roles.registry import RoleRegistry
+
+            system_prompt = RoleRegistry.get_system_prompt(agent_role)
+            _logger.info(f'Resolved agent_role={agent_role} to system prompt')
+            return system_prompt
+        except ImportError:
+            _logger.warning('atoms_plus module not available, ignoring agent_role')
+            return None
+        except ValueError as e:
+            _logger.warning(f'Failed to resolve agent_role={agent_role}: {e}')
+            return None
+        except Exception as e:
+            _logger.error(f'Unexpected error resolving agent_role={agent_role}: {e}')
+            return None
 
     def _create_agent_with_context(
         self,

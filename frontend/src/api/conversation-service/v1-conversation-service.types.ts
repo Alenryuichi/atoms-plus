@@ -54,6 +54,8 @@ export interface V1AppConversationStartRequest {
   pr_number?: number[];
   parent_conversation_id?: string | null;
   agent_type?: "default" | "plan";
+  // Atoms Plus: auto-detected role ID (engineer, architect, product_manager, etc.)
+  agent_role?: string | null;
 }
 
 export type V1AppConversationStartTaskStatus =

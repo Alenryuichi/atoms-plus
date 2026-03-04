@@ -157,6 +157,10 @@ class AppConversationStartRequest(OpenHandsModel):
     parent_conversation_id: OpenHandsUUID | None = None
     agent_type: AgentType = Field(default=AgentType.DEFAULT)
 
+    # Atoms Plus: auto-detected role ID (engineer, architect, product_manager, etc.)
+    # When set, the backend will fetch the role's system prompt and use it
+    agent_role: str | None = None
+
     public: bool | None = None
 
     # Plugin parameters - for loading remote plugins into the conversation
