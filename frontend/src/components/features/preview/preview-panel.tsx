@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   SandpackProvider,
   SandpackLayout,
@@ -42,6 +42,7 @@ type ViewMode = "split" | "editor" | "preview";
 // Storage key prefixes for persisting selected file (conversation-specific)
 const STORAGE_KEY_PREFIX_SELECTED_FILE = "preview-selected-file-";
 const STORAGE_KEY_PREFIX_VIEW_MODE = "preview-view-mode-";
+const STORAGE_KEY_PREFIX_AUTO_SWITCHED = "preview-auto-switched-";
 
 /**
  * Get file extension and determine Sandpack template
@@ -85,6 +86,14 @@ export function PreviewPanel() {
   // Conversation-specific storage keys
   const storageKeySelectedFile = `${STORAGE_KEY_PREFIX_SELECTED_FILE}${conversationId}`;
   const storageKeyViewMode = `${STORAGE_KEY_PREFIX_VIEW_MODE}${conversationId}`;
+  const storageKeyAutoSwitched = `${STORAGE_KEY_PREFIX_AUTO_SWITCHED}${conversationId}`;
+
+  // Track if auto-switch has already happened (use ref to avoid re-renders)
+  const hasAutoSwitchedRef = useRef<boolean>(
+    typeof window !== "undefined" && conversationId
+      ? localStorage.getItem(storageKeyAutoSwitched) === "true"
+      : false,
+  );
 
   // State
   const [selectedFile, setSelectedFile] = useState<string | null>(() => {
@@ -104,8 +113,8 @@ export function PreviewPanel() {
         return saved;
       }
     }
-    // Default to preview-only mode (like bolt.new, lovable.dev)
-    return "preview";
+    // Default to editor view (Code) - will auto-switch to preview once files are loaded
+    return "editor";
   });
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -149,6 +158,37 @@ export function PreviewPanel() {
       localStorage.setItem(storageKeyViewMode, viewMode);
     }
   }, [viewMode, conversationId, storageKeyViewMode]);
+
+  // Auto-switch from "editor" to "preview" once files and content are ready
+  // This only happens once per conversation to provide a good initial experience
+  useEffect(() => {
+    // Check if we've already auto-switched for this conversation
+    if (hasAutoSwitchedRef.current) return;
+
+    // Check if conditions are met: files loaded, file selected, content available, not loading
+    if (
+      files &&
+      files.length > 0 &&
+      selectedFile &&
+      fileContent &&
+      !isLoadingContent
+    ) {
+      // Mark as auto-switched before changing mode
+      hasAutoSwitchedRef.current = true;
+      if (conversationId) {
+        localStorage.setItem(storageKeyAutoSwitched, "true");
+      }
+      // Switch to preview mode
+      setViewMode("preview");
+    }
+  }, [
+    files,
+    selectedFile,
+    fileContent,
+    isLoadingContent,
+    conversationId,
+    storageKeyAutoSwitched,
+  ]);
 
   // Build Sandpack files from workspace content
   const sandpackFiles = useMemo(() => {

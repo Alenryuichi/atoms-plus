@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { cn } from "#/lib/utils";
 import { ChatInterfaceWrapper } from "./chat-interface-wrapper";
 import { ConversationTabContent } from "../conversation-tabs/conversation-tab-content/conversation-tab-content";
@@ -19,14 +18,10 @@ function getDesktopTabPanelClass(isRightPanelShown: boolean) {
 
 export function ConversationMain() {
   const isMobile = useBreakpoint();
-  const { isRightPanelShown, setSelectedTab, setIsRightPanelShown } =
-    useConversationStore();
+  const { isRightPanelShown } = useConversationStore();
 
-  // Atoms Plus: Auto-show Preview tab by default
-  useEffect(() => {
-    setSelectedTab("preview");
-    setIsRightPanelShown(true);
-  }, [setSelectedTab, setIsRightPanelShown]);
+  // Note: Auto-switch to Preview view is now handled in PreviewPanel component
+  // It switches from "Code" to "Preview" once workspace files and content are loaded
 
   const { leftWidth, rightWidth, isDragging, containerRef, handleMouseDown } =
     useResizablePanels({
@@ -116,7 +111,7 @@ export function ConversationMain() {
             className={cn(
               isMobile
                 ? "h-full flex flex-col gap-3 pb-2 md:pb-0 pt-2"
-                : "flex flex-col flex-1 gap-3 min-w-max h-full",
+                : "flex flex-col flex-1 gap-3 min-w-max h-full p-3",
             )}
           >
             <ConversationTabContent />
