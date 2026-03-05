@@ -302,9 +302,11 @@ class DaytonaSandboxService(SandboxService):
         # First kill any existing agent server process to avoid port conflicts
         kill_cmd = f"pkill -f 'openhands.agent_server.*--port {DAYTONA_AGENT_SERVER_PORT}' 2>/dev/null || true"
 
-        # Use nohup and & to run in background, redirect output to log file
+        # Use simple background execution with &
+        # Note: nohup doesn't work reliably with Daytona's process.exec
+        # The & alone works because the shell exits quickly and orphans the process
         start_cmd = (
-            f'nohup python -m openhands.agent_server --port {DAYTONA_AGENT_SERVER_PORT} '
+            f'python3 -m openhands.agent_server --port {DAYTONA_AGENT_SERVER_PORT} '
             f'> /tmp/agent_server.log 2>&1 &'
         )
 
