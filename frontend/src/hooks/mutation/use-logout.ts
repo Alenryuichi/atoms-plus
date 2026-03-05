@@ -24,7 +24,7 @@ export const useLogout = () => {
       }
 
       // Clear Supabase session if configured
-      if (isSupabaseConfigured()) {
+      if (isSupabaseConfigured() && supabase) {
         await supabase.auth.signOut();
       }
 

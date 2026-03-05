@@ -52,7 +52,7 @@ export function SupabaseAuthProvider({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) {
+    if (!isSupabaseConfigured() || !supabase) {
       setIsLoading(false);
       return undefined;
     }
@@ -80,6 +80,7 @@ export function SupabaseAuthProvider({
 
   const signIn = useCallback(
     async (email: string, password: string, captchaToken?: string) => {
+      if (!supabase) return { error: { message: "Supabase not configured" } as AuthError };
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -92,6 +93,7 @@ export function SupabaseAuthProvider({
 
   const signUp = useCallback(
     async (email: string, password: string, captchaToken?: string) => {
+      if (!supabase) return { error: { message: "Supabase not configured" } as AuthError };
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -103,10 +105,12 @@ export function SupabaseAuthProvider({
   );
 
   const signOut = useCallback(async () => {
+    if (!supabase) return;
     await supabase.auth.signOut();
   }, []);
 
   const signInWithGitHub = useCallback(async () => {
+    if (!supabase) return { error: { message: "Supabase not configured" } as AuthError };
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "github",
       options: {

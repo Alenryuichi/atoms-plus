@@ -29,7 +29,7 @@ async function initializeBalance(
   userId: string,
   initialCredits: number = 100000,
 ): Promise<CreditBalance | null> {
-  if (!isSupabaseConfigured()) return null;
+  if (!isSupabaseConfigured() || !supabase) return null;
 
   const insertData = {
     user_id: userId,
@@ -60,7 +60,7 @@ async function initializeBalance(
 async function getBalance(
   userId: string,
 ): Promise<CreditBalanceResponse | null> {
-  if (!isSupabaseConfigured()) {
+  if (!isSupabaseConfigured() || !supabase) {
     // eslint-disable-next-line no-console
     console.warn("Supabase not configured, returning mock data");
     return {
@@ -104,7 +104,7 @@ async function recordTransaction(
   userId: string,
   transaction: CreditTransactionInput,
 ): Promise<CreditTransaction | null> {
-  if (!isSupabaseConfigured()) return null;
+  if (!isSupabaseConfigured() || !supabase) return null;
 
   const insertData = {
     user_id: userId,
@@ -172,7 +172,7 @@ async function getTransactionHistory(
   userId: string,
   limit: number = 50,
 ): Promise<CreditTransaction[]> {
-  if (!isSupabaseConfigured()) return [];
+  if (!isSupabaseConfigured() || !supabase) return [];
 
   const { data, error } = await supabase
     .from("credit_transactions")
