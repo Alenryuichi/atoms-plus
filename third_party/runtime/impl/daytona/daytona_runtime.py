@@ -128,9 +128,13 @@ class DaytonaRuntime(ActionExecutionClient):
         )
         auto_stop_interval = 0 if disable_auto_stop else 60
 
+        # NOTE: Daytona SDK 0.24.x does NOT support creating sandboxes from Docker images.
+        # The `snapshot` parameter expects a Daytona snapshot ID, not a Docker image name.
+        # We create a default Python sandbox and install openhands via pip instead.
         sandbox_params = CreateSandboxFromSnapshotParams(
             language="python",
-            snapshot=self.config.sandbox.runtime_container_image,
+            # Do NOT pass snapshot - use default Python environment
+            # snapshot=self.config.sandbox.runtime_container_image,  # This was wrong!
             public=True,
             env_vars=self._get_creation_env_vars(),
             labels={OPENHANDS_SID_LABEL: self.sid},
@@ -146,23 +150,60 @@ class DaytonaRuntime(ActionExecutionClient):
     def action_execution_server_url(self) -> str:
         return self.api_url
 
+    def _install_openhands_in_sandbox(self) -> None:
+        """Install openhands package in the Daytona sandbox.
+
+        Since Daytona SDK 0.24.x doesn't support creating sandboxes from Docker images,
+        we need to install the openhands package manually via pip.
+        """
+        assert self.sandbox is not None, "Sandbox is not initialized"
+
+        self.log("info", "Installing openhands package in Daytona sandbox...")
+
+        # Install openhands from PyPI
+        # Using --quiet to reduce output, --no-cache-dir to save space
+        install_cmd = (
+            "pip install --quiet --no-cache-dir openhands-ai && "
+            "echo 'openhands installation complete'"
+        )
+
+        try:
+            result = self.sandbox.process.exec(install_cmd, timeout=300)
+            self.log("info", f"pip install result: {result.result if hasattr(result, 'result') else result}")
+        except Exception as e:
+            self.log("error", f"Failed to install openhands: {e}")
+            raise RuntimeError(f"Failed to install openhands in Daytona sandbox: {e}")
+
     def _start_action_execution_server(self) -> None:
         assert self.sandbox is not None, "Sandbox is not initialized"
 
-        start_command: list[str] = get_action_execution_server_startup_command(
-            server_port=self._sandbox_port,
-            plugins=self.plugins,
-            app_config=self.config,
-            override_user_id=1000,
-            override_username="openhands",
-        )
-        start_command_str: str = (
-            f"mkdir -p {self.config.workspace_mount_path_in_sandbox} && cd /openhands/code && "
-            + " ".join(start_command)
+        # First, install openhands package since Daytona's default Python sandbox
+        # doesn't have it pre-installed
+        self._install_openhands_in_sandbox()
+
+        # For Daytona sandbox, we use a simplified startup command
+        # The Daytona sandbox uses native Python, not micromamba/poetry
+        workspace_dir = self.config.workspace_mount_path_in_sandbox
+        server_port = self._sandbox_port
+
+        # Build plugin args
+        plugin_args = ""
+        if self.plugins:
+            plugin_names = " ".join([p.name for p in self.plugins])
+            plugin_args = f"--plugins {plugin_names}"
+
+        # Build simplified command that works in Daytona's Python environment
+        # Note: Daytona sandbox has Python pre-installed, we use python3 directly
+        start_command_str = (
+            f"mkdir -p {workspace_dir} && cd {workspace_dir} && "
+            f"python3 -u -m openhands.runtime.action_execution_server "
+            f"{server_port} --working-dir {workspace_dir} "
+            f"--username openhands --user-id 1000 "
+            f"{plugin_args} --no-enable-browser"
         )
 
         self.log(
-            "debug",
+            "info",
             f"Starting action execution server with command: {start_command_str}",
         )
 
@@ -174,7 +215,18 @@ class DaytonaRuntime(ActionExecutionClient):
             SessionExecuteRequest(command=start_command_str, var_async=True),
         )
 
-        self.log("debug", f"exec_command_id: {exec_command.cmd_id}")
+        self.log("info", f"exec_command_id: {exec_command.cmd_id}")
+
+        # Give the server more time to start after pip install
+        import time
+        time.sleep(5)
+
+        # Try to get command output for debugging
+        try:
+            session_info = self.sandbox.process.get_session(exec_session_id)
+            self.log("info", f"Session state after 5s: {session_info}")
+        except Exception as e:
+            self.log("warning", f"Could not get session info: {e}")
 
     @tenacity.retry(
         stop=tenacity.stop_after_delay(120) | stop_if_should_exit(),
