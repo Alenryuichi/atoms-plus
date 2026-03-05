@@ -94,16 +94,20 @@ export default function MainApp() {
   // Use Supabase auth if configured, otherwise use the original OSS/SAAS auth
   // In mock mode, always consider user as authenticated
   const useSupabaseAuthFlow = isSupabaseConfigured() && !isMockMode;
-  const effectiveIsAuthed = isMockMode
-    ? true
-    : useSupabaseAuthFlow
-      ? isSupabaseAuthed
-      : isAuthed;
-  const effectiveIsLoading = isMockMode
-    ? false
-    : useSupabaseAuthFlow
-      ? isSupabaseLoading
-      : isAuthLoading;
+
+  const getEffectiveIsAuthed = (): boolean => {
+    if (isMockMode) return true;
+    if (useSupabaseAuthFlow) return isSupabaseAuthed;
+    return isAuthed;
+  };
+  const effectiveIsAuthed = getEffectiveIsAuthed();
+
+  const getEffectiveIsLoading = (): boolean => {
+    if (isMockMode) return false;
+    if (useSupabaseAuthFlow) return isSupabaseLoading;
+    return isAuthLoading;
+  };
+  const effectiveIsLoading = getEffectiveIsLoading();
 
   const [consentFormIsOpen, setConsentFormIsOpen] = React.useState(false);
 

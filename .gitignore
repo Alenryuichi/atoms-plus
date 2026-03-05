@@ -268,3 +268,9 @@ test-results
 !.augment/skills/
 !.augment/agents/
 worktrees/
+
+# Debug/Diagnosis files
+DIAGNOSIS*.md
+FINAL_DIAGNOSIS*.md
+*.diagnosis.md
+image*.png

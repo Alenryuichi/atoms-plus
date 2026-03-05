@@ -91,13 +91,11 @@ export function ScaffoldBentoGrid() {
               animate="visible"
               transition={{ delay: index * 0.1, duration: 0.4 }}
               // Bento grid sizing - make some cards larger
-              className={
-                index === 0
-                  ? "md:col-span-2 md:row-span-2"
-                  : index === 3
-                    ? "lg:col-span-2"
-                    : ""
-              }
+              className={(() => {
+                if (index === 0) return "md:col-span-2 md:row-span-2";
+                if (index === 3) return "lg:col-span-2";
+                return "";
+              })()}
             >
               <BentoCard
                 onClick={() => handleTemplateClick(project.id)}

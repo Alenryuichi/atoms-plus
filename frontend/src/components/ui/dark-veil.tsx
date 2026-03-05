@@ -115,10 +115,10 @@ export function DarkVeil({
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) return undefined;
 
     const parent = canvas.parentElement;
-    if (!parent) return;
+    if (!parent) return undefined;
 
     // Use a try-catch to handle WebGL initialization errors gracefully
     let renderer: Renderer;
@@ -128,8 +128,9 @@ export function DarkVeil({
         canvas,
       });
     } catch {
+      // eslint-disable-next-line no-console
       console.warn("DarkVeil: WebGL not supported, skipping background");
-      return;
+      return undefined;
     }
 
     const { gl } = renderer;
@@ -181,6 +182,9 @@ export function DarkVeil({
     return () => {
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", resize);
+      // Cleanup WebGL context to prevent memory leaks
+      const ext = gl.getExtension("WEBGL_lose_context");
+      if (ext) ext.loseContext();
     };
   }, [
     hueShift,

@@ -88,7 +88,10 @@ function getSandpackFileName(filePath: string): string {
   return `/${fileName}`;
 }
 
-export const PreviewPanel = forwardRef<PreviewPanelHandle>((_props, ref) => {
+function PreviewPanelComponent(
+  _props: object,
+  ref: React.Ref<PreviewPanelHandle>,
+) {
   const { t } = useTranslation();
   const runtimeIsReady = useRuntimeIsReady();
   const { conversationId } = useConversationId();
@@ -118,8 +121,7 @@ export const PreviewPanel = forwardRef<PreviewPanelHandle>((_props, ref) => {
   // Fetch selected file content
   const {
     data: fileContent,
-    isLoading: isLoadingContent,
-    error: contentError,
+    // isLoading and error are handled by Sandpack internally
     refetch: refetchContent,
   } = useWorkspaceFileContent(selectedFile);
 
@@ -141,13 +143,13 @@ export const PreviewPanel = forwardRef<PreviewPanelHandle>((_props, ref) => {
   const sandpackFiles = useMemo(() => {
     // In mock mode, use all mock files for complete React project support
     if (isMockMode) {
-      const files: Record<string, { code: string }> = {};
+      const mockFiles: Record<string, { code: string }> = {};
       Object.entries(MOCK_FILE_CONTENTS).forEach(([path, code]) => {
         // Convert file path to Sandpack format (e.g., "src/App.tsx" -> "/src/App.tsx")
         const sandpackPath = path.startsWith("/") ? path : `/${path}`;
-        files[sandpackPath] = { code };
+        mockFiles[sandpackPath] = { code };
       });
-      return files;
+      return mockFiles;
     }
 
     // Normal mode: use single file content
@@ -167,11 +169,15 @@ export const PreviewPanel = forwardRef<PreviewPanelHandle>((_props, ref) => {
   }, [fileContent, selectedFile]);
 
   // In mock mode, always use react-ts template for full React project support
-  const template = isMockMode
-    ? "react-ts"
-    : selectedFile
-      ? getFileTemplate(selectedFile)
-      : "static";
+  const getTemplate = ():
+    | "react-ts"
+    | "static"
+    | ReturnType<typeof getFileTemplate> => {
+    if (isMockMode) return "react-ts";
+    if (selectedFile) return getFileTemplate(selectedFile);
+    return "static";
+  };
+  const template = getTemplate();
 
   // Handle refresh - exposed via ref for parent component
   const handleRefresh = () => {
@@ -303,4 +309,9 @@ export const PreviewPanel = forwardRef<PreviewPanelHandle>((_props, ref) => {
       </div>
     </div>
   );
-});
+}
+
+export const PreviewPanel = forwardRef<PreviewPanelHandle>(
+  PreviewPanelComponent,
+);
+PreviewPanel.displayName = "PreviewPanel";

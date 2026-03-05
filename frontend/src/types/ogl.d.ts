@@ -1,4 +1,5 @@
 // Type declarations for OGL (Minimal WebGL Library)
+/* eslint-disable max-classes-per-file */
 declare module "ogl" {
   export class Renderer {
     constructor(options?: {
