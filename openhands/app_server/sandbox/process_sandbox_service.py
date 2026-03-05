@@ -166,12 +166,12 @@ class ProcessSandboxService(SandboxService):
         env['SESSION_API_KEY'] = session_api_key
 
         # Set working directory environment variables for agent server
-        # This ensures files are created in the correct per-conversation directory
-        # These variables are used by the agent server to configure:
-        # - OH_CONVERSATIONS_PATH: where conversation data is stored
-        # - OH_BASH_EVENTS_DIR: where bash events are logged
-        env['OH_CONVERSATIONS_PATH'] = os.path.join(working_dir, 'conversations')
-        env['OH_BASH_EVENTS_DIR'] = os.path.join(working_dir, 'bash_events')
+        # IMPORTANT: Conversations and bash events are stored OUTSIDE the working directory
+        # to prevent them from appearing in the 'Changes' tab (git diff).
+        # The working directory should only contain user project files.
+        persistence_base = os.getenv('OH_PERSISTENCE_DIR', '/tmp/openhands-data')
+        env['OH_CONVERSATIONS_PATH'] = os.path.join(persistence_base, sandbox_id, 'conversations')
+        env['OH_BASH_EVENTS_DIR'] = os.path.join(persistence_base, sandbox_id, 'bash_events')
         env['WORKSPACE_BASE'] = working_dir
 
         # Prepare command arguments
