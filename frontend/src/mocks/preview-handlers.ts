@@ -19,11 +19,7 @@ import { delay, http, HttpResponse } from "msw";
  * Web-previewable files that appear in the Preview panel
  * These match WEB_PREVIEWABLE_EXTENSIONS in use-workspace-files.ts
  */
-export const PREVIEW_FILES = [
-  "App.tsx",
-  "styles.css",
-  "Button.tsx",
-];
+export const PREVIEW_FILES = ["App.tsx", "styles.css", "Button.tsx"];
 
 /**
  * Mock file contents for preview
@@ -233,12 +229,12 @@ export const PREVIEW_HANDLERS = [
 
       // If requesting a subdirectory, filter files
       if (path) {
-        const filesInPath = PREVIEW_FILES.filter((f) =>
-          f.startsWith(path + "/") || f.startsWith(path)
+        const filesInPath = PREVIEW_FILES.filter(
+          (f) => f.startsWith(`${path}/`) || f.startsWith(path),
         );
         // Return relative paths from the requested directory
         const relativePaths = filesInPath.map((f) => {
-          if (f.startsWith(path + "/")) {
+          if (f.startsWith(`${path}/`)) {
             return f.slice(path.length + 1);
           }
           return f;
@@ -283,4 +279,3 @@ export const PREVIEW_HANDLERS = [
     },
   ),
 ];
-

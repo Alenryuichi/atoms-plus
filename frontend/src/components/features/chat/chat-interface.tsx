@@ -21,7 +21,6 @@ import { useAgentState } from "#/hooks/use-agent-state";
 import { useHandleBuildPlanClick } from "#/hooks/use-handle-build-plan-click";
 
 import { ScrollToBottomButton } from "#/components/shared/buttons/scroll-to-bottom-button";
-import { LoadingSpinner } from "#/components/shared/loading-spinner";
 import { ChatMessagesSkeleton } from "./chat-messages-skeleton";
 import { displayErrorToast } from "#/utils/custom-toast-handlers";
 import { useErrorMessageStore } from "#/stores/error-message-store";
@@ -260,10 +259,11 @@ export function ChatInterface() {
     <ScrollProvider value={scrollProviderValue}>
       {/* Atoms Plus: Transparent chat interface - parent card handles background */}
       <div className="h-full flex flex-col relative bg-transparent min-h-0">
+        {/* Atoms Plus: Show suggestions immediately for new conversations (no loading needed) */}
         {!hasSubstantiveAgentActions &&
           !optimisticUserMessage &&
           !userEventsExist &&
-          !isChatLoading && (
+          !isReturningToConversation && (
             <ChatSuggestions
               onSuggestionsClick={(message) => setMessageToSend(message)}
             />
@@ -296,12 +296,7 @@ export function ChatInterface() {
               />
             )}
 
-          {/* Fallback to simple spinner for non-task loading */}
-          {isChatLoading && !isReturningToConversation && (
-            <div className="flex justify-center" data-testid="loading-spinner">
-              <LoadingSpinner size="small" />
-            </div>
-          )}
+          {/* Note: Removed spinner for new conversations - ChatSuggestions shows immediately */}
 
           {(!isLoadingMessages || v0Events.length > 0) && v0UserEventsExist && (
             <V0Messages

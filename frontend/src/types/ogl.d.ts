@@ -34,7 +34,7 @@ declare module "ogl" {
         depthTest?: boolean;
         depthWrite?: boolean;
         depthFunc?: number;
-      }
+      },
     );
     uniforms: Record<string, { value: unknown }>;
   }
@@ -46,14 +46,14 @@ declare module "ogl" {
         geometry: Geometry | Triangle;
         program: Program;
         mode?: number;
-      }
+      },
     );
   }
 
   export class Geometry {
     constructor(
       gl: WebGLRenderingContext,
-      attributes?: Record<string, { size: number; data: Float32Array }>
+      attributes?: Record<string, { size: number; data: Float32Array }>,
     );
   }
 
@@ -63,6 +63,7 @@ declare module "ogl" {
 
   export class Vec2 {
     x: number;
+
     y: number;
     constructor(x?: number, y?: number);
     set(x: number, y: number): this;
@@ -70,7 +71,9 @@ declare module "ogl" {
 
   export class Vec3 {
     x: number;
+
     y: number;
+
     z: number;
     constructor(x?: number, y?: number, z?: number);
     set(x: number, y: number, z: number): this;
@@ -84,11 +87,10 @@ declare module "ogl" {
         near?: number;
         far?: number;
         aspect?: number;
-      }
+      },
     );
     position: Vec3;
     lookAt(target: Vec3): void;
     perspective(options?: { aspect?: number }): void;
   }
 }
-

@@ -15,7 +15,7 @@ interface BlurTextProps {
 
 const buildKeyframes = (
   from: Record<string, unknown>,
-  steps: Record<string, unknown>[]
+  steps: Record<string, unknown>[],
 ) => {
   const keys = new Set([
     ...Object.keys(from),
@@ -53,7 +53,7 @@ export function BlurText({
           if (ref.current) observer.unobserve(ref.current);
         }
       },
-      { threshold, rootMargin }
+      { threshold, rootMargin },
     );
     observer.observe(ref.current);
     return () => observer.disconnect();
@@ -64,7 +64,7 @@ export function BlurText({
       direction === "top"
         ? { filter: "blur(10px)", opacity: 0, y: -50 }
         : { filter: "blur(10px)", opacity: 0, y: 50 },
-    [direction]
+    [direction],
   );
 
   const defaultTo = useMemo(
@@ -76,7 +76,7 @@ export function BlurText({
       },
       { filter: "blur(0px)", opacity: 1, y: 0 },
     ],
-    [direction]
+    [direction],
   );
 
   const fromSnapshot = defaultFrom;
@@ -85,7 +85,7 @@ export function BlurText({
   const stepCount = toSnapshots.length + 1;
   const totalDuration = stepDuration * (stepCount - 1);
   const times = Array.from({ length: stepCount }, (_, i) =>
-    stepCount === 1 ? 0 : i / (stepCount - 1)
+    stepCount === 1 ? 0 : i / (stepCount - 1),
   );
 
   return (
@@ -124,4 +124,3 @@ export function BlurText({
 }
 
 export default BlurText;
-

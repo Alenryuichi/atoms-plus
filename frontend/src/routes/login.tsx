@@ -195,7 +195,11 @@ export default function LoginPage() {
             <div className="flex flex-col items-center space-y-4">
               <div className="relative">
                 <div className="absolute inset-0 bg-amber-500/20 blur-2xl rounded-full" />
-                <AtomsPlusLogo width={80} height={80} className="relative z-10" />
+                <AtomsPlusLogo
+                  width={80}
+                  height={80}
+                  className="relative z-10"
+                />
               </div>
               <div className="text-center">
                 <h1 className="text-2xl font-semibold text-white tracking-tight">
@@ -340,7 +344,9 @@ export default function LoginPage() {
             {/* Toggle Sign Up/In */}
             {!isMockMode && (
               <p className="text-center text-sm text-neutral-500">
-                {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+                {isSignUp
+                  ? "Already have an account?"
+                  : "Don't have an account?"}{" "}
                 <button
                   type="button"
                   onClick={() => {
@@ -359,11 +365,17 @@ export default function LoginPage() {
         {/* Bottom Text */}
         <p className="mt-6 text-center text-xs text-neutral-600">
           By signing in, you agree to our{" "}
-          <a href="/terms" className="text-neutral-500 hover:text-amber-500 transition-colors">
+          <a
+            href="/terms"
+            className="text-neutral-500 hover:text-amber-500 transition-colors"
+          >
             Terms of Service
           </a>{" "}
           and{" "}
-          <a href="/privacy" className="text-neutral-500 hover:text-amber-500 transition-colors">
+          <a
+            href="/privacy"
+            className="text-neutral-500 hover:text-amber-500 transition-colors"
+          >
             Privacy Policy
           </a>
         </p>

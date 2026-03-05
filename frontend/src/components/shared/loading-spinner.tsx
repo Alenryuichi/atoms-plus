@@ -5,8 +5,7 @@ interface LoadingSpinnerProps {
 }
 
 export function LoadingSpinner({ size }: LoadingSpinnerProps) {
-  const sizeStyle =
-    size === "small" ? "w-6 h-6" : "w-12 h-12";
+  const sizeStyle = size === "small" ? "w-6 h-6" : "w-12 h-12";
   const borderWidth = size === "small" ? "border-2" : "border-4";
 
   return (

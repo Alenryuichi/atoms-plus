@@ -31,7 +31,7 @@ export function SpotlightCard({
       onMouseMove={handleMouseMove}
       className={cn(
         "spotlight-card relative rounded-xl border border-border-light bg-base-secondary p-6 overflow-hidden",
-        className
+        className,
       )}
       style={
         {
@@ -55,4 +55,3 @@ export function SpotlightCard({
 }
 
 export default SpotlightCard;
-

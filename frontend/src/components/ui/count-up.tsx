@@ -80,10 +80,14 @@ export function CountUp({
         maximumFractionDigits: hasDecimals ? maxDecimals : 0,
       };
 
-      const formattedNumber = Intl.NumberFormat("en-US", options).format(latest);
-      return separator ? formattedNumber.replace(/,/g, separator) : formattedNumber;
+      const formattedNumber = Intl.NumberFormat("en-US", options).format(
+        latest,
+      );
+      return separator
+        ? formattedNumber.replace(/,/g, separator)
+        : formattedNumber;
     },
-    [maxDecimals, separator]
+    [maxDecimals, separator],
   );
 
   // Set initial value
@@ -106,7 +110,7 @@ export function CountUp({
         () => {
           if (typeof onEnd === "function") onEnd();
         },
-        delay * 1000 + duration * 1000
+        delay * 1000 + duration * 1000,
       );
 
       return () => {
@@ -114,7 +118,18 @@ export function CountUp({
         clearTimeout(durationTimeoutId);
       };
     }
-  }, [isInView, startWhen, motionValue, direction, from, to, delay, onStart, onEnd, duration]);
+  }, [
+    isInView,
+    startWhen,
+    motionValue,
+    direction,
+    from,
+    to,
+    delay,
+    onStart,
+    onEnd,
+    duration,
+  ]);
 
   // Update DOM when spring value changes
   useEffect(() => {
@@ -127,16 +142,7 @@ export function CountUp({
     return () => unsubscribe();
   }, [springValue, formatValue]);
 
-  return (
-    <span
-      ref={ref}
-      className={cn(
-        "tabular-nums",
-        className
-      )}
-    />
-  );
+  return <span ref={ref} className={cn("tabular-nums", className)} />;
 }
 
 export default CountUp;
-

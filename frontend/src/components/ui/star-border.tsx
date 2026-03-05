@@ -58,7 +58,11 @@ export function StarBorder<T extends React.ElementType = "button">({
         }}
       />
       {/* Content */}
-      <div className={innerClassName !== undefined ? innerClassName : defaultInnerClass}>
+      <div
+        className={
+          innerClassName !== undefined ? innerClassName : defaultInnerClass
+        }
+      >
         {children}
       </div>
     </Component>
@@ -66,4 +70,3 @@ export function StarBorder<T extends React.ElementType = "button">({
 }
 
 export default StarBorder;
-

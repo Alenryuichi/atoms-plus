@@ -88,25 +88,24 @@ function getSandpackFileName(filePath: string): string {
   return `/${fileName}`;
 }
 
-export const PreviewPanel = forwardRef<PreviewPanelHandle>(
-  function PreviewPanel(_props, ref) {
-    const { t } = useTranslation();
-    const runtimeIsReady = useRuntimeIsReady();
-    const { conversationId } = useConversationId();
-    const { previewViewMode: viewMode } = useConversationStore();
+export const PreviewPanel = forwardRef<PreviewPanelHandle>((_props, ref) => {
+  const { t } = useTranslation();
+  const runtimeIsReady = useRuntimeIsReady();
+  const { conversationId } = useConversationId();
+  const { previewViewMode: viewMode } = useConversationStore();
 
-    // Conversation-specific storage key for selected file
-    const storageKeySelectedFile = `${STORAGE_KEY_PREFIX_SELECTED_FILE}${conversationId}`;
+  // Conversation-specific storage key for selected file
+  const storageKeySelectedFile = `${STORAGE_KEY_PREFIX_SELECTED_FILE}${conversationId}`;
 
-    // State - only selected file is local state now
-    const [selectedFile, setSelectedFile] = useState<string | null>(() => {
-      if (typeof window !== "undefined" && conversationId) {
-        return localStorage.getItem(
-          `${STORAGE_KEY_PREFIX_SELECTED_FILE}${conversationId}`,
-        );
-      }
-      return null;
-    });
+  // State - only selected file is local state now
+  const [selectedFile, setSelectedFile] = useState<string | null>(() => {
+    if (typeof window !== "undefined" && conversationId) {
+      return localStorage.getItem(
+        `${STORAGE_KEY_PREFIX_SELECTED_FILE}${conversationId}`,
+      );
+    }
+    return null;
+  });
 
   // Fetch workspace files
   const {
@@ -304,5 +303,4 @@ export const PreviewPanel = forwardRef<PreviewPanelHandle>(
       </div>
     </div>
   );
-  },
-);
+});

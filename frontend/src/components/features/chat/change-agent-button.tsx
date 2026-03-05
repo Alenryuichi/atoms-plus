@@ -159,9 +159,7 @@ export function ChangeAgentButton() {
           // Plan mode: purple accent
           !isExecutionAgent &&
             "border-purple-500/40 bg-purple-500/20 hover:border-purple-500/60",
-          isButtonDisabled
-            ? "opacity-50 cursor-not-allowed"
-            : "cursor-pointer",
+          isButtonDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
         )}
       >
         <div className="flex items-center gap-1.5 pl-0.5">

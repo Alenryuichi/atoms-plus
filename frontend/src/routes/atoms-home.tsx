@@ -12,10 +12,6 @@ import { CountUp } from "#/components/ui/count-up";
 import { DarkVeil } from "#/components/ui/dark-veil";
 import { ScaffoldBentoGrid } from "#/components/features/scaffolding";
 import { I18nKey } from "#/i18n/declaration";
-import { autoDetectRole } from "#/api/role-service/role-service.api";
-
-// Atoms Plus: Role detection timeout (ms) - don't block conversation creation too long
-const ROLE_DETECTION_TIMEOUT = 2000;
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
@@ -292,38 +288,6 @@ export default function AtomsHome() {
 
     setIsCreating(true);
     try {
-      // Atoms Plus: Auto-detect role for UI display only
-      // The actual prompt injection is handled by microagents in .openhands/microagents/
-      const controller = new AbortController();
-      const timeoutId = setTimeout(
-        () => controller.abort(),
-        ROLE_DETECTION_TIMEOUT,
-      );
-
-      try {
-        const roleResult = await autoDetectRole(query.trim());
-        clearTimeout(timeoutId);
-        // Log detected role for UI feedback (microagents handle actual behavior)
-        if (process.env.NODE_ENV === "development") {
-          // eslint-disable-next-line no-console
-          console.log(
-            `[Atoms Plus] Detected role: ${roleResult.role_name} (${roleResult.role_id}) - handled by microagents`,
-          );
-        }
-      } catch (error) {
-        clearTimeout(timeoutId);
-        // Role detection is optional - microagents still work without it
-        if (process.env.NODE_ENV === "development") {
-          const reason =
-            error instanceof Error && error.name === "AbortError"
-              ? "timeout"
-              : "error";
-          // eslint-disable-next-line no-console
-          console.log(`[Atoms Plus] Role detection ${reason} (non-blocking)`);
-        }
-      }
-
-      // Note: agentRole parameter removed - microagents handle role injection
       const result = await createConversation.mutateAsync({
         query: query.trim(),
       });
