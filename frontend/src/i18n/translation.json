@@ -18258,5 +18258,45 @@
     "en": "Ready",
     "zh-CN": "就绪",
     "ja": "準備完了"
+  },
+  "AUTO_ROLE$RESPONDING": {
+    "en": "responding",
+    "zh-CN": "响应中",
+    "ja": "応答中"
+  },
+  "AUTO_ROLE$KEYWORDS": {
+    "en": "Keywords",
+    "zh-CN": "关键词",
+    "ja": "キーワード"
+  },
+  "AUTO_ROLE$CONFIDENCE": {
+    "en": "Confidence",
+    "zh-CN": "置信度",
+    "ja": "信頼度"
+  },
+  "ATOMS$UNIT_K_PLUS": {
+    "en": "K+",
+    "zh-CN": "K+",
+    "ja": "K+"
+  },
+  "ATOMS$UNIT_M_PLUS": {
+    "en": "M+",
+    "zh-CN": "M+",
+    "ja": "M+"
+  },
+  "ATOMS$UNIT_PLUS": {
+    "en": "+",
+    "zh-CN": "+",
+    "ja": "+"
+  },
+  "ATOMS$CONTRIBUTORS": {
+    "en": "Contributors",
+    "zh-CN": "贡献者",
+    "ja": "コントリビューター"
+  },
+  "SETTINGS$SKIP_DEV_MODE": {
+    "en": "Skip (Dev Mode)",
+    "zh-CN": "跳过 (开发模式)",
+    "ja": "スキップ (開発モード)"
   }
 }

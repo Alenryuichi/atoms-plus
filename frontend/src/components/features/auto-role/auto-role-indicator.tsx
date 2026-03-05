@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { User } from "lucide-react";
 import { cn } from "#/lib/utils";
@@ -90,6 +91,8 @@ export function AutoRoleIndicator({
     return () => clearTimeout(timer);
   }, [userInput, debounceMs, detectRole]);
 
+  const { t } = useTranslation();
+
   return (
     <TooltipProvider delayDuration={0}>
       <Tooltip>
@@ -151,7 +154,7 @@ export function AutoRoleIndicator({
                       {currentRole.role_name}
                     </span>
                     <span className="text-[10px] text-neutral-500">
-                      responding
+                      {t("AUTO_ROLE$RESPONDING")}
                     </span>
                   </>
                 )}
@@ -175,11 +178,13 @@ export function AutoRoleIndicator({
             </div>
             {currentRole.matched_keywords.length > 0 && (
               <div className="text-xs text-neutral-600 mt-1">
-                Keywords: {currentRole.matched_keywords.slice(0, 3).join(", ")}
+                {t("AUTO_ROLE$KEYWORDS")}:{" "}
+                {currentRole.matched_keywords.slice(0, 3).join(", ")}
               </div>
             )}
             <div className="text-xs text-amber-500/70 mt-1">
-              Confidence: {Math.round(currentRole.confidence * 100)}%
+              {t("AUTO_ROLE$CONFIDENCE")}:{" "}
+              {Math.round(currentRole.confidence * 100)}%
             </div>
           </div>
         </TooltipContent>

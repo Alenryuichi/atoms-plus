@@ -541,7 +541,7 @@ export default function AtomsHome() {
                   className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent"
                 />
                 <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
-                  K+
+                  {t(I18nKey.ATOMS$UNIT_K_PLUS)}
                 </span>
               </div>
               <div className="text-sm text-neutral-500">
@@ -558,7 +558,7 @@ export default function AtomsHome() {
                   className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent"
                 />
                 <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
-                  M+
+                  {t(I18nKey.ATOMS$UNIT_M_PLUS)}
                 </span>
               </div>
               <div className="text-sm text-neutral-500">
@@ -576,11 +576,11 @@ export default function AtomsHome() {
                   className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent"
                 />
                 <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
-                  +
+                  {t(I18nKey.ATOMS$UNIT_PLUS)}
                 </span>
               </div>
               <div className="text-sm text-neutral-500">
-                {t(I18nKey.ATOMS$CONTRIBUTORS) || "Contributors"}
+                {t(I18nKey.ATOMS$CONTRIBUTORS)}
               </div>
             </div>
           </div>

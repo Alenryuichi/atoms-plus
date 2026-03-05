@@ -45,7 +45,7 @@ export function BlurText({
   const ref = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
-    if (!ref.current) return;
+    if (!ref.current) return undefined;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
