@@ -730,6 +730,12 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
         if not self.web_url:
             return
 
+        # Skip MCP for Daytona sandboxes - the sandbox cannot reach back to the server
+        # reliably due to network latency. MCP tools are disabled until we have a better solution.
+        if os.getenv('OH_DISABLE_MCP', 'false').lower() == 'true':
+            _logger.info('MCP disabled via OH_DISABLE_MCP environment variable')
+            return
+
         # Add default OpenHands MCP server
         mcp_url = f'{self.web_url}/mcp/mcp'
         mcp_servers['default'] = {'url': mcp_url}
