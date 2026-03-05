@@ -6,6 +6,9 @@ import { useCreateConversation } from "#/hooks/mutation/use-create-conversation"
 import { LoadingSpinner } from "#/components/shared/loading-spinner";
 import { ShuffleText } from "#/components/ui/shuffle-text";
 import { StarBorder } from "#/components/ui/star-border";
+import { CountUp } from "#/components/ui/count-up";
+import { DarkVeil } from "#/components/ui/dark-veil";
+import { ScaffoldBentoGrid } from "#/components/features/scaffolding";
 import { I18nKey } from "#/i18n/declaration";
 
 // Animation variants
@@ -216,10 +219,22 @@ export default function AtomsHome() {
   };
 
   return (
-    <div className="min-h-full flex flex-col bg-base overflow-auto">
+    <div className="min-h-full flex flex-col overflow-auto relative">
+      {/* Animated WebGL Background */}
+      <div className="fixed inset-0 w-full h-full" style={{ zIndex: -1 }}>
+        <DarkVeil
+          hueShift={30}
+          noiseIntensity={0}
+          scanlineIntensity={0}
+          speed={0.6}
+          scanlineFrequency={0}
+          warpAmount={0}
+        />
+      </div>
+
       {/* Main Content */}
       <motion.div
-        className="flex-1 flex flex-col items-center px-4 py-12 md:py-20"
+        className="flex-1 flex flex-col items-center px-4 py-12 md:py-20 relative z-10"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -394,6 +409,23 @@ export default function AtomsHome() {
           </div>
         </motion.div>
 
+        {/* Scaffold Templates Bento Grid */}
+        <motion.div
+          className="w-full max-w-5xl mx-auto mt-16 space-y-6"
+          variants={itemVariants}
+        >
+          <div className="text-center space-y-3">
+            <h2 className="text-2xl md:text-3xl font-semibold text-white">
+              {t(I18nKey.ATOMS$SCAFFOLD_TITLE) || "Quick Start Templates"}
+            </h2>
+            <p className="text-neutral-400 max-w-2xl mx-auto">
+              {t(I18nKey.ATOMS$SCAFFOLD_DESCRIPTION) ||
+                "Generate a complete project with your favorite framework in seconds"}
+            </p>
+          </div>
+          <ScaffoldBentoGrid />
+        </motion.div>
+
         {/* Stats Section */}
         <motion.div
           className="w-full max-w-4xl mx-auto mt-20 text-center"
@@ -404,19 +436,56 @@ export default function AtomsHome() {
           </p>
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white">
-                {t(I18nKey.ATOMS$STAT_GITHUB_STARS_VALUE)}
+              <div className="text-3xl md:text-4xl font-bold text-white flex items-center justify-center">
+                <CountUp
+                  to={100}
+                  from={0}
+                  duration={2.5}
+                  delay={0.2}
+                  separator=","
+                  className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent"
+                />
+                <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
+                  K+
+                </span>
               </div>
               <div className="text-sm text-neutral-500">
                 {t(I18nKey.ATOMS$GITHUB_STARS)}
               </div>
             </div>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white">
-                {t(I18nKey.ATOMS$STAT_BUILDERS_VALUE)}
+              <div className="text-3xl md:text-4xl font-bold text-white flex items-center justify-center">
+                <CountUp
+                  to={1}
+                  from={0}
+                  duration={2}
+                  delay={0.4}
+                  className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent"
+                />
+                <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
+                  M+
+                </span>
               </div>
               <div className="text-sm text-neutral-500">
                 {t(I18nKey.ATOMS$BUILDERS)}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-white flex items-center justify-center">
+                <CountUp
+                  to={50}
+                  from={0}
+                  duration={2.2}
+                  delay={0.6}
+                  separator=","
+                  className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent"
+                />
+                <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
+                  +
+                </span>
+              </div>
+              <div className="text-sm text-neutral-500">
+                {t(I18nKey.ATOMS$CONTRIBUTORS) || "Contributors"}
               </div>
             </div>
           </div>
