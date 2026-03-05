@@ -10,3 +10,4 @@ node_modules/
 .react-router/
 .vercel
 .env*.local
+!.env.local
