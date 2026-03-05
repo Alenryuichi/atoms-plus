@@ -30,7 +30,10 @@ const FrameworkIcons: Record<ProjectType, React.ReactNode> = {
 };
 
 // Color themes for each framework
-const FrameworkColors: Record<ProjectType, { bg: string; text: string; border: string }> = {
+const FrameworkColors: Record<
+  ProjectType,
+  { bg: string; text: string; border: string }
+> = {
   "react-vite": {
     bg: "from-sky-500/10 to-cyan-500/10",
     text: "text-sky-400",
@@ -112,7 +115,9 @@ export function ScaffoldBentoGrid() {
                 <div className="relative z-10 flex flex-col h-full">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`p-2.5 rounded-xl bg-neutral-800/50 ${colors.text}`}>
+                    <div
+                      className={`p-2.5 rounded-xl bg-neutral-800/50 ${colors.text}`}
+                    >
                       {Icon}
                     </div>
                     <span
@@ -151,4 +156,3 @@ export function ScaffoldBentoGrid() {
 }
 
 export default ScaffoldBentoGrid;
-

@@ -21,13 +21,17 @@ const getStepIndex = (step: WizardStep): number => {
   return 2;
 };
 
-export function ScaffoldWizard({ isOpen, onClose, initialProjectType }: ScaffoldWizardProps) {
+export function ScaffoldWizard({
+  isOpen,
+  onClose,
+  initialProjectType,
+}: ScaffoldWizardProps) {
   // If initialProjectType is provided, skip to configuration step
   const [currentStep, setCurrentStep] = useState<WizardStep>(
-    initialProjectType ? "configuration" : "project-type"
+    initialProjectType ? "configuration" : "project-type",
   );
   const [config, setConfig] = useState<Partial<ScaffoldingConfig>>(
-    initialProjectType ? { projectType: initialProjectType } : {}
+    initialProjectType ? { projectType: initialProjectType } : {},
   );
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationResult, setGenerationResult] = useState<{

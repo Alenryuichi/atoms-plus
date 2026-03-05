@@ -50,7 +50,7 @@ export function AtomsPlusLogoAnimated({
         scale: 1,
         duration: 0.3,
       },
-      "-=0.2"
+      "-=0.2",
     );
 
     // Orbits draw in (staggered)
@@ -62,7 +62,7 @@ export function AtomsPlusLogoAnimated({
         duration: 0.6,
         stagger: 0.15,
       },
-      "-=0.2"
+      "-=0.2",
     );
 
     // Electrons appear with bounce
@@ -75,7 +75,7 @@ export function AtomsPlusLogoAnimated({
         stagger: 0.1,
         ease: "back.out(1.7)",
       },
-      "-=0.3"
+      "-=0.3",
     );
 
     // Continuous orbit rotation animation
@@ -159,12 +159,24 @@ export function AtomsPlusLogoAnimated({
     >
       <defs>
         {/* Amber/Gold gradient matching Atoms Plus theme */}
-        <linearGradient id="atomGradientAnim" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient
+          id="atomGradientAnim"
+          x1="0%"
+          y1="0%"
+          x2="100%"
+          y2="100%"
+        >
           <stop offset="0%" stopColor="#d4a855" />
           <stop offset="50%" stopColor="#c99a45" />
           <stop offset="100%" stopColor="#b08a3a" />
         </linearGradient>
-        <linearGradient id="orbitGradientAnim" x1="0%" y1="0%" x2="100%" y2="0%">
+        <linearGradient
+          id="orbitGradientAnim"
+          x1="0%"
+          y1="0%"
+          x2="100%"
+          y2="0%"
+        >
           <stop offset="0%" stopColor="#d4a855" stopOpacity={0.8} />
           <stop offset="100%" stopColor="#e4c078" stopOpacity={0.8} />
         </linearGradient>
@@ -258,4 +270,3 @@ export function AtomsPlusLogoAnimated({
 }
 
 export default AtomsPlusLogoAnimated;
-

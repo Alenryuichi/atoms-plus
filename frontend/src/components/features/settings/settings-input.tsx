@@ -46,7 +46,9 @@ export function SettingsInput({
     <label className={cn("flex flex-col gap-2.5 w-fit", className)}>
       <div className="flex items-center gap-2">
         {startContent}
-        <span className={cn("text-sm text-neutral-300", labelClassName)}>{label}</span>
+        <span className={cn("text-sm text-neutral-300", labelClassName)}>
+          {label}
+        </span>
         {showOptionalTag && <OptionalTag />}
       </div>
       <input

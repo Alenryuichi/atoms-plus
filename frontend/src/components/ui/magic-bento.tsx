@@ -1,4 +1,11 @@
-import { useRef, useEffect, useCallback, useState, ReactNode, MouseEvent } from "react";
+import {
+  useRef,
+  useEffect,
+  useCallback,
+  useState,
+  ReactNode,
+  MouseEvent,
+} from "react";
 import gsap from "gsap";
 import { cn } from "#/lib/utils";
 
@@ -18,7 +25,7 @@ const updateCardGlowProperties = (
   mouseX: number,
   mouseY: number,
   glow: number,
-  radius: number
+  radius: number,
 ) => {
   const rect = card.getBoundingClientRect();
   const relativeX = ((mouseX - rect.left) / rect.width) * 100;
@@ -35,7 +42,8 @@ const useMobileDetection = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT);
+    const checkMobile = () =>
+      setIsMobile(window.innerWidth <= MOBILE_BREAKPOINT);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -112,7 +120,7 @@ export function BentoCard({
         });
       }
     },
-    [isMobile, enableTilt, enableMagnetism]
+    [isMobile, enableTilt, enableMagnetism],
   );
 
   const handleMouseLeave = useCallback(() => {
@@ -131,7 +139,7 @@ export function BentoCard({
   const handleClick = useCallback(
     (e: MouseEvent<HTMLDivElement>) => {
       if (disabled) return;
-      
+
       if (clickEffect && cardRef.current && !isMobile) {
         const el = cardRef.current;
         const rect = el.getBoundingClientRect();
@@ -142,7 +150,7 @@ export function BentoCard({
           Math.hypot(x, y),
           Math.hypot(x - rect.width, y),
           Math.hypot(x, y - rect.height),
-          Math.hypot(x - rect.width, y - rect.height)
+          Math.hypot(x - rect.width, y - rect.height),
         );
 
         const ripple = document.createElement("div");
@@ -169,13 +177,13 @@ export function BentoCard({
             duration: 0.6,
             ease: "power2.out",
             onComplete: () => ripple.remove(),
-          }
+          },
         );
       }
 
       onClick?.();
     },
-    [disabled, clickEffect, glowColor, onClick, isMobile]
+    [disabled, clickEffect, glowColor, onClick, isMobile],
   );
 
   return (
@@ -198,7 +206,7 @@ export function BentoCard({
         "focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:ring-offset-2 focus:ring-offset-neutral-900",
         disabled && "opacity-50 cursor-not-allowed",
         !disabled && "cursor-pointer",
-        className
+        className,
       )}
       style={{
         ["--glow-x" as string]: "50%",
@@ -216,7 +224,8 @@ export function BentoCard({
           background: `radial-gradient(var(--glow-radius) circle at var(--glow-x) var(--glow-y), rgba(${glowColor}, calc(var(--glow-intensity) * 0.6)) 0%, rgba(${glowColor}, calc(var(--glow-intensity) * 0.3)) 30%, transparent 60%)`,
           mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
           maskComposite: "exclude",
-          WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+          WebkitMask:
+            "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
           WebkitMaskComposite: "xor",
         }}
       />
@@ -292,7 +301,8 @@ function GlobalSpotlight({
         return;
       }
 
-      const { proximity, fadeDistance } = calculateSpotlightValues(spotlightRadius);
+      const { proximity, fadeDistance } =
+        calculateSpotlightValues(spotlightRadius);
       let minDistance = Infinity;
 
       cards.forEach((card) => {
@@ -310,10 +320,17 @@ function GlobalSpotlight({
         if (effectiveDistance <= proximity) {
           glowIntensity = 1;
         } else if (effectiveDistance <= fadeDistance) {
-          glowIntensity = (fadeDistance - effectiveDistance) / (fadeDistance - proximity);
+          glowIntensity =
+            (fadeDistance - effectiveDistance) / (fadeDistance - proximity);
         }
 
-        updateCardGlowProperties(card, e.clientX, e.clientY, glowIntensity, spotlightRadius);
+        updateCardGlowProperties(
+          card,
+          e.clientX,
+          e.clientY,
+          glowIntensity,
+          spotlightRadius,
+        );
       });
 
       gsap.to(spotlightRef.current, {
@@ -338,9 +355,11 @@ function GlobalSpotlight({
     };
 
     const handleMouseLeave = () => {
-      gridRef.current?.querySelectorAll<HTMLElement>(".bento-card").forEach((card) => {
-        card.style.setProperty("--glow-intensity", "0");
-      });
+      gridRef.current
+        ?.querySelectorAll<HTMLElement>(".bento-card")
+        .forEach((card) => {
+          card.style.setProperty("--glow-intensity", "0");
+        });
       if (spotlightRef.current) {
         gsap.to(spotlightRef.current, {
           opacity: 0,
@@ -385,10 +404,7 @@ export function BentoGrid({
       )}
       <div
         ref={gridRef}
-        className={cn(
-          "bento-grid grid gap-3 w-full",
-          className
-        )}
+        className={cn("bento-grid grid gap-3 w-full", className)}
       >
         {children}
       </div>
@@ -397,4 +413,3 @@ export function BentoGrid({
 }
 
 export default BentoGrid;
-

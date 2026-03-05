@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useAIConfigOptions } from "#/hooks/query/use-ai-config-options";
 import { I18nKey } from "#/i18n/declaration";
-import { LoadingSpinner } from "../../loading-spinner";
 import { ModalBackdrop } from "../modal-backdrop";
 import { SettingsForm } from "./settings-form";
 import { Settings } from "#/types/settings";
@@ -25,7 +24,9 @@ export function SettingsModal({ onClose, settings }: SettingsModalProps) {
         className="bg-black/80 backdrop-blur-xl min-w-full max-w-[475px] m-4 p-6 rounded-2xl flex flex-col gap-5 border border-amber-500/20 shadow-2xl shadow-black/50 api-configuration-modal"
       >
         {aiConfigOptions.error && (
-          <p className="text-red-400 text-xs">{aiConfigOptions.error.message}</p>
+          <p className="text-red-400 text-xs">
+            {aiConfigOptions.error.message}
+          </p>
         )}
         {/* Header */}
         <div className="flex items-center justify-between">

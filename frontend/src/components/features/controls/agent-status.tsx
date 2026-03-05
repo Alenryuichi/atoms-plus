@@ -128,7 +128,9 @@ export function AgentStatus({
         {!isLoading &&
           !shouldShownAgentStop &&
           !shouldShownAgentResume &&
-          !shouldShownAgentError && <ClockIcon className="w-4 h-4 text-neutral-400" />}
+          !shouldShownAgentError && (
+            <ClockIcon className="w-4 h-4 text-neutral-400" />
+          )}
       </div>
     </div>
   );

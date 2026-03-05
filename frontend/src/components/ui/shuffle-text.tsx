@@ -27,13 +27,13 @@ export function ShuffleText({
 
   const scramble = useCallback(() => {
     if (isAnimating) return;
-    
+
     setIsAnimating(true);
     iterationRef.current = 0;
-    
+
     const targetText = text;
     const totalIterations = targetText.length;
-    
+
     intervalRef.current = setInterval(() => {
       setDisplayText((prev) => {
         const chars = targetText.split("");
@@ -71,13 +71,14 @@ export function ShuffleText({
   }, []);
 
   // Cleanup on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
-    };
-  }, []);
+    },
+    [],
+  );
 
   const handleMouseEnter = () => {
     if (triggerOnHover) {
@@ -96,4 +97,3 @@ export function ShuffleText({
 }
 
 export default ShuffleText;
-

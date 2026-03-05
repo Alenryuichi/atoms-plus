@@ -132,7 +132,7 @@ export function DarkVeil({
       return;
     }
 
-    const gl = renderer.gl;
+    const { gl } = renderer;
     const geometry = new Triangle(gl);
 
     const program = new Program(gl, {
@@ -165,7 +165,8 @@ export function DarkVeil({
     let frameId = 0;
 
     const loop = () => {
-      program.uniforms.uTime.value = ((performance.now() - start) / 1000) * speed;
+      program.uniforms.uTime.value =
+        ((performance.now() - start) / 1000) * speed;
       program.uniforms.uHueShift.value = hueShift;
       program.uniforms.uNoise.value = noiseIntensity;
       program.uniforms.uScan.value = scanlineIntensity;
@@ -181,18 +182,25 @@ export function DarkVeil({
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", resize);
     };
-  }, [hueShift, noiseIntensity, scanlineIntensity, scanlineFrequency, warpAmount, speed, resolutionScale]);
+  }, [
+    hueShift,
+    noiseIntensity,
+    scanlineIntensity,
+    scanlineFrequency,
+    warpAmount,
+    speed,
+    resolutionScale,
+  ]);
 
   return (
     <canvas
       ref={canvasRef}
       className={cn(
         "absolute inset-0 w-full h-full pointer-events-none",
-        className
+        className,
       )}
     />
   );
 }
 
 export default DarkVeil;
-

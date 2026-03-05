@@ -77,7 +77,9 @@ const v1AppConversations: V1AppConversation[] = [
     conversation_id: "2",
     title: "Repo Testing",
     created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    last_updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    last_updated_at: new Date(
+      Date.now() - 2 * 24 * 60 * 60 * 1000,
+    ).toISOString(),
     status: "STOPPED",
     selected_repository: "octocat/hello-world",
     selected_branch: null,
@@ -105,6 +107,8 @@ export const CONVERSATION_HANDLERS = [
   }),
 
   http.get("/api/conversations/:conversationId", async ({ params }) => {
+    // Add 10s delay to simulate loading state for returning to existing conversations
+    await delay(10000);
     const conversationId = params.conversationId as string;
     const project = CONVERSATIONS.get(conversationId);
     if (project) return HttpResponse.json(project);
@@ -160,8 +164,8 @@ export const CONVERSATION_HANDLERS = [
   }),
 
   // Conversation config endpoint - required for chat interface
-  http.get("/api/conversations/:conversationId/config", async () => {
-    return HttpResponse.json({
+  http.get("/api/conversations/:conversationId/config", async () =>
+    HttpResponse.json({
       agent: "CodeActAgent",
       security_analyzer: null,
       llm_config: {
@@ -170,18 +174,18 @@ export const CONVERSATION_HANDLERS = [
         api_key: "mock-key",
         temperature: 0.7,
       },
-    });
-  }),
+    }),
+  ),
 
   // Git changes endpoint - required for preview panel
-  http.get("/api/conversations/:conversationId/git/changes", async () => {
-    return HttpResponse.json({
+  http.get("/api/conversations/:conversationId/git/changes", async () =>
+    HttpResponse.json({
       changes: [],
       has_uncommitted: false,
       current_branch: "main",
       remote_url: null,
-    });
-  }),
+    }),
+  ),
 
   http.get("/api/conversations/:conversationId/microagents", async () => {
     const response: GetMicroagentsResponse = {
@@ -339,27 +343,21 @@ export const CONVERSATION_HANDLERS = [
   ),
 
   // Get V1 conversation skills
-  http.get(
-    "/api/v1/app-conversations/:conversationId/skills",
-    async () => {
-      return HttpResponse.json({
-        skills: [
-          { name: "code-review", description: "Review code changes" },
-          { name: "refactor", description: "Refactor code" },
-        ],
-      });
-    },
+  http.get("/api/v1/app-conversations/:conversationId/skills", async () =>
+    HttpResponse.json({
+      skills: [
+        { name: "code-review", description: "Review code changes" },
+        { name: "refactor", description: "Refactor code" },
+      ],
+    }),
   ),
 
   // V1 conversation events search
-  http.post(
-    "/api/v1/conversation/:conversationId/events/search",
-    async () => {
-      return HttpResponse.json({
-        events: [],
-        has_more: false,
-      });
-    },
+  http.post("/api/v1/conversation/:conversationId/events/search", async () =>
+    HttpResponse.json({
+      events: [],
+      has_more: false,
+    }),
   ),
 
   // ============================================
@@ -367,8 +365,8 @@ export const CONVERSATION_HANDLERS = [
   // ============================================
 
   // List sandboxes
-  http.get("/api/v1/sandboxes", async () => {
-    return HttpResponse.json({
+  http.get("/api/v1/sandboxes", async () =>
+    HttpResponse.json({
       items: [
         {
           id: "sandbox-1",
@@ -376,16 +374,16 @@ export const CONVERSATION_HANDLERS = [
           created_at: new Date().toISOString(),
         },
       ],
-    });
-  }),
+    }),
+  ),
 
   // Pause sandbox
-  http.post("/api/v1/sandboxes/:sandboxId/pause", async () => {
-    return HttpResponse.json({ success: true });
-  }),
+  http.post("/api/v1/sandboxes/:sandboxId/pause", async () =>
+    HttpResponse.json({ success: true }),
+  ),
 
   // Resume sandbox
-  http.post("/api/v1/sandboxes/:sandboxId/resume", async () => {
-    return HttpResponse.json({ success: true });
-  }),
+  http.post("/api/v1/sandboxes/:sandboxId/resume", async () =>
+    HttpResponse.json({ success: true }),
+  ),
 ];

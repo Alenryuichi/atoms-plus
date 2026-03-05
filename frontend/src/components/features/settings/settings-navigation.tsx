@@ -44,7 +44,9 @@ export function SettingsNavigation({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 ml-1 sm:ml-4.5">
             <SettingsIcon width={16} height={16} className="text-amber-500" />
-            <Typography.H2 className="text-white">{t(I18nKey.SETTINGS$TITLE)}</Typography.H2>
+            <Typography.H2 className="text-white">
+              {t(I18nKey.SETTINGS$TITLE)}
+            </Typography.H2>
           </div>
           {/* Close button - only visible on mobile */}
           <button
