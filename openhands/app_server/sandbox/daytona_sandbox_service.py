@@ -65,17 +65,17 @@ class DaytonaSandboxService(SandboxService):
         """Search for sandboxes."""
         sandboxes = []
         for sandbox_id, info in _daytona_sandboxes.items():
-            if self.user_id and info.get("user_id") != self.user_id:
+            if self.user_id and info.get('user_id') != self.user_id:
                 continue
             sandboxes.append(
                 SandboxInfo(
                     id=sandbox_id,
-                    created_by_user_id=info.get("user_id"),
-                    sandbox_spec_id=info.get("sandbox_spec_id", "default"),
+                    created_by_user_id=info.get('user_id'),
+                    sandbox_spec_id=info.get('sandbox_spec_id', 'default'),
                     status=SandboxStatus.RUNNING,
-                    session_api_key=info.get("session_api_key"),
-                    exposed_urls=info.get("exposed_urls", []),
-                    created_at=info.get("created_at", utc_now()),
+                    session_api_key=info.get('session_api_key'),
+                    exposed_urls=info.get('exposed_urls', []),
+                    created_at=info.get('created_at', utc_now()),
                 )
             )
         return SandboxPage(items=sandboxes[:limit], next_page_id=None)
@@ -87,12 +87,12 @@ class DaytonaSandboxService(SandboxService):
             return None
         return SandboxInfo(
             id=sandbox_id,
-            created_by_user_id=info.get("user_id"),
-            sandbox_spec_id=info.get("sandbox_spec_id", "default"),
+            created_by_user_id=info.get('user_id'),
+            sandbox_spec_id=info.get('sandbox_spec_id', 'default'),
             status=SandboxStatus.RUNNING,
-            session_api_key=info.get("session_api_key"),
-            exposed_urls=info.get("exposed_urls", []),
-            created_at=info.get("created_at", utc_now()),
+            session_api_key=info.get('session_api_key'),
+            exposed_urls=info.get('exposed_urls', []),
+            created_at=info.get('created_at', utc_now()),
         )
 
     async def get_sandbox_by_session_api_key(
@@ -100,25 +100,25 @@ class DaytonaSandboxService(SandboxService):
     ) -> SandboxInfo | None:
         """Get a single sandbox by session API key."""
         for sandbox_id, info in _daytona_sandboxes.items():
-            if info.get("session_api_key") == session_api_key:
+            if info.get('session_api_key') == session_api_key:
                 return SandboxInfo(
                     id=sandbox_id,
-                    created_by_user_id=info.get("user_id"),
-                    sandbox_spec_id=info.get("sandbox_spec_id", "default"),
+                    created_by_user_id=info.get('user_id'),
+                    sandbox_spec_id=info.get('sandbox_spec_id', 'default'),
                     status=SandboxStatus.RUNNING,
-                    session_api_key=info.get("session_api_key"),
-                    exposed_urls=info.get("exposed_urls", []),
-                    created_at=info.get("created_at", utc_now()),
+                    session_api_key=info.get('session_api_key'),
+                    exposed_urls=info.get('exposed_urls', []),
+                    created_at=info.get('created_at', utc_now()),
                 )
         return None
 
-    def _get_daytona_client(self) -> "Daytona":
+    def _get_daytona_client(self) -> 'Daytona':
         """Create and return a Daytona client instance."""
         try:
             from daytona import Daytona, DaytonaConfig
         except ImportError:
             raise SandboxError(
-                "Daytona SDK not installed. Install with: pip install daytona-sdk"
+                'Daytona SDK not installed. Install with: pip install daytona-sdk'
             )
 
         config = DaytonaConfig(
@@ -139,7 +139,7 @@ class DaytonaSandboxService(SandboxService):
         if sandbox_id is None:
             sandbox_id = base62.encodebytes(os.urandom(16))
 
-        _logger.info(f"Creating Daytona sandbox: {sandbox_id}")
+        _logger.info(f'Creating Daytona sandbox: {sandbox_id}')
 
         try:
             daytona = self._get_daytona_client()
@@ -162,14 +162,14 @@ class DaytonaSandboxService(SandboxService):
                     )
                 except ImportError:
                     _logger.warning(
-                        "CreateSandboxFromSnapshotParams not available, falling back to default"
+                        'CreateSandboxFromSnapshotParams not available, falling back to default'
                     )
                     sandbox = await asyncio.to_thread(daytona.create)
             else:
                 # The SDK will use its default Python sandbox image
                 sandbox = await asyncio.to_thread(daytona.create)
 
-            _logger.info(f"Daytona sandbox created with ID: {sandbox.id}")
+            _logger.info(f'Daytona sandbox created with ID: {sandbox.id}')
 
             # Generate session API key for authentication
             session_api_key = base62.encodebytes(os.urandom(32))
@@ -182,20 +182,20 @@ class DaytonaSandboxService(SandboxService):
 
             # Store sandbox info
             _daytona_sandboxes[sandbox_id] = {
-                "daytona_id": sandbox.id,
-                "daytona_sandbox": sandbox,
-                "user_id": self.user_id,
-                "sandbox_spec_id": sandbox_spec_id or "default",
-                "session_api_key": session_api_key,
-                "created_at": utc_now(),
-                "exposed_urls": exposed_urls,
-                "status": SandboxStatus.RUNNING,
+                'daytona_id': sandbox.id,
+                'daytona_sandbox': sandbox,
+                'user_id': self.user_id,
+                'sandbox_spec_id': sandbox_spec_id or 'default',
+                'session_api_key': session_api_key,
+                'created_at': utc_now(),
+                'exposed_urls': exposed_urls,
+                'status': SandboxStatus.RUNNING,
             }
 
             return SandboxInfo(
                 id=sandbox_id,
                 created_by_user_id=self.user_id,
-                sandbox_spec_id=sandbox_spec_id or "default",
+                sandbox_spec_id=sandbox_spec_id or 'default',
                 status=SandboxStatus.RUNNING,
                 session_api_key=session_api_key,
                 exposed_urls=exposed_urls,
@@ -204,10 +204,10 @@ class DaytonaSandboxService(SandboxService):
         except SandboxError:
             raise
         except Exception as e:
-            _logger.exception(f"Failed to create Daytona sandbox: {e}")
-            raise SandboxError(f"Failed to create Daytona sandbox: {e}")
+            _logger.exception(f'Failed to create Daytona sandbox: {e}')
+            raise SandboxError(f'Failed to create Daytona sandbox: {e}')
 
-    async def _get_exposed_urls(self, sandbox: "Sandbox") -> list[ExposedUrl]:
+    async def _get_exposed_urls(self, sandbox: 'Sandbox') -> list[ExposedUrl]:
         """Get exposed URLs from Daytona sandbox."""
         exposed_urls = []
         try:
@@ -229,28 +229,28 @@ class DaytonaSandboxService(SandboxService):
             )
             exposed_urls.append(
                 ExposedUrl(
-                    name="vscode",
+                    name='vscode',
                     url=vscode_url.url,
                     port=DAYTONA_VSCODE_PORT,
                 )
             )
         except Exception as e:
-            _logger.warning(f"Failed to get exposed URLs: {e}")
+            _logger.warning(f'Failed to get exposed URLs: {e}')
 
         return exposed_urls
 
-    async def _install_openhands_in_sandbox(self, sandbox: "Sandbox") -> None:
+    async def _install_openhands_in_sandbox(self, sandbox: 'Sandbox') -> None:
         """Install openhands-ai package in the Daytona sandbox.
 
         Since Daytona SDK 0.24.x doesn't support creating sandboxes from Docker images,
         we need to install the openhands package manually via pip.
         """
-        _logger.info("Installing openhands-ai package in Daytona sandbox...")
+        _logger.info('Installing openhands-ai package in Daytona sandbox...')
 
         # Install openhands from PyPI
         # Using --quiet to reduce output, --no-cache-dir to save space
         install_cmd = (
-            "pip install --quiet --no-cache-dir openhands-ai && "
+            'pip install --quiet --no-cache-dir openhands-ai && '
             "echo 'openhands installation complete'"
         )
 
@@ -261,15 +261,15 @@ class DaytonaSandboxService(SandboxService):
                 timeout=300,  # pip install can take a while
             )
             _logger.info(
-                f"pip install result: {result.result if hasattr(result, 'result') else result}"
+                f'pip install result: {result.result if hasattr(result, "result") else result}'
             )
         except Exception as e:
-            _logger.error(f"Failed to install openhands: {e}")
-            raise SandboxError(f"Failed to install openhands in Daytona sandbox: {e}")
+            _logger.error(f'Failed to install openhands: {e}')
+            raise SandboxError(f'Failed to install openhands in Daytona sandbox: {e}')
 
     async def _start_agent_server(
         self,
-        sandbox: "Sandbox",
+        sandbox: 'Sandbox',
         session_api_key: str,
         spec: SandboxSpecInfo | None,
     ) -> None:
@@ -286,29 +286,47 @@ class DaytonaSandboxService(SandboxService):
 
         # Build environment variables
         env_vars = {
-            "SESSION_API_KEY": session_api_key,
-            "PYTHONUNBUFFERED": "1",
+            'SESSION_API_KEY': session_api_key,
+            'PYTHONUNBUFFERED': '1',
         }
         if spec and spec.initial_env:
             env_vars.update(spec.initial_env)
 
         # Build command to start agent server
-        cmd = f"python -m openhands.agent_server --port {DAYTONA_AGENT_SERVER_PORT}"
+        # First kill any existing agent server process to avoid port conflicts
+        kill_cmd = f"pkill -f 'openhands.agent_server.*--port {DAYTONA_AGENT_SERVER_PORT}' 2>/dev/null || true"
 
-        _logger.info(f"Starting agent server in Daytona sandbox: {cmd}")
+        # Use nohup and & to run in background, redirect output to log file
+        start_cmd = (
+            f'nohup python -m openhands.agent_server --port {DAYTONA_AGENT_SERVER_PORT} '
+            f'> /tmp/agent_server.log 2>&1 &'
+        )
+
+        _logger.info(
+            f'Starting agent server in Daytona sandbox on port {DAYTONA_AGENT_SERVER_PORT}'
+        )
 
         try:
-            # Execute command in sandbox session
-            # Run in background so we don't block
+            # Kill any existing process first
             await asyncio.to_thread(
                 sandbox.process.exec,
-                cmd,
-                timeout=10,  # Just start it, don't wait for completion
+                kill_cmd,
+                timeout=5,
             )
+
+            # Small delay to ensure port is released
+            await asyncio.sleep(0.5)
+
+            # Start the agent server in background
+            await asyncio.to_thread(
+                sandbox.process.exec,
+                start_cmd,
+                timeout=5,  # Should return quickly since we're using nohup &
+            )
+            _logger.info('Agent server start command executed successfully')
         except Exception as e:
-            # The command may timeout because it's a long-running process
-            # This is expected behavior
-            _logger.debug(f"Agent server start command returned: {e}")
+            # Log but don't fail - the process might still start
+            _logger.debug(f'Agent server start command returned: {e}')
 
     async def resume_sandbox(self, sandbox_id: str) -> bool:
         """Resume a paused Daytona sandbox."""
@@ -316,15 +334,15 @@ class DaytonaSandboxService(SandboxService):
         if not info:
             return False
 
-        sandbox = info.get("daytona_sandbox")
+        sandbox = info.get('daytona_sandbox')
         if sandbox:
             try:
                 await asyncio.to_thread(sandbox.start)
-                info["status"] = SandboxStatus.RUNNING
-                _logger.info(f"Resumed Daytona sandbox: {sandbox_id}")
+                info['status'] = SandboxStatus.RUNNING
+                _logger.info(f'Resumed Daytona sandbox: {sandbox_id}')
                 return True
             except Exception as e:
-                _logger.error(f"Failed to resume sandbox {sandbox_id}: {e}")
+                _logger.error(f'Failed to resume sandbox {sandbox_id}: {e}')
                 return False
         return True
 
@@ -334,15 +352,15 @@ class DaytonaSandboxService(SandboxService):
         if not info:
             return False
 
-        sandbox = info.get("daytona_sandbox")
+        sandbox = info.get('daytona_sandbox')
         if sandbox:
             try:
                 await asyncio.to_thread(sandbox.stop)
-                info["status"] = SandboxStatus.PAUSED
-                _logger.info(f"Paused Daytona sandbox: {sandbox_id}")
+                info['status'] = SandboxStatus.PAUSED
+                _logger.info(f'Paused Daytona sandbox: {sandbox_id}')
                 return True
             except Exception as e:
-                _logger.error(f"Failed to pause sandbox {sandbox_id}: {e}")
+                _logger.error(f'Failed to pause sandbox {sandbox_id}: {e}')
                 return False
         return True
 
@@ -352,14 +370,14 @@ class DaytonaSandboxService(SandboxService):
         if not info:
             return False
 
-        sandbox = info.get("daytona_sandbox")
+        sandbox = info.get('daytona_sandbox')
         if sandbox:
             try:
                 daytona = self._get_daytona_client()
                 await asyncio.to_thread(daytona.delete, sandbox)
-                _logger.info(f"Deleted Daytona sandbox: {sandbox_id}")
+                _logger.info(f'Deleted Daytona sandbox: {sandbox_id}')
             except Exception as e:
-                _logger.error(f"Failed to delete sandbox from Daytona: {e}")
+                _logger.error(f'Failed to delete sandbox from Daytona: {e}')
 
         # Remove from local cache regardless
         del _daytona_sandboxes[sandbox_id]
@@ -371,13 +389,13 @@ def validate_daytona_config() -> None:
 
     Raises ValueError if required environment variables are missing.
     """
-    api_key = os.getenv("DAYTONA_API_KEY")
+    api_key = os.getenv('DAYTONA_API_KEY')
     if not api_key:
         raise ValueError(
-            "DAYTONA_API_KEY environment variable is required when RUNTIME=daytona. "
-            "Get your API key from https://app.daytona.io/settings/api-keys"
+            'DAYTONA_API_KEY environment variable is required when RUNTIME=daytona. '
+            'Get your API key from https://app.daytona.io/settings/api-keys'
         )
-    _logger.info("Daytona configuration validated successfully")
+    _logger.info('Daytona configuration validated successfully')
 
 
 class DaytonaSandboxServiceInjector(SandboxServiceInjector):
@@ -391,30 +409,30 @@ class DaytonaSandboxServiceInjector(SandboxServiceInjector):
     """
 
     api_key: str = Field(
-        default_factory=lambda: os.getenv("DAYTONA_API_KEY", ""),
-        description="Daytona API key (required)",
+        default_factory=lambda: os.getenv('DAYTONA_API_KEY', ''),
+        description='Daytona API key (required)',
     )
     api_url: str = Field(
         default_factory=lambda: os.getenv(
-            "DAYTONA_API_URL", "https://app.daytona.io/api"
+            'DAYTONA_API_URL', 'https://app.daytona.io/api'
         ),
-        description="Daytona API URL",
+        description='Daytona API URL',
     )
     target: str = Field(
-        default_factory=lambda: os.getenv("DAYTONA_TARGET", "eu"),
-        description="Daytona target region (eu or us)",
+        default_factory=lambda: os.getenv('DAYTONA_TARGET', 'eu'),
+        description='Daytona target region (eu or us)',
     )
     snapshot: str | None = Field(
-        default_factory=lambda: os.getenv("DAYTONA_SNAPSHOT"),
-        description="Pre-built snapshot name with openhands pre-installed (for faster startup)",
+        default_factory=lambda: os.getenv('DAYTONA_SNAPSHOT'),
+        description='Pre-built snapshot name with openhands pre-installed (for faster startup)',
     )
 
     def model_post_init(self, __context: Any) -> None:
         """Validate configuration after model initialization."""
         if not self.api_key:
             _logger.warning(
-                "DAYTONA_API_KEY not set. Daytona sandbox creation will fail. "
-                "Set DAYTONA_API_KEY environment variable to enable Daytona sandboxes."
+                'DAYTONA_API_KEY not set. Daytona sandbox creation will fail. '
+                'Set DAYTONA_API_KEY environment variable to enable Daytona sandboxes.'
             )
 
     async def inject(
@@ -428,8 +446,8 @@ class DaytonaSandboxServiceInjector(SandboxServiceInjector):
         # Validate API key before creating service
         if not self.api_key:
             raise SandboxError(
-                "Daytona API key not configured. "
-                "Set DAYTONA_API_KEY environment variable."
+                'Daytona API key not configured. '
+                'Set DAYTONA_API_KEY environment variable.'
             )
 
         async with (
