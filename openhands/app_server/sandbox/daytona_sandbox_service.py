@@ -208,12 +208,17 @@ class DaytonaSandboxService(SandboxService):
             raise SandboxError(f'Failed to create Daytona sandbox: {e}')
 
     async def _get_exposed_urls(self, sandbox: 'Sandbox') -> list[ExposedUrl]:
-        """Get exposed URLs from Daytona sandbox."""
+        """Get exposed URLs from Daytona sandbox.
+
+        Uses create_signed_preview_url() instead of get_preview_link() because:
+        - get_preview_link() returns URLs that require Auth0 authentication (307 redirect)
+        - create_signed_preview_url() returns URLs with embedded auth tokens for direct access
+        """
         exposed_urls = []
         try:
-            # Get preview link for agent server port
+            # Get SIGNED preview URL for agent server port (bypasses Auth0 redirect)
             agent_url = await asyncio.to_thread(
-                sandbox.get_preview_link, DAYTONA_AGENT_SERVER_PORT
+                sandbox.create_signed_preview_url, DAYTONA_AGENT_SERVER_PORT
             )
             exposed_urls.append(
                 ExposedUrl(
@@ -222,10 +227,11 @@ class DaytonaSandboxService(SandboxService):
                     port=DAYTONA_AGENT_SERVER_PORT,
                 )
             )
+            _logger.info(f'Got signed preview URL for agent server: {agent_url.url}')
 
-            # Get preview link for VSCode port
+            # Get SIGNED preview URL for VSCode port
             vscode_url = await asyncio.to_thread(
-                sandbox.get_preview_link, DAYTONA_VSCODE_PORT
+                sandbox.create_signed_preview_url, DAYTONA_VSCODE_PORT
             )
             exposed_urls.append(
                 ExposedUrl(
