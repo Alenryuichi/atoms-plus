@@ -136,19 +136,51 @@ async function fetchFilesRecursively(
  * Only returns files that can be previewed (HTML, CSS, JS, etc.)
  * Fetches files recursively from all subdirectories
  */
+// Check if running in mock mode
+const isMockMode = import.meta.env.VITE_MOCK_API === "true";
+
 export const useWorkspaceFiles = (path?: string) => {
   const { conversationId } = useConversationId();
   const runtimeIsReady = useRuntimeIsReady();
 
+  const isEnabled = runtimeIsReady && !!conversationId;
+
+  // Debug logging for mock mode
+  if (isMockMode) {
+    console.log(
+      "%c[useWorkspaceFiles]",
+      "background: #3b82f6; color: #fff; padding: 2px 6px; border-radius: 4px;",
+      {
+        conversationId,
+        runtimeIsReady,
+        isEnabled,
+        path,
+      },
+    );
+  }
+
   return useQuery({
     queryKey: ["workspace-files", conversationId, path],
     queryFn: async () => {
+      if (isMockMode) {
+        console.log(
+          "%c[useWorkspaceFiles] Fetching files...",
+          "background: #22c55e; color: #fff; padding: 2px 6px; border-radius: 4px;",
+        );
+      }
       const files = await fetchFilesRecursively(conversationId, path);
+      if (isMockMode) {
+        console.log(
+          "%c[useWorkspaceFiles] Files fetched:",
+          "background: #22c55e; color: #fff; padding: 2px 6px; border-radius: 4px;",
+          files,
+        );
+      }
       // Filter to only include previewable web files and sort with entry files first
       const previewableFiles = files.filter(isPreviewableFile);
       return sortFilesWithEntryPriority(previewableFiles);
     },
-    enabled: runtimeIsReady && !!conversationId,
+    enabled: isEnabled,
     staleTime: 1000 * 30, // 30 seconds
     gcTime: 1000 * 60 * 5, // 5 minutes
     meta: {

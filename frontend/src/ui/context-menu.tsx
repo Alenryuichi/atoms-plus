@@ -3,8 +3,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "#/utils/utils";
 
 const contextMenuVariants = cva(
-  // Updated to atoms.dev dark theme style
-  "absolute bg-[#1a1d22] rounded-lg text-neutral-300 overflow-hidden z-50 border border-neutral-700/50 shadow-xl shadow-black/20",
+  // Atoms Plus: Glass effect context menu with amber accent
+  "absolute bg-black/80 backdrop-blur-xl rounded-xl text-neutral-300 overflow-hidden z-50 border border-amber-500/20 shadow-2xl shadow-black/40",
   {
     variants: {
       size: {

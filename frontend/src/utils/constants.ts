@@ -43,7 +43,7 @@ export const PRODUCT_URL = {
 };
 
 export const SETTINGS_FORM = {
-  LABEL_CLASSNAME: "text-[11px] font-medium leading-4 tracking-[0.11px]",
+  LABEL_CLASSNAME: "text-xs font-medium leading-4 tracking-wide text-neutral-300",
 };
 
 export const GIT_PROVIDER_OPTIONS = [

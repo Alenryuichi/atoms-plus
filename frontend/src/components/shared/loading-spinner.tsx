@@ -1,4 +1,3 @@
-import LoadingSpinnerOuter from "#/icons/loading-outer.svg?react";
 import { cn } from "#/utils/utils";
 
 interface LoadingSpinnerProps {
@@ -7,17 +6,26 @@ interface LoadingSpinnerProps {
 
 export function LoadingSpinner({ size }: LoadingSpinnerProps) {
   const sizeStyle =
-    size === "small" ? "w-[25px] h-[25px]" : "w-[50px] h-[50px]";
+    size === "small" ? "w-6 h-6" : "w-12 h-12";
+  const borderWidth = size === "small" ? "border-2" : "border-4";
 
   return (
     <div data-testid="loading-spinner" className={cn("relative", sizeStyle)}>
+      {/* Atoms Plus: Amber-themed loading spinner */}
       <div
         className={cn(
-          "rounded-full border-4 border-[#525252] absolute",
-          sizeStyle,
+          "rounded-full absolute inset-0",
+          borderWidth,
+          "border-amber-500/20",
         )}
       />
-      <LoadingSpinnerOuter className={cn("absolute animate-spin", sizeStyle)} />
+      <div
+        className={cn(
+          "rounded-full absolute inset-0 animate-spin",
+          borderWidth,
+          "border-transparent border-t-amber-500 border-r-amber-500/50",
+        )}
+      />
     </div>
   );
 }

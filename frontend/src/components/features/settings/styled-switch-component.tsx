@@ -10,16 +10,15 @@ export function StyledSwitchComponent({
   return (
     <div
       className={cn(
-        "w-12 h-6 rounded-xl flex items-center p-1.5 cursor-pointer",
-        isToggled && "justify-end bg-primary",
-        !isToggled &&
-          "justify-start bg-base-secondary border border-tertiary-light",
+        "w-12 h-6 rounded-full flex items-center p-1 cursor-pointer transition-all duration-300",
+        isToggled && "justify-end bg-gradient-to-r from-amber-600 to-amber-500 shadow-lg shadow-amber-500/30",
+        !isToggled && "justify-start bg-neutral-800 border border-white/10",
       )}
     >
       <div
         className={cn(
-          "w-3 h-3 rounded-xl",
-          isToggled ? "bg-base-secondary" : "bg-tertiary-light",
+          "w-4 h-4 rounded-full transition-all duration-300",
+          isToggled ? "bg-white shadow-md" : "bg-neutral-500",
         )}
       />
     </div>

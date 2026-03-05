@@ -493,15 +493,18 @@ function LlmSettingsScreen() {
         action={formAction}
         className="flex flex-col h-full justify-between"
       >
-        <div className="flex flex-col gap-6">
-          <SettingsSwitch
-            testId="advanced-settings-switch"
-            defaultIsToggled={view === "advanced"}
-            onToggle={handleToggleAdvancedSettings}
-            isToggled={view === "advanced"}
-          >
-            {t(I18nKey.SETTINGS$ADVANCED)}
-          </SettingsSwitch>
+        <div className="flex flex-col gap-8">
+          {/* Advanced Toggle */}
+          <div className="flex items-center justify-between">
+            <SettingsSwitch
+              testId="advanced-settings-switch"
+              defaultIsToggled={view === "advanced"}
+              onToggle={handleToggleAdvancedSettings}
+              isToggled={view === "advanced"}
+            >
+              {t(I18nKey.SETTINGS$ADVANCED)}
+            </SettingsSwitch>
+          </div>
 
           {view === "basic" && (
             <div
@@ -746,7 +749,8 @@ function LlmSettingsScreen() {
           )}
         </div>
 
-        <div className="flex gap-6 p-6 justify-end">
+        {/* Submit Button */}
+        <div className="flex gap-4 pt-8 pb-4 justify-end border-t border-white/5 mt-8">
           <BrandButton
             testId="submit-button"
             type="submit"
@@ -754,7 +758,12 @@ function LlmSettingsScreen() {
             isDisabled={!formIsDirty || isPending}
           >
             {!isPending && t("SETTINGS$SAVE_CHANGES")}
-            {isPending && t("SETTINGS$SAVING")}
+            {isPending && (
+              <span className="flex items-center gap-2">
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                {t("SETTINGS$SAVING")}
+              </span>
+            )}
           </BrandButton>
         </div>
       </form>

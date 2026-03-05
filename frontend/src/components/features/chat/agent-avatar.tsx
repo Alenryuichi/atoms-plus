@@ -19,12 +19,12 @@ const roleColors: Record<string, string> = {
   Reviewer: "bg-amber-500/20 text-amber-300 border border-amber-500/30",
 };
 
-// Atoms Plus: Avatar gradient backgrounds
+// Atoms Plus: Avatar gradient backgrounds (neutral, professional dark gradients)
 const roleGradients: Record<string, string> = {
-  Coder: "bg-gradient-to-br from-indigo-500 to-blue-600",
-  Planner: "bg-gradient-to-br from-purple-500 to-violet-600",
-  Designer: "bg-gradient-to-br from-pink-500 to-rose-600",
-  Reviewer: "bg-gradient-to-br from-amber-500 to-orange-600",
+  Coder: "bg-gradient-to-br from-slate-600 to-slate-700",
+  Planner: "bg-gradient-to-br from-zinc-600 to-zinc-700",
+  Designer: "bg-gradient-to-br from-stone-600 to-stone-700",
+  Reviewer: "bg-gradient-to-br from-amber-600/80 to-amber-700/80",
 };
 
 const sizeClasses = {

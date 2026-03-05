@@ -16,6 +16,9 @@ import { useUnifiedWebSocketStatus } from "#/hooks/use-unified-websocket-status"
 import { useTaskPolling } from "#/hooks/query/use-task-polling";
 import { useSubConversationTaskPolling } from "#/hooks/query/use-sub-conversation-task-polling";
 
+// Check if running in mock mode - skip loading state for testing
+const isMockMode = import.meta.env.VITE_MOCK_API === "true";
+
 export interface AgentStatusProps {
   className?: string;
   handleStop: () => void;
@@ -58,12 +61,14 @@ export function AgentStatus({
     subConversationTaskStatus,
   );
 
-  const shouldShownAgentLoading =
-    curAgentState === AgentState.INIT ||
-    curAgentState === AgentState.LOADING ||
-    (webSocketStatus === "CONNECTING" && taskStatus !== "ERROR") ||
-    isTaskPolling(taskStatus) ||
-    isTaskPolling(subConversationTaskStatus);
+  // In mock mode, skip loading state to allow testing Preview panel
+  const shouldShownAgentLoading = isMockMode
+    ? false
+    : curAgentState === AgentState.INIT ||
+      curAgentState === AgentState.LOADING ||
+      (webSocketStatus === "CONNECTING" && taskStatus !== "ERROR") ||
+      isTaskPolling(taskStatus) ||
+      isTaskPolling(subConversationTaskStatus);
 
   // For UI rendering - includes pause state
   const isLoading = shouldShownAgentLoading || isPausing;
@@ -85,19 +90,23 @@ export function AgentStatus({
   }, [shouldShownAgentLoading, setShouldShownAgentLoading]);
 
   return (
-    <div className={cn("flex items-center gap-1 min-w-0", className)}>
+    <div className={cn("flex items-center gap-2 min-w-0", className)}>
       <span
-        className="text-[11px] text-white font-normal leading-5 flex-1 min-w-0 max-w-full whitespace-normal break-words"
+        className="text-xs text-neutral-400 font-medium flex-1 min-w-0 max-w-full whitespace-normal break-words"
         title={t(statusCode)}
       >
         {t(statusCode)}
       </span>
       <div
         className={cn(
-          "bg-[#525252] box-border content-stretch flex flex-row gap-[3px] items-center justify-center overflow-clip px-0.5 py-1 relative rounded-[100px] shrink-0 size-6 transition-all duration-200 active:scale-95",
+          // Atoms Plus: Glass effect control button
+          "bg-black/40 backdrop-blur-sm border border-white/10",
+          "box-border flex items-center justify-center",
+          "rounded-full shrink-0 size-7",
+          "transition-all duration-200 active:scale-95",
           !isLoading &&
             (shouldShownAgentStop || shouldShownAgentResume) &&
-            "hover:bg-[#737373] cursor-pointer",
+            "hover:bg-black/60 hover:border-amber-500/30 cursor-pointer",
         )}
       >
         {isLoading && <AgentLoading />}
@@ -112,14 +121,14 @@ export function AgentStatus({
         )}
         {!isLoading && shouldShownAgentError && (
           <CircleErrorIcon
-            className="w-4 h-4"
+            className="w-4 h-4 text-red-400"
             data-testid="circle-error-icon"
           />
         )}
         {!isLoading &&
           !shouldShownAgentStop &&
           !shouldShownAgentResume &&
-          !shouldShownAgentError && <ClockIcon className="w-4 h-4" />}
+          !shouldShownAgentError && <ClockIcon className="w-4 h-4 text-neutral-400" />}
       </div>
     </div>
   );

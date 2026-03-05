@@ -63,14 +63,19 @@ export function ChatInputContainer({
     <div
       ref={chatContainerRef}
       className={cn(
-        // Atoms Plus: Modern dark input styling matching atoms.dev
-        "bg-[var(--atoms-bg-card)] border border-[var(--atoms-border)]",
+        // Atoms Plus: Premium glass input with amber glow on focus
+        "bg-black/40 backdrop-blur-sm",
+        "border border-white/10",
         "box-border content-stretch flex flex-col items-start justify-center",
         "p-4 pt-3 relative rounded-2xl w-full",
-        "transition-all duration-200 ease-out",
-        "focus-within:border-[var(--atoms-accent-primary)]/50 focus-within:shadow-lg focus-within:shadow-[var(--atoms-accent-primary)]/5",
+        "transition-all duration-300 ease-out",
+        // Focus state: amber border + amber glow
+        "focus-within:border-amber-500/50",
+        "focus-within:shadow-[0_0_20px_rgba(212,168,85,0.15)]",
+        "focus-within:bg-black/50",
+        // Plan mode styling
         conversationMode === "plan" &&
-          "border-[var(--atoms-accent-secondary)]/50",
+          "border-purple-500/30 focus-within:border-purple-500/50 focus-within:shadow-[0_0_20px_rgba(168,85,247,0.15)]",
       )}
       onDragOver={(e) => onDragOver(e, disabled)}
       onDragLeave={(e) => onDragLeave(e, disabled)}

@@ -2,7 +2,14 @@ import React from "react";
 import { useLocation, NavLink, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronDown } from "lucide-react";
+import {
+  Menu,
+  X,
+  ChevronDown,
+  Plus,
+  MessageSquare,
+  RefreshCw,
+} from "lucide-react";
 import { useGitUser } from "#/hooks/query/use-git-user";
 import { UserActions } from "../sidebar/user-actions";
 import { CreditsDisplay } from "../sidebar/credits-display";
@@ -20,6 +27,9 @@ import { displayErrorToast } from "#/utils/custom-toast-handlers";
 import { I18nKey } from "#/i18n/declaration";
 import { cn } from "#/lib/utils";
 import { Button } from "#/components/ui/button";
+import { LanguageSwitcher } from "#/components/shared/language-switcher";
+import { useConversationStore } from "#/stores/conversation-store";
+import { getPreviewPanelRef } from "#/routes/preview-tab";
 
 // Resources dropdown items
 const RESOURCES_ITEMS = [
@@ -102,6 +112,241 @@ function ResourcesDropdown({
   );
 }
 
+// Desktop Navigation Actions Component
+interface NavActionsDesktopProps {
+  isConversationPage: boolean;
+  isEmailVerified: boolean;
+  conversationPanelIsOpen: boolean;
+  setConversationPanelIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  t: ReturnType<typeof useTranslation>["t"];
+}
+
+function NavActionsDesktop({
+  isConversationPage,
+  isEmailVerified,
+  conversationPanelIsOpen,
+  setConversationPanelIsOpen,
+  t,
+}: NavActionsDesktopProps) {
+  const {
+    previewViewMode,
+    setPreviewViewMode,
+    panelLeftWidth,
+    panelIsDragging,
+  } = useConversationStore();
+
+  const handlePreviewRefresh = () => {
+    const previewRef = getPreviewPanelRef();
+    if (previewRef) {
+      previewRef.refresh();
+    }
+  };
+
+  // Chat page: Icon buttons + Preview controls aligned with split panels
+  // CRITICAL: Must use EXACTLY the same flex layout as ConversationMain to achieve pixel-perfect alignment
+  // ConversationMain uses: width% + flexGrow:1 + flexShrink:1
+  if (isConversationPage) {
+    return (
+      <nav
+        className="absolute hidden md:flex items-center gap-3 z-[5]"
+        style={{
+          // Match ConversationMain's p-3 for vertical centering
+          top: "12px",
+          bottom: "12px",
+          // Match ConversationMain's p-3 for horizontal padding
+          left: "12px",
+          right: "12px",
+        }}
+      >
+        {/* Left half: Chat controls - EXACT same flex properties as Chat panel below */}
+        {/* KEY: ConversationMain uses flex-1 (flex: 1 1 0%) which means flex-basis: 0 */}
+        {/* We must use flexBasis: 0 + flexGrow ratio to match the exact same space distribution */}
+        <div
+          className="flex items-center justify-end gap-2 h-full"
+          style={{
+            // Match ConversationMain's flex-1 behavior: basis 0, grow proportionally
+            flexGrow: panelLeftWidth,
+            flexShrink: 1,
+            flexBasis: 0,
+            transitionProperty: panelIsDragging ? "none" : "all",
+            transitionDuration: "0.3s",
+            transitionTimingFunction: "ease-in-out",
+          }}
+        >
+          {/* New Project - Icon only */}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <NavLink
+              to="/"
+              className={cn(
+                "flex items-center justify-center w-10 h-10 rounded-xl",
+                "bg-gradient-to-br from-amber-500 to-amber-600",
+                "text-black",
+                "shadow-lg shadow-amber-500/25",
+                "transition-all duration-200",
+                "hover:shadow-amber-500/40 hover:from-amber-400 hover:to-amber-500",
+                !isEmailVerified && "opacity-50 pointer-events-none",
+              )}
+              onClick={(e) => !isEmailVerified && e.preventDefault()}
+              title={t(I18nKey.CONVERSATION$START_NEW)}
+            >
+              <Plus className="w-5 h-5" strokeWidth={2.5} />
+            </NavLink>
+          </motion.div>
+
+          {/* Conversations - Icon only */}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <button
+              type="button"
+              onClick={() =>
+                isEmailVerified && setConversationPanelIsOpen((prev) => !prev)
+              }
+              disabled={!isEmailVerified}
+              className={cn(
+                "flex items-center justify-center w-10 h-10 rounded-xl",
+                "bg-black/40 backdrop-blur-sm",
+                "text-neutral-400 hover:text-white",
+                "border border-white/10 hover:border-amber-500/30",
+                "transition-all duration-200",
+                conversationPanelIsOpen &&
+                  "bg-amber-500/20 text-amber-400 border-amber-500/30",
+                !isEmailVerified && "opacity-50 cursor-not-allowed",
+              )}
+              title={t(I18nKey.SIDEBAR$CONVERSATIONS)}
+            >
+              <MessageSquare className="w-5 h-5" />
+            </button>
+          </motion.div>
+        </div>
+
+        {/* Center Divider - matches ResizeHandle width (w-2 = 8px) in ConversationMain */}
+        <div className="w-2 flex-shrink-0 flex items-center justify-center">
+          <div className="h-6 w-px bg-white/20" />
+        </div>
+
+        {/* Right half: Preview controls - EXACT same flex properties as Preview panel below */}
+        {/* KEY: ConversationMain uses flex-1 (flex: 1 1 0%) which means flex-basis: 0 */}
+        <div
+          className="flex items-center justify-start gap-1.5 h-full"
+          style={{
+            // Match ConversationMain's flex-1 behavior: basis 0, grow proportionally
+            flexGrow: 100 - panelLeftWidth,
+            flexShrink: 1,
+            flexBasis: 0,
+            transitionProperty: panelIsDragging ? "none" : "all",
+            transitionDuration: "0.3s",
+            transitionTimingFunction: "ease-in-out",
+          }}
+        >
+          {/* View Mode Toggle */}
+          <div className="flex bg-black/40 backdrop-blur-sm rounded-xl p-1 border border-white/10">
+            {(["split", "editor", "preview"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setPreviewViewMode(mode)}
+                className={cn(
+                  "px-3 py-1.5 text-xs rounded-lg transition-all font-medium",
+                  previewViewMode === mode
+                    ? "bg-gradient-to-br from-amber-500 to-amber-600 text-black shadow-sm"
+                    : "text-neutral-400 hover:text-white hover:bg-white/5",
+                )}
+              >
+                {
+                  {
+                    split: t(I18nKey.COMMON$SPLIT),
+                    editor: t(I18nKey.COMMON$CODE),
+                    preview: t(I18nKey.COMMON$PREVIEW),
+                  }[mode]
+                }
+              </button>
+            ))}
+          </div>
+
+          {/* Refresh Button */}
+          <motion.button
+            type="button"
+            onClick={handlePreviewRefresh}
+            whileHover={{ scale: 1.05, rotate: 15 }}
+            whileTap={{ scale: 0.95 }}
+            className={cn(
+              "flex items-center justify-center w-9 h-9 rounded-xl",
+              "bg-black/40 backdrop-blur-sm",
+              "text-neutral-400 hover:text-amber-400",
+              "border border-white/10 hover:border-amber-500/30",
+              "transition-all duration-200",
+            )}
+            title={t(I18nKey.BUTTON$REFRESH)}
+          >
+            <RefreshCw className="w-4 h-4" />
+          </motion.button>
+        </div>
+      </nav>
+    );
+  }
+
+  // Non-chat pages: Full text buttons
+  return (
+    <nav className="hidden md:flex items-center gap-4">
+      {/* Pricing Link */}
+      <NavLink
+        to="/pricing"
+        className="text-sm font-medium text-neutral-300 hover:text-white transition-colors"
+      >
+        {t(I18nKey.ATOMS$NAV_PRICING)}
+      </NavLink>
+
+      {/* Resources Dropdown */}
+      <ResourcesDropdown t={t} />
+
+      {/* Divider */}
+      <div className="h-5 w-px bg-neutral-700/50" />
+
+      {/* New Project Button */}
+      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+        <NavLink
+          to="/"
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-lg",
+            "bg-[var(--atoms-accent-primary)] hover:bg-[var(--atoms-accent-hover)]",
+            "text-white font-medium text-sm",
+            "shadow-lg shadow-amber-500/20",
+            "transition-all duration-200",
+            !isEmailVerified && "opacity-50 pointer-events-none",
+          )}
+          onClick={(e) => !isEmailVerified && e.preventDefault()}
+        >
+          <Plus className="w-4 h-4" />
+          <span>{t(I18nKey.CONVERSATION$START_NEW)}</span>
+        </NavLink>
+      </motion.div>
+
+      {/* Conversations Button */}
+      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+        <button
+          type="button"
+          onClick={() =>
+            isEmailVerified && setConversationPanelIsOpen((prev) => !prev)
+          }
+          disabled={!isEmailVerified}
+          className={cn(
+            "flex items-center gap-2 px-4 py-2 rounded-lg",
+            "bg-neutral-800/80 hover:bg-neutral-700/80",
+            "text-neutral-300 hover:text-white",
+            "font-medium text-sm",
+            "border border-neutral-700/50 hover:border-neutral-600/50",
+            "transition-all duration-200",
+            conversationPanelIsOpen && "bg-neutral-700/80 text-white",
+            !isEmailVerified && "opacity-50 cursor-not-allowed",
+          )}
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span>{t(I18nKey.SIDEBAR$CONVERSATIONS)}</span>
+        </button>
+      </motion.div>
+    </nav>
+  );
+}
+
 // Mobile Menu for authenticated users
 interface MobileMenuProps {
   isEmailVerified: boolean;
@@ -110,6 +355,7 @@ interface MobileMenuProps {
   user: ReturnType<typeof useGitUser>;
   logout: () => void;
   t: ReturnType<typeof useTranslation>["t"];
+  isConversationPage?: boolean;
 }
 
 function MobileMenuAuthed({
@@ -119,6 +365,7 @@ function MobileMenuAuthed({
   user,
   logout,
   t,
+  isConversationPage = false,
 }: MobileMenuProps) {
   return (
     <motion.div
@@ -195,48 +442,62 @@ function MobileMenuAuthed({
           <span>{t(I18nKey.SIDEBAR$CONVERSATIONS)}</span>
         </button>
 
-        {/* Divider */}
-        <div className="border-t border-neutral-800/50 pt-3 mt-1" />
+        {/* Divider - hidden on conversation page */}
+        {!isConversationPage && (
+          <div className="border-t border-neutral-800/50 pt-3 mt-1" />
+        )}
 
-        {/* Pricing Link - Mobile */}
-        <NavLink
-          to="/pricing"
-          className="flex items-center justify-center py-2 text-sm font-medium text-neutral-300 hover:text-white transition-colors"
-        >
-          {t(I18nKey.ATOMS$NAV_PRICING)}
-        </NavLink>
+        {/* Pricing Link - Mobile - hidden on conversation page */}
+        {!isConversationPage && (
+          <NavLink
+            to="/pricing"
+            className="flex items-center justify-center py-2 text-sm font-medium text-neutral-300 hover:text-white transition-colors"
+          >
+            {t(I18nKey.ATOMS$NAV_PRICING)}
+          </NavLink>
+        )}
 
-        {/* Resources Links - Mobile (expanded list instead of dropdown) */}
-        <div className="flex flex-col gap-2">
-          <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider px-2">
-            {t(I18nKey.ATOMS$NAV_RESOURCES)}
+        {/* Resources Links - Mobile - hidden on conversation page */}
+        {!isConversationPage && (
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider px-2">
+              {t(I18nKey.ATOMS$NAV_RESOURCES)}
+            </span>
+            {RESOURCES_ITEMS.map((item) => (
+              <NavLink
+                key={item.href}
+                to={item.href}
+                target={item.external ? "_blank" : undefined}
+                rel={item.external ? "noopener noreferrer" : undefined}
+                className="flex items-center justify-between py-2 px-2 text-sm text-neutral-400 hover:text-white transition-colors rounded-lg hover:bg-neutral-800/50"
+              >
+                <span>{t(item.labelKey)}</span>
+                {item.external && (
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                )}
+              </NavLink>
+            ))}
+          </div>
+        )}
+
+        {/* Language Switcher */}
+        <div className="flex items-center justify-between px-2 py-2">
+          <span className="text-sm text-neutral-400">
+            {t(I18nKey.SETTINGS$LANGUAGE)}
           </span>
-          {RESOURCES_ITEMS.map((item) => (
-            <NavLink
-              key={item.href}
-              to={item.href}
-              target={item.external ? "_blank" : undefined}
-              rel={item.external ? "noopener noreferrer" : undefined}
-              className="flex items-center justify-between py-2 px-2 text-sm text-neutral-400 hover:text-white transition-colors rounded-lg hover:bg-neutral-800/50"
-            >
-              <span>{t(item.labelKey)}</span>
-              {item.external && (
-                <svg
-                  className="w-3 h-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
-              )}
-            </NavLink>
-          ))}
+          <LanguageSwitcher variant="full" />
         </div>
 
         {/* User Section */}
@@ -302,6 +563,14 @@ function MobileMenuLanding({
           </a>
         ))}
         <div className="border-t border-neutral-700/40 my-2" />
+        {/* Language Switcher */}
+        <div className="flex items-center justify-between px-4 py-2">
+          <span className="text-sm text-neutral-400">
+            {t(I18nKey.SETTINGS$LANGUAGE)}
+          </span>
+          <LanguageSwitcher variant="full" />
+        </div>
+        <div className="border-t border-neutral-700/40 my-2" />
         <div className="flex gap-3 pt-2">
           <Button
             variant="ghost"
@@ -352,6 +621,9 @@ export function TopNavbar() {
   // Determine if we're on the landing page (home page and not authenticated)
   const isLandingPage = pathname === "/" && !effectiveIsAuthed;
 
+  // Determine if we're on a conversation page (hide Pricing/Resources)
+  const isConversationPage = pathname.startsWith("/conversations/");
+
   React.useEffect(() => {
     if (pathname === "/settings") {
       setSettingsModalIsOpen(false);
@@ -399,18 +671,18 @@ export function TopNavbar() {
             "fixed top-0 left-0 right-0 z-50",
             "h-16 px-4 md:px-8 lg:px-12",
             "bg-transparent",
-            "flex items-center justify-between",
+            "flex items-center",
           )}
         >
           {/* Left: Logo */}
-          <div className="flex items-center">
+          <div className="flex items-center flex-shrink-0">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <OpenHandsLogoButton />
             </motion.div>
           </div>
 
-          {/* Center/Right: Navigation Links (Desktop) */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Center: Navigation Links (Desktop) - absolute centered */}
+          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
             <NavLink
               to="/pricing"
               className="px-4 py-2 text-sm font-medium text-neutral-300 hover:text-white transition-colors"
@@ -421,7 +693,8 @@ export function TopNavbar() {
           </nav>
 
           {/* Right: Auth Buttons (Desktop) */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3 ml-auto">
+            <LanguageSwitcher />
             <Button
               variant="ghost"
               size="sm"
@@ -443,7 +716,7 @@ export function TopNavbar() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden text-white hover:bg-white/10"
+            className="md:hidden text-white hover:bg-white/10 ml-auto"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
           >
@@ -474,107 +747,30 @@ export function TopNavbar() {
     <>
       <header
         aria-label={t(I18nKey.SIDEBAR$NAVIGATION_LABEL)}
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50",
-          "h-16 px-4 md:px-8 lg:px-12",
-          "bg-[#0a0a0b]/95 backdrop-blur-xl border-b border-neutral-800/50",
-          "flex items-center justify-between",
-        )}
+        className="fixed top-0 left-0 right-0 z-50 h-16"
       >
-        {/* Left: Logo */}
-        <div className="flex items-center">
+        {/* Background layer */}
+        <div className="absolute inset-0 bg-[#0a0a0b]/95 backdrop-blur-xl border-b border-neutral-800/50" />
+
+        {/* Left: Logo - absolutely positioned */}
+        <div className="absolute left-4 md:left-8 lg:left-12 top-1/2 -translate-y-1/2 z-10">
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <OpenHandsLogoButton />
           </motion.div>
         </div>
 
-        {/* Center: Navigation Actions (Desktop) */}
-        <nav className="hidden md:flex items-center gap-4">
-          {/* Pricing Link */}
-          <NavLink
-            to="/pricing"
-            className="text-sm font-medium text-neutral-300 hover:text-white transition-colors"
-          >
-            {t(I18nKey.ATOMS$NAV_PRICING)}
-          </NavLink>
+        {/* Center: Navigation Actions - uses same p-3 gap-3 as ConversationMain for alignment */}
+        <NavActionsDesktop
+          isConversationPage={isConversationPage}
+          isEmailVerified={isEmailVerified}
+          conversationPanelIsOpen={conversationPanelIsOpen}
+          setConversationPanelIsOpen={setConversationPanelIsOpen}
+          t={t}
+        />
 
-          {/* Resources Dropdown */}
-          <ResourcesDropdown t={t} />
-
-          {/* Divider */}
-          <div className="h-5 w-px bg-neutral-700/50" />
-
-          {/* New Project Button - atoms.dev style */}
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <NavLink
-              to="/"
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg",
-                "bg-gradient-to-r from-indigo-600 to-purple-600",
-                "hover:from-indigo-500 hover:to-purple-500",
-                "text-white font-medium text-sm",
-                "shadow-lg shadow-indigo-500/20",
-                "transition-all duration-200",
-                !isEmailVerified && "opacity-50 pointer-events-none",
-              )}
-              onClick={(e) => !isEmailVerified && e.preventDefault()}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              <span>{t(I18nKey.CONVERSATION$START_NEW)}</span>
-            </NavLink>
-          </motion.div>
-
-          {/* Conversations Button - atoms.dev style */}
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <button
-              type="button"
-              onClick={() =>
-                isEmailVerified && setConversationPanelIsOpen((prev) => !prev)
-              }
-              disabled={!isEmailVerified}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg",
-                "bg-neutral-800/80 hover:bg-neutral-700/80",
-                "text-neutral-300 hover:text-white",
-                "font-medium text-sm",
-                "border border-neutral-700/50 hover:border-neutral-600/50",
-                "transition-all duration-200",
-                conversationPanelIsOpen && "bg-neutral-700/80 text-white",
-                !isEmailVerified && "opacity-50 cursor-not-allowed",
-              )}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-              <span>{t(I18nKey.SIDEBAR$CONVERSATIONS)}</span>
-            </button>
-          </motion.div>
-        </nav>
-
-        {/* Right: User Actions (Desktop) */}
-        <div className="hidden md:flex items-center gap-4">
+        {/* Right: User Actions - absolutely positioned */}
+        <div className="absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center gap-4">
+          <LanguageSwitcher />
           <CreditsDisplay />
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <UserActions
@@ -613,6 +809,7 @@ export function TopNavbar() {
             user={user}
             logout={logout}
             t={t}
+            isConversationPage={isConversationPage}
           />
         )}
       </AnimatePresence>

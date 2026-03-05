@@ -25,9 +25,10 @@ export function ChatSuggestions({ onSuggestionsClick }: ChatSuggestionsProps) {
           transition={{ duration: 0.4, ease: "easeOut" }}
           className="absolute top-0 left-0 right-0 bottom-[151px] flex flex-col items-center justify-center pointer-events-auto"
         >
+          {/* Atoms Plus: Amber accent for branding */}
           <div className="flex flex-col items-center p-6 rounded-2xl w-full">
-            <BuildIt width={72} height={86} className="text-primary" />
-            <span className="text-3xl font-bold leading-tight text-foreground pt-5 pb-7">
+            <BuildIt width={72} height={86} className="text-amber-500" />
+            <span className="text-3xl font-bold leading-tight text-white pt-5 pb-7">
               {t(I18nKey.LANDING$TITLE)}
             </span>
           </div>

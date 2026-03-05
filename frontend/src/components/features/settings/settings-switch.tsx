@@ -52,10 +52,10 @@ export function SettingsSwitch({
 
       <StyledSwitchComponent isToggled={controlledIsToggled ?? isToggled} />
 
-      <div className="flex items-center gap-1">
-        <span className="text-sm">{children}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-neutral-300">{children}</span>
         {isBeta && (
-          <span className="text-[11px] leading-4 text-[#0D0F11] font-[500] tracking-tighter bg-primary px-1 rounded-full">
+          <span className="text-[10px] leading-4 text-amber-900 font-semibold tracking-tight bg-gradient-to-r from-amber-500 to-amber-400 px-1.5 py-0.5 rounded-full">
             {t(I18nKey.BADGE$BETA)}
           </span>
         )}

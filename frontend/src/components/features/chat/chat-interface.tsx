@@ -258,8 +258,8 @@ export function ChatInterface() {
 
   return (
     <ScrollProvider value={scrollProviderValue}>
-      {/* Atoms Plus: Dark theme chat interface matching atoms.dev */}
-      <div className="h-full flex flex-col pr-0 md:pr-4 relative bg-[var(--atoms-bg-secondary)]">
+      {/* Atoms Plus: Transparent chat interface - parent card handles background */}
+      <div className="h-full flex flex-col relative bg-transparent min-h-0">
         {!hasSubstantiveAgentActions &&
           !optimisticUserMessage &&
           !userEventsExist &&
@@ -270,14 +270,14 @@ export function ChatInterface() {
           )}
         {/* Note: We only hide chat suggestions when there's a user message */}
 
-        {/* Atoms Plus: Message area with custom scrollbar */}
+        {/* Atoms Plus: Message area - flex-grow to fill space */}
         <div
           ref={scrollRef}
           onScroll={(e) => onChatBodyScroll(e.currentTarget)}
-          className="atoms-chat-scroll flex flex-col grow overflow-y-auto overflow-x-hidden px-4 pt-6 gap-4"
+          className="atoms-chat-scroll flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 pt-4 gap-4"
           style={{
             scrollbarWidth: "thin",
-            scrollbarColor: "var(--atoms-border) transparent",
+            scrollbarColor: "rgba(212,168,85,0.3) transparent",
           }}
         >
           {isChatLoading && isReturningToConversation && (
@@ -317,19 +317,25 @@ export function ChatInterface() {
           )}
         </div>
 
-        {/* Atoms Plus: Bottom control area */}
-        <div className="flex flex-col gap-2 px-2 pb-2">
-          <div className="flex justify-between relative">
-            <div className="flex items-end gap-2">
-              {/* Atoms Plus: Auto Role Indicator - 自动角色指示器 */}
+        {/* Atoms Plus: Bottom control area - transparent background */}
+        <div className="flex flex-col gap-2 px-3 pb-3 pt-2 bg-transparent">
+          {/* Atoms Plus: Unified status bar - Role + Status aligned */}
+          <div className="flex items-center justify-between relative">
+            {/* Left: Role + Status indicators (same height h-8) */}
+            <div className="flex items-center gap-2">
+              {/* Auto Role Indicator - Shows current responding role */}
               <AutoRoleIndicator showDetails={false} />
-              <ConfirmationModeEnabled />
+
+              {/* Status Indicator - Shows agent state */}
               {isStartingStatus && (
                 <ChatStatusIndicator
                   statusColor={serverStatusColor}
                   status={serverStatusText}
                 />
               )}
+
+              <ConfirmationModeEnabled />
+
               {totalEvents > 0 && !isV1Conversation && (
                 <TrajectoryActions
                   onPositiveFeedback={() =>
@@ -343,10 +349,12 @@ export function ChatInterface() {
               )}
             </div>
 
+            {/* Center: Typing indicator */}
             <div className="absolute left-1/2 transform -translate-x-1/2 bottom-0">
               {curAgentState === AgentState.RUNNING && <TypingIndicator />}
             </div>
 
+            {/* Right: Scroll to bottom */}
             {!hitBottom && <ScrollToBottomButton onClick={scrollDomToBottom} />}
           </div>
 

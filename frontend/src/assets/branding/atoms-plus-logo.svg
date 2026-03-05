@@ -1,16 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
   <defs>
+    <!-- Amber/Gold gradient matching Atoms Plus theme -->
     <linearGradient id="atomGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#6366F1"/>
-      <stop offset="50%" style="stop-color:#8B5CF6"/>
-      <stop offset="100%" style="stop-color:#A855F7"/>
+      <stop offset="0%" style="stop-color:#d4a855"/>
+      <stop offset="50%" style="stop-color:#c99a45"/>
+      <stop offset="100%" style="stop-color:#b08a3a"/>
     </linearGradient>
     <linearGradient id="orbitGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#6366F1;stop-opacity:0.8"/>
-      <stop offset="100%" style="stop-color:#A855F7;stop-opacity:0.8"/>
+      <stop offset="0%" style="stop-color:#d4a855;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#e4c078;stop-opacity:0.8"/>
     </linearGradient>
     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
       <feMerge>
         <feMergeNode in="coloredBlur"/>
         <feMergeNode in="SourceGraphic"/>

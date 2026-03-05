@@ -12,10 +12,9 @@
   --bg-editor-sidebar: #24272e;
   --bg-editor-active: #31343d;
   --border-editor-sidebar: #3c3c4a;
-  background-color: var(--base) !important;
   --bg-neutral-muted: #afb8c133;
 
-  /* Atoms Plus: Dark charcoal theme inspired by atoms.dev */
+  /* Atoms Plus: Dark charcoal theme - neutral with amber/gold accent */
   --atoms-bg-primary: #0f1115;
   --atoms-bg-secondary: #141619;
   --atoms-bg-elevated: #1a1d22;
@@ -25,18 +24,19 @@
   --atoms-text-primary: #e8eaed;
   --atoms-text-secondary: #9aa0a9;
   --atoms-text-muted: #6b7280;
-  --atoms-accent-primary: #6366f1;
-  --atoms-accent-secondary: #8b5cf6;
-  --atoms-accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  --atoms-success: #10b981;
-  --atoms-warning: #f59e0b;
-  --atoms-error: #ef4444;
+  /* Single accent color - warm amber/gold (desaturated ~70%) */
+  --atoms-accent-primary: #d4a855;
+  --atoms-accent-hover: #c99a45;
+  /* Removed purple secondary to eliminate AI gradient aesthetic */
+  --atoms-success: #34d399;
+  --atoms-warning: #fbbf24;
+  --atoms-error: #f87171;
 }
 
 body {
   margin: 0;
   font-family:
-    -apple-system, "SF Pro", BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Outfit", -apple-system, "SF Pro", BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;

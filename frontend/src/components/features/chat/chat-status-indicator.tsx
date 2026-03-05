@@ -15,7 +15,12 @@ function ChatStatusIndicator({
     <div
       data-testid="chat-status-indicator"
       className={cn(
-        "h-[31px] w-fit rounded-[100px] pt-[20px] pr-[16px] pb-[20px] pl-[5px] bg-[#25272D] flex items-center",
+        // Atoms Plus: Glass effect status indicator with amber accent
+        "h-8 w-fit rounded-full px-3 py-1",
+        "bg-black/50 backdrop-blur-sm",
+        "border border-amber-500/20",
+        "flex items-center gap-1",
+        "shadow-lg shadow-black/20",
       )}
     >
       <AnimatePresence mode="wait">
@@ -29,7 +34,7 @@ function ChatStatusIndicator({
           transition={{ duration: 0.3 }}
         >
           <DebugStackframeDot
-            className="w-6 h-6 shrink-0"
+            className="w-5 h-5 shrink-0"
             color={statusColor}
           />
         </motion.span>
@@ -41,7 +46,7 @@ function ChatStatusIndicator({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 2 }}
           transition={{ duration: 0.3 }}
-          className="font-normal text-[11px] leading-[20px] normal-case"
+          className="font-medium text-xs text-neutral-300"
         >
           {status}
         </motion.span>

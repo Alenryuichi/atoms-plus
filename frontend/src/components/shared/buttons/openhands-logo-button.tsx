@@ -1,6 +1,6 @@
 import { NavLink } from "react-router";
 import { useTranslation } from "react-i18next";
-import { AtomsPlusLogo } from "#/assets/branding/atoms-plus-logo";
+import { AtomsPlusLogoAnimated } from "#/assets/branding/atoms-plus-logo-animated";
 import { I18nKey } from "#/i18n/declaration";
 import { StyledTooltip } from "#/components/shared/buttons/styled-tooltip";
 
@@ -13,7 +13,7 @@ export function AtomsPlusLogoButton() {
   return (
     <StyledTooltip content={tooltipText}>
       <NavLink to="/" aria-label={ariaLabel}>
-        <AtomsPlusLogo width={46} height={46} />
+        <AtomsPlusLogoAnimated width={46} height={46} />
       </NavLink>
     </StyledTooltip>
   );

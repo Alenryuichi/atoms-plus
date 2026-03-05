@@ -1,4 +1,4 @@
-import { lazy, useMemo, Suspense } from "react";
+import { lazy, useMemo, Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { ConversationLoading } from "../../conversation-loading";
 import { I18nKey } from "#/i18n/declaration";
@@ -9,6 +9,7 @@ import { ConversationTabTitle } from "../conversation-tab-title";
 import Terminal from "#/components/features/terminal/terminal";
 import { useConversationStore } from "#/stores/conversation-store";
 import { useConversationId } from "#/hooks/use-conversation-id";
+import { getPreviewPanelRef } from "#/routes/preview-tab";
 
 // Lazy load all tab components
 const EditorTab = lazy(() => import("#/routes/changes-tab"));
@@ -62,16 +63,31 @@ export function ConversationTabContent() {
   const ActiveComponent = activeTab.component;
   const conversationTabTitle = t(activeTab.titleKey);
 
+  // Handle preview refresh via ref
+  const handlePreviewRefresh = useCallback(() => {
+    const previewRef = getPreviewPanelRef();
+    if (previewRef) {
+      previewRef.refresh();
+    }
+  }, []);
+
   if (shouldShownAgentLoading) {
     return <ConversationLoading className="rounded-xl" />;
   }
 
+  // Hide title bar for preview tab (controls moved to TopNavbar)
+  const isPreviewTab = selectedTab === "preview";
+
   return (
     <TabContainer>
-      <ConversationTabTitle
-        title={conversationTabTitle}
-        conversationKey={selectedTab ?? "editor"}
-      />
+      {/* Hide title bar for preview tab - controls are in TopNavbar */}
+      {!isPreviewTab && (
+        <ConversationTabTitle
+          title={conversationTabTitle}
+          conversationKey={selectedTab ?? "editor"}
+          onPreviewRefresh={handlePreviewRefresh}
+        />
+      )}
       <Suspense fallback={<ConversationLoading />}>
         <TabContentArea>
           <TabWrapper

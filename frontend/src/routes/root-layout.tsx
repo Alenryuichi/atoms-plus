@@ -88,12 +88,16 @@ export default function MainApp() {
   const { isAuthenticated: isSupabaseAuthed, isLoading: isSupabaseLoading } =
     useSupabaseAuth();
 
+  // Check if we're in mock mode - skip auth in mock mode
+  const isMockMode = import.meta.env.VITE_MOCK_API === "true";
+
   // Use Supabase auth if configured, otherwise use the original OSS/SAAS auth
-  const useSupabaseAuthFlow = isSupabaseConfigured();
-  const effectiveIsAuthed = useSupabaseAuthFlow ? isSupabaseAuthed : isAuthed;
-  const effectiveIsLoading = useSupabaseAuthFlow
+  // In mock mode, always consider user as authenticated
+  const useSupabaseAuthFlow = isSupabaseConfigured() && !isMockMode;
+  const effectiveIsAuthed = isMockMode ? true : (useSupabaseAuthFlow ? isSupabaseAuthed : isAuthed);
+  const effectiveIsLoading = isMockMode ? false : (useSupabaseAuthFlow
     ? isSupabaseLoading
-    : isAuthLoading;
+    : isAuthLoading);
 
   const [consentFormIsOpen, setConsentFormIsOpen] = React.useState(false);
 
@@ -251,10 +255,9 @@ export default function MainApp() {
     <div
       data-testid="root-layout"
       className={cn(
-        // Use h-screen instead of min-h-screen to ensure exact viewport height
-        // This allows flex-1 children to calculate proper heights
-        // Use bg-base to match html/body background and avoid white edges
-        "h-screen lg:min-w-5xl flex flex-col bg-base overflow-hidden",
+        // Use min-h-dvh for proper mobile viewport handling (iOS Safari)
+        // dvh = dynamic viewport height, accounts for browser chrome
+        "min-h-dvh lg:min-w-5xl flex flex-col bg-base overflow-hidden",
         isMobileDevice() && "overflow-hidden",
       )}
     >
