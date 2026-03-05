@@ -137,14 +137,14 @@ atoms-plus/
 ├── atoms_plus/             # Atoms Plus 扩展
 │   ├── atoms_server.py     # 扩展服务器入口 (Railway 运行此文件)
 │   ├── race_mode/          # Race Mode - 多模型竞速
-│   ├── roles/              # Auto-Role - 自动角色路由
+│   ├── roles/              # Auto-Role UI API (角色由 Microagents 处理)
 │   ├── orchestrator/       # Orchestrator - 多角色协调
 │   └── scaffolding/        # Scaffolding - 项目脚手架
 ├── frontend/               # OpenHands 前端 (含 Atoms Plus UI)
 │   └── src/components/features/
 │       ├── auto-role/      # 自动角色指示器
 │       └── scaffolding/    # 项目脚手架卡片
-├── .openhands/microagents/ # 7 个领域专属 Microagents
+├── .openhands/microagents/ # 15 个 Microagents (8 角色 + 7 领域)
 └── CLAUDE.md               # 本文件
 ```
 
@@ -211,6 +211,14 @@ atoms-plus/
 - Google: gemini-2.0-flash, gemini-1.5-pro
 - Mistral: mistral-large-latest
 
+### ✅ Orchestrator 后端
+
+多角色协调引擎，支持：
+- 8 个专业角色的任务分发
+- 并行/串行执行模式
+- LiteLLM 多模型支持 (Qwen, DeepSeek)
+- 任务建议和自动角色匹配
+
 ### ✅ Microagents
 
 15 个 Microagents (8 角色 + 7 领域)：
@@ -236,7 +244,7 @@ atoms-plus/
 | 功能 | 描述 | 状态 |
 |------|------|------|
 | **Race Mode UI** | 多模型竞速的前端界面 | 后端 ✅ / 前端 ❌ |
-| **Auto-Role 集成** | 让检测到的角色真正影响 Agent system prompt | 前端显示 ✅ / 实际生效 ❌ |
+| **Orchestrator UI** | 多角色协调的前端界面 | 后端 ✅ / 前端 ❌ |
 
 ### 🟡 中优先级
 
