@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useCreateConversation } from "#/hooks/mutation/use-create-conversation";
 import { LoadingSpinner } from "#/components/shared/loading-spinner";
 import { ShuffleText } from "#/components/ui/shuffle-text";
@@ -11,43 +13,11 @@ import { DarkVeil } from "#/components/ui/dark-veil";
 import { ScaffoldBentoGrid } from "#/components/features/scaffolding";
 import { I18nKey } from "#/i18n/declaration";
 
-// Animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1,
-    },
-  },
-};
+// Register GSAP plugins
+gsap.registerPlugin(ScrollTrigger);
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: "spring",
-      stiffness: 100,
-      damping: 20,
-    },
-  },
-};
-
+// Card hover animation variants (still using Framer Motion for hover/tap)
 const cardVariants = {
-  hidden: { opacity: 0, scale: 0.95, y: 20 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: {
-      type: "spring",
-      stiffness: 100,
-      damping: 15,
-    },
-  },
   hover: {
     scale: 1.03,
     y: -6,
@@ -152,6 +122,129 @@ export default function AtomsHome() {
   const inputRef = useRef<HTMLInputElement>(null);
   const createConversation = useCreateConversation();
 
+  // Refs for GSAP animations
+  const containerRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const heroContentRef = useRef<HTMLDivElement>(null);
+
+  // GSAP ScrollTrigger animations
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      // Hero parallax effect - background moves slower than content
+      if (heroRef.current) {
+        gsap.to(heroRef.current, {
+          yPercent: -30,
+          ease: "none",
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: 1,
+          },
+        });
+      }
+
+      // Hero content parallax - moves slightly faster for depth
+      if (heroContentRef.current) {
+        gsap.to(heroContentRef.current, {
+          yPercent: -15,
+          ease: "none",
+          scrollTrigger: {
+            trigger: heroContentRef.current,
+            start: "top 20%",
+            end: "bottom top",
+            scrub: 0.5,
+          },
+        });
+      }
+
+      // Scroll reveal for all sections
+      ScrollTrigger.batch(".scroll-reveal", {
+        onEnter: (elements) => {
+          gsap.fromTo(
+            elements,
+            {
+              y: 80,
+              opacity: 0,
+              scale: 0.95,
+            },
+            {
+              y: 0,
+              opacity: 1,
+              scale: 1,
+              duration: 1,
+              stagger: 0.15,
+              ease: "power3.out",
+              overwrite: true,
+            },
+          );
+        },
+        onLeave: (elements) => {
+          gsap.to(elements, {
+            opacity: 0.7,
+            scale: 0.98,
+            duration: 0.3,
+          });
+        },
+        onEnterBack: (elements) => {
+          gsap.to(elements, {
+            opacity: 1,
+            scale: 1,
+            duration: 0.3,
+          });
+        },
+        start: "top 85%",
+        end: "bottom 15%",
+      });
+
+      // Staggered reveal for template cards
+      ScrollTrigger.batch(".scroll-reveal-card", {
+        onEnter: (elements) => {
+          gsap.fromTo(
+            elements,
+            {
+              y: 60,
+              opacity: 0,
+              scale: 0.9,
+            },
+            {
+              y: 0,
+              opacity: 1,
+              scale: 1,
+              duration: 0.8,
+              stagger: 0.1,
+              ease: "back.out(1.2)",
+              overwrite: true,
+            },
+          );
+        },
+        start: "top 90%",
+      });
+
+      // Stats section - count up trigger
+      ScrollTrigger.create({
+        trigger: ".stats-section",
+        start: "top 80%",
+        onEnter: () => {
+          gsap.fromTo(
+            ".stat-item",
+            { y: 40, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.8,
+              stagger: 0.2,
+              ease: "power2.out",
+            },
+          );
+        },
+        once: true,
+      });
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, []);
+
   // Animated placeholder effect
   useEffect(() => {
     // Only run animation when input is empty
@@ -219,9 +312,16 @@ export default function AtomsHome() {
   };
 
   return (
-    <div className="min-h-full flex flex-col overflow-auto relative">
-      {/* Animated WebGL Background */}
-      <div className="fixed inset-0 w-full h-full" style={{ zIndex: -1 }}>
+    <div
+      ref={containerRef}
+      className="min-h-full flex flex-col overflow-auto relative"
+    >
+      {/* Animated WebGL Background with parallax */}
+      <div
+        ref={heroRef}
+        className="fixed inset-0 w-full h-full will-change-transform"
+        style={{ zIndex: -1 }}
+      >
         <DarkVeil
           hueShift={30}
           noiseIntensity={0}
@@ -233,18 +333,18 @@ export default function AtomsHome() {
       </div>
 
       {/* Main Content */}
-      <motion.div
-        className="flex-1 flex flex-col items-center px-4 py-12 md:py-20 relative z-10"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Hero Section */}
-        <motion.div
-          className="text-center space-y-6 max-w-4xl mx-auto mb-12"
-          variants={itemVariants}
+      <div className="flex-1 flex flex-col items-center px-4 py-12 md:py-20 relative z-10">
+        {/* Hero Section with parallax content */}
+        <div
+          ref={heroContentRef}
+          className="text-center space-y-6 max-w-4xl mx-auto mb-12 will-change-transform"
         >
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight">
+          <motion.h1
+            className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight tracking-tight"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
             {t(I18nKey.ATOMS$HERO_TITLE_PREFIX)}{" "}
             <ShuffleText
               text={t(I18nKey.ATOMS$HERO_TITLE_HIGHLIGHT)}
@@ -253,20 +353,27 @@ export default function AtomsHome() {
               duration={40}
               triggerOnHover
             />
-          </h1>
-          <p className="text-lg md:text-xl text-neutral-400 max-w-2xl mx-auto leading-relaxed">
+          </motion.h1>
+          <motion.p
+            className="text-lg md:text-xl text-neutral-400 max-w-2xl mx-auto leading-relaxed"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+          >
             {t(I18nKey.ATOMS$HERO_SUBTITLE)}
-          </p>
-        </motion.div>
+          </motion.p>
+        </div>
 
-        {/* Search Input Section */}
+        {/* Search Input Section - scroll reveal */}
         <motion.div
-          className="w-full max-w-2xl mx-auto mb-16"
-          variants={itemVariants}
+          className="scroll-reveal w-full max-w-2xl mx-auto mb-16 will-change-transform"
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
         >
           <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500" />
-            <div className="relative flex items-center bg-neutral-900/90 backdrop-blur-sm border border-neutral-700/50 rounded-2xl overflow-hidden focus-within:border-indigo-500/50 transition-all duration-300">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/30 via-orange-500/30 to-amber-500/30 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500" />
+            <div className="relative flex items-center bg-neutral-900/90 backdrop-blur-sm border border-neutral-700/50 rounded-2xl overflow-hidden focus-within:border-amber-500/50 transition-all duration-300">
               <input
                 ref={inputRef}
                 type="text"
@@ -323,11 +430,8 @@ export default function AtomsHome() {
           </div>
         </motion.div>
 
-        {/* Templates Section */}
-        <motion.div
-          className="w-full max-w-5xl mx-auto space-y-8"
-          variants={itemVariants}
-        >
+        {/* Templates Section - scroll reveal */}
+        <div className="scroll-reveal w-full max-w-5xl mx-auto space-y-8 will-change-transform">
           <div className="text-center space-y-4">
             <h2 className="text-2xl md:text-3xl font-semibold text-white">
               {t(I18nKey.ATOMS$TEMPLATES_TITLE)}
@@ -359,13 +463,13 @@ export default function AtomsHome() {
             </div>
           </div>
 
-          {/* Template Cards Grid */}
+          {/* Template Cards Grid - scroll reveal cards */}
           <div
             className="grid grid-cols-1 md:grid-cols-3 gap-4"
             role="tabpanel"
           >
             <AnimatePresence mode="wait">
-              {TEMPLATES.map((template, index) => (
+              {TEMPLATES.map((template) => (
                 <motion.button
                   type="button"
                   key={template.id}
@@ -377,13 +481,10 @@ export default function AtomsHome() {
                     }
                   }}
                   disabled={isCreating}
-                  className="group relative overflow-hidden rounded-2xl bg-neutral-900/50 border border-neutral-700/30 hover:border-indigo-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-neutral-900"
+                  className="scroll-reveal-card group relative overflow-hidden rounded-2xl bg-neutral-900/50 border border-neutral-700/30 hover:border-amber-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-neutral-900 will-change-transform"
                   variants={cardVariants}
-                  initial="hidden"
-                  animate="visible"
                   whileHover="hover"
                   whileTap="tap"
-                  transition={{ delay: index * 0.1 }}
                 >
                   {/* Card Background Gradient */}
                   <div
@@ -398,7 +499,7 @@ export default function AtomsHome() {
                       </span>
                     </div>
                     <div className="text-left">
-                      <h3 className="text-lg font-semibold text-white group-hover:text-indigo-300 transition-colors">
+                      <h3 className="text-lg font-semibold text-white group-hover:text-amber-300 transition-colors">
                         {t(template.titleKey)}
                       </h3>
                     </div>
@@ -407,13 +508,10 @@ export default function AtomsHome() {
               ))}
             </AnimatePresence>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Scaffold Templates Bento Grid */}
-        <motion.div
-          className="w-full max-w-5xl mx-auto mt-16 space-y-6"
-          variants={itemVariants}
-        >
+        {/* Scaffold Templates Bento Grid - scroll reveal */}
+        <div className="scroll-reveal w-full max-w-5xl mx-auto mt-16 space-y-6 will-change-transform">
           <div className="text-center space-y-3">
             <h2 className="text-2xl md:text-3xl font-semibold text-white">
               {t(I18nKey.ATOMS$SCAFFOLD_TITLE) || "Quick Start Templates"}
@@ -424,18 +522,15 @@ export default function AtomsHome() {
             </p>
           </div>
           <ScaffoldBentoGrid />
-        </motion.div>
+        </div>
 
-        {/* Stats Section */}
-        <motion.div
-          className="w-full max-w-4xl mx-auto mt-20 text-center"
-          variants={itemVariants}
-        >
+        {/* Stats Section - scroll reveal with GSAP */}
+        <div className="stats-section scroll-reveal w-full max-w-4xl mx-auto mt-20 text-center will-change-transform">
           <p className="text-neutral-500 mb-6">
             {t(I18nKey.ATOMS$POWERED_BY_OPENSOURCE)}
           </p>
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">
-            <div className="text-center">
+            <div className="stat-item text-center">
               <div className="text-3xl md:text-4xl font-bold text-white flex items-center justify-center">
                 <CountUp
                   to={100}
@@ -453,7 +548,7 @@ export default function AtomsHome() {
                 {t(I18nKey.ATOMS$GITHUB_STARS)}
               </div>
             </div>
-            <div className="text-center">
+            <div className="stat-item text-center">
               <div className="text-3xl md:text-4xl font-bold text-white flex items-center justify-center">
                 <CountUp
                   to={1}
@@ -470,7 +565,7 @@ export default function AtomsHome() {
                 {t(I18nKey.ATOMS$BUILDERS)}
               </div>
             </div>
-            <div className="text-center">
+            <div className="stat-item text-center">
               <div className="text-3xl md:text-4xl font-bold text-white flex items-center justify-center">
                 <CountUp
                   to={50}
@@ -489,8 +584,8 @@ export default function AtomsHome() {
               </div>
             </div>
           </div>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 }
