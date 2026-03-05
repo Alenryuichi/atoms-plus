@@ -6,7 +6,8 @@ interface TabContainerProps {
 
 export function TabContainer({ children }: TabContainerProps) {
   return (
-    <div className="bg-card border border-border/50 rounded-xl flex flex-col h-full w-full shadow-sm">
+    // Atoms Plus: Transparent container - parent glass card handles background
+    <div className="bg-transparent flex flex-col h-full w-full overflow-hidden">
       {children}
     </div>
   );

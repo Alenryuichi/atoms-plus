@@ -1,4 +1,10 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import {
   SandpackProvider,
   SandpackLayout,
@@ -7,15 +13,18 @@ import {
 } from "@codesandbox/sandpack-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, RefreshCw, FileCode } from "lucide-react";
+import { FileCode } from "lucide-react";
 import { I18nKey } from "#/i18n/declaration";
 import { useWorkspaceFiles } from "#/hooks/query/use-workspace-files";
 import { useWorkspaceFileContent } from "#/hooks/query/use-workspace-file-content";
 import { useRuntimeIsReady } from "#/hooks/use-runtime-is-ready";
 import { useConversationId } from "#/hooks/use-conversation-id";
-import { useClickOutsideElement } from "#/hooks/use-click-outside-element";
 import { LoadingSpinner } from "#/components/shared/loading-spinner";
-import { cn } from "#/utils/utils";
+import { useConversationStore } from "#/stores/conversation-store";
+import { MOCK_FILE_CONTENTS } from "#/mocks/preview-handlers";
+
+// Check if running in mock mode
+const isMockMode = import.meta.env.VITE_MOCK_API === "true";
 
 // Animation variants for view mode transitions
 const contentVariants = {
@@ -37,12 +46,13 @@ const contentVariants = {
   },
 };
 
-type ViewMode = "split" | "editor" | "preview";
-
-// Storage key prefixes for persisting selected file (conversation-specific)
+// Storage key prefix for persisting selected file (conversation-specific)
 const STORAGE_KEY_PREFIX_SELECTED_FILE = "preview-selected-file-";
-const STORAGE_KEY_PREFIX_VIEW_MODE = "preview-view-mode-";
-const STORAGE_KEY_PREFIX_AUTO_SWITCHED = "preview-auto-switched-";
+
+// Export handle type for ref
+export interface PreviewPanelHandle {
+  refresh: () => void;
+}
 
 /**
  * Get file extension and determine Sandpack template
@@ -78,49 +88,25 @@ function getSandpackFileName(filePath: string): string {
   return `/${fileName}`;
 }
 
-export function PreviewPanel() {
-  const { t } = useTranslation();
-  const runtimeIsReady = useRuntimeIsReady();
-  const { conversationId } = useConversationId();
+export const PreviewPanel = forwardRef<PreviewPanelHandle>(
+  function PreviewPanel(_props, ref) {
+    const { t } = useTranslation();
+    const runtimeIsReady = useRuntimeIsReady();
+    const { conversationId } = useConversationId();
+    const { previewViewMode: viewMode } = useConversationStore();
 
-  // Conversation-specific storage keys
-  const storageKeySelectedFile = `${STORAGE_KEY_PREFIX_SELECTED_FILE}${conversationId}`;
-  const storageKeyViewMode = `${STORAGE_KEY_PREFIX_VIEW_MODE}${conversationId}`;
-  const storageKeyAutoSwitched = `${STORAGE_KEY_PREFIX_AUTO_SWITCHED}${conversationId}`;
+    // Conversation-specific storage key for selected file
+    const storageKeySelectedFile = `${STORAGE_KEY_PREFIX_SELECTED_FILE}${conversationId}`;
 
-  // Track if auto-switch has already happened (use ref to avoid re-renders)
-  const hasAutoSwitchedRef = useRef<boolean>(
-    typeof window !== "undefined" && conversationId
-      ? localStorage.getItem(storageKeyAutoSwitched) === "true"
-      : false,
-  );
-
-  // State
-  const [selectedFile, setSelectedFile] = useState<string | null>(() => {
-    if (typeof window !== "undefined" && conversationId) {
-      return localStorage.getItem(
-        `${STORAGE_KEY_PREFIX_SELECTED_FILE}${conversationId}`,
-      );
-    }
-    return null;
-  });
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window !== "undefined" && conversationId) {
-      const saved = localStorage.getItem(
-        `${STORAGE_KEY_PREFIX_VIEW_MODE}${conversationId}`,
-      ) as ViewMode;
-      if (saved && ["split", "editor", "preview"].includes(saved)) {
-        return saved;
+    // State - only selected file is local state now
+    const [selectedFile, setSelectedFile] = useState<string | null>(() => {
+      if (typeof window !== "undefined" && conversationId) {
+        return localStorage.getItem(
+          `${STORAGE_KEY_PREFIX_SELECTED_FILE}${conversationId}`,
+        );
       }
-    }
-    // Default to editor view (Code) - will auto-switch to preview once files are loaded
-    return "editor";
-  });
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
-  // Click outside handler for dropdown
-  const closeDropdown = useCallback(() => setIsDropdownOpen(false), []);
-  const dropdownRef = useClickOutsideElement<HTMLDivElement>(closeDropdown);
+      return null;
+    });
 
   // Fetch workspace files
   const {
@@ -152,46 +138,20 @@ export function PreviewPanel() {
     }
   }, [selectedFile, conversationId, storageKeySelectedFile]);
 
-  // Persist view mode to localStorage (conversation-specific)
-  useEffect(() => {
-    if (conversationId) {
-      localStorage.setItem(storageKeyViewMode, viewMode);
-    }
-  }, [viewMode, conversationId, storageKeyViewMode]);
-
-  // Auto-switch from "editor" to "preview" once files and content are ready
-  // This only happens once per conversation to provide a good initial experience
-  useEffect(() => {
-    // Check if we've already auto-switched for this conversation
-    if (hasAutoSwitchedRef.current) return;
-
-    // Check if conditions are met: files loaded, file selected, content available, not loading
-    if (
-      files &&
-      files.length > 0 &&
-      selectedFile &&
-      fileContent &&
-      !isLoadingContent
-    ) {
-      // Mark as auto-switched before changing mode
-      hasAutoSwitchedRef.current = true;
-      if (conversationId) {
-        localStorage.setItem(storageKeyAutoSwitched, "true");
-      }
-      // Switch to preview mode
-      setViewMode("preview");
-    }
-  }, [
-    files,
-    selectedFile,
-    fileContent,
-    isLoadingContent,
-    conversationId,
-    storageKeyAutoSwitched,
-  ]);
-
   // Build Sandpack files from workspace content
   const sandpackFiles = useMemo(() => {
+    // In mock mode, use all mock files for complete React project support
+    if (isMockMode) {
+      const files: Record<string, { code: string }> = {};
+      Object.entries(MOCK_FILE_CONTENTS).forEach(([path, code]) => {
+        // Convert file path to Sandpack format (e.g., "src/App.tsx" -> "/src/App.tsx")
+        const sandpackPath = path.startsWith("/") ? path : `/${path}`;
+        files[sandpackPath] = { code };
+      });
+      return files;
+    }
+
+    // Normal mode: use single file content
     if (!fileContent || !selectedFile) {
       return {
         "/index.html": {
@@ -207,15 +167,14 @@ export function PreviewPanel() {
     return { [fileName]: { code: fileContent } };
   }, [fileContent, selectedFile]);
 
-  const template = selectedFile ? getFileTemplate(selectedFile) : "static";
+  // In mock mode, always use react-ts template for full React project support
+  const template = isMockMode
+    ? "react-ts"
+    : selectedFile
+      ? getFileTemplate(selectedFile)
+      : "static";
 
-  // Handle file selection
-  const handleSelectFile = (file: string) => {
-    setSelectedFile(file);
-    setIsDropdownOpen(false);
-  };
-
-  // Handle refresh
+  // Handle refresh - exposed via ref for parent component
   const handleRefresh = () => {
     refetchFiles();
     if (selectedFile) {
@@ -223,25 +182,30 @@ export function PreviewPanel() {
     }
   };
 
-  // Render loading state
+  // Expose refresh method to parent via ref
+  useImperativeHandle(ref, () => ({
+    refresh: handleRefresh,
+  }));
+
+  // Render loading state - Atoms Plus: Transparent background
   if (!runtimeIsReady) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-neutral-900 text-neutral-400">
+      <div className="h-full w-full flex flex-col items-center justify-center bg-transparent text-neutral-400">
         <LoadingSpinner size="large" />
-        <p className="mt-4 text-sm">
+        <p className="mt-4 text-sm text-neutral-500">
           {t(I18nKey.DIFF_VIEWER$WAITING_FOR_RUNTIME)}
         </p>
       </div>
     );
   }
 
-  // Render error state
+  // Render error state - Atoms Plus: Transparent background
   if (filesError) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-neutral-900 p-4">
+      <div className="h-full w-full flex flex-col items-center justify-center bg-transparent p-4">
         <div className="text-red-400 text-center max-w-md">
           <p className="font-medium mb-2">{t(I18nKey.COMMON$FETCH_ERROR)}</p>
-          <p className="text-sm text-neutral-400">
+          <p className="text-sm text-neutral-500">
             {filesError instanceof Error
               ? filesError.message
               : "Failed to load workspace files"}
@@ -249,7 +213,7 @@ export function PreviewPanel() {
           <button
             type="button"
             onClick={() => refetchFiles()}
-            className="mt-4 px-4 py-2 bg-neutral-700 hover:bg-neutral-600 rounded text-sm text-white"
+            className="mt-4 px-4 py-2 bg-black/40 hover:bg-black/60 border border-white/10 hover:border-amber-500/30 rounded-lg text-sm text-white transition-all"
           >
             {t(I18nKey.BUTTON$REFRESH)}
           </button>
@@ -258,150 +222,19 @@ export function PreviewPanel() {
     );
   }
 
-  // Render empty state
+  // Render empty state - Atoms Plus: Transparent background
   if (!isLoadingFiles && (!files || files.length === 0)) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-neutral-900 text-neutral-400 p-4">
-        <FileCode className="w-12 h-12 mb-4 opacity-50" />
+      <div className="h-full w-full flex flex-col items-center justify-center bg-transparent text-neutral-500 p-4">
+        <FileCode className="w-12 h-12 mb-4 opacity-40 text-amber-500/50" />
         <p className="text-center">{t(I18nKey.PREVIEW$NO_FILES)}</p>
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full flex flex-col bg-base-secondary">
-      {/* Atoms Plus: Simplified toolbar - cleaner design */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-tertiary-light bg-base-tertiary">
-        {/* Left side: File selector */}
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="relative" ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  setIsDropdownOpen(false);
-                }
-                if (e.key === "ArrowDown" && !isDropdownOpen) {
-                  e.preventDefault();
-                  setIsDropdownOpen(true);
-                }
-              }}
-              className="flex items-center gap-2 px-2.5 py-1 bg-base-secondary hover:bg-neutral-700 border border-tertiary rounded-lg text-sm text-content-secondary max-w-[180px] transition-colors"
-              aria-label={t(I18nKey.PREVIEW$SELECT_FILE)}
-              aria-expanded={isDropdownOpen}
-              aria-haspopup="listbox"
-            >
-              <FileCode className="w-3.5 h-3.5 shrink-0 text-content-tertiary" />
-              <span className="truncate">
-                {selectedFile
-                  ? selectedFile.split("/").pop()
-                  : t(I18nKey.PREVIEW$SELECT_FILE)}
-              </span>
-              <ChevronDown
-                className={cn(
-                  "w-3.5 h-3.5 shrink-0 transition-transform text-content-tertiary",
-                  isDropdownOpen && "rotate-180",
-                )}
-              />
-            </button>
-            {isDropdownOpen && files && (
-              <div
-                role="listbox"
-                aria-label={t(I18nKey.PREVIEW$SELECT_FILE)}
-                className="absolute top-full left-0 mt-1 z-50 min-w-[200px] max-h-[300px] overflow-auto bg-base-tertiary border border-tertiary rounded-lg shadow-xl"
-              >
-                {files.map((file) => {
-                  const fileName = file.split("/").pop() || file;
-                  const dirPath = file.includes("/")
-                    ? file.substring(0, file.lastIndexOf("/"))
-                    : "";
-                  return (
-                    <button
-                      key={file}
-                      type="button"
-                      role="option"
-                      aria-selected={selectedFile === file}
-                      onClick={() => handleSelectFile(file)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") {
-                          setIsDropdownOpen(false);
-                        }
-                      }}
-                      className={cn(
-                        "w-full text-left px-3 py-2 text-sm hover:bg-neutral-700 transition-colors",
-                        selectedFile === file
-                          ? "bg-primary/10 text-primary"
-                          : "text-content-secondary",
-                      )}
-                      title={file}
-                    >
-                      <span className="block truncate">{fileName}</span>
-                      {dirPath && (
-                        <span className="block text-xs text-content-tertiary truncate">
-                          {dirPath}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Loading/Error indicators */}
-          {isLoadingContent && (
-            <div className="flex items-center gap-1.5 text-content-tertiary text-xs">
-              <LoadingSpinner size="small" />
-            </div>
-          )}
-          {contentError && (
-            <span className="text-danger text-xs truncate">
-              {t(I18nKey.COMMON$FETCH_ERROR)}
-            </span>
-          )}
-        </div>
-
-        {/* Right side: View mode + Refresh */}
-        <div className="flex items-center gap-1.5">
-          {/* Compact View Mode Toggle */}
-          <div className="flex bg-base-secondary rounded-lg p-0.5 border border-tertiary">
-            {(["split", "editor", "preview"] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setViewMode(mode)}
-                className={cn(
-                  "px-2 py-0.5 text-xs rounded-md transition-all font-medium",
-                  viewMode === mode
-                    ? "bg-primary text-white shadow-sm"
-                    : "text-content-tertiary hover:text-content-secondary",
-                )}
-              >
-                {
-                  {
-                    split: t(I18nKey.COMMON$SPLIT),
-                    editor: t(I18nKey.COMMON$CODE),
-                    preview: t(I18nKey.COMMON$PREVIEW),
-                  }[mode]
-                }
-              </button>
-            ))}
-          </div>
-
-          {/* Refresh Button */}
-          <button
-            type="button"
-            onClick={handleRefresh}
-            className="p-1 text-content-tertiary hover:text-content hover:bg-neutral-700 rounded-md transition-colors"
-            aria-label={t(I18nKey.BUTTON$REFRESH)}
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Sandpack Preview with animated transitions */}
+    <div className="h-full w-full flex flex-col bg-transparent">
+      {/* Sandpack Preview - clean content area without toolbar */}
       <div className="flex-1 overflow-hidden h-full">
         <AnimatePresence mode="wait">
           {isLoadingFiles ? (
@@ -459,8 +292,8 @@ export function PreviewPanel() {
                         height: "100%",
                         flex: viewMode === "split" ? 1 : "auto",
                       }}
-                      showNavigator
-                      showRefreshButton
+                      showNavigator={false}
+                      showRefreshButton={false}
                     />
                   )}
                 </SandpackLayout>
@@ -471,4 +304,5 @@ export function PreviewPanel() {
       </div>
     </div>
   );
-}
+  },
+);

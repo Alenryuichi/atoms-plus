@@ -5,6 +5,9 @@ import {
   setConversationState,
 } from "#/utils/conversation-local-storage";
 
+// Check if running in mock mode - default to preview tab for testing
+const isMockMode = import.meta.env.VITE_MOCK_API === "true";
+
 export type ConversationTab =
   | "editor"
   | "browser"
@@ -15,6 +18,14 @@ export type ConversationTab =
   | "preview";
 
 export type ConversationMode = "code" | "plan";
+
+export type PreviewViewMode = "split" | "editor" | "preview";
+
+// Panel width constants
+const PANEL_WIDTH_STORAGE_KEY = "desktop-layout-panel-width";
+const DEFAULT_PANEL_LEFT_WIDTH = 50;
+const MIN_PANEL_LEFT_WIDTH = 30;
+const MAX_PANEL_LEFT_WIDTH = 80;
 
 export interface IMessageToSend {
   text: string;
@@ -36,6 +47,10 @@ interface ConversationState {
   planContent: string | null;
   conversationMode: ConversationMode;
   subConversationTaskId: string | null; // Task ID for sub-conversation creation
+  previewViewMode: PreviewViewMode; // Preview panel view mode (split/editor/preview)
+  // Panel width state - shared between TopNavbar and ConversationMain
+  panelLeftWidth: number; // Left panel width as percentage (30-80)
+  panelIsDragging: boolean; // Whether user is currently dragging the resize handle
 }
 
 interface ConversationActions {
@@ -62,6 +77,11 @@ interface ConversationActions {
   setConversationMode: (conversationMode: ConversationMode) => void;
   setSubConversationTaskId: (taskId: string | null) => void;
   setPlanContent: (planContent: string | null) => void;
+  setPreviewViewMode: (previewViewMode: PreviewViewMode) => void;
+  // Panel width actions
+  setPanelLeftWidth: (width: number) => void;
+  setPanelIsDragging: (isDragging: boolean) => void;
+  persistPanelWidth: () => void; // Save to localStorage when drag ends
 }
 
 type ConversationStore = ConversationState & ConversationActions;
@@ -124,12 +144,31 @@ const getInitialConversationMode = (): ConversationMode => {
   return state.conversationMode;
 };
 
+const getInitialPanelWidth = (): number => {
+  if (typeof window === "undefined") {
+    return DEFAULT_PANEL_LEFT_WIDTH;
+  }
+
+  const stored = localStorage.getItem(PANEL_WIDTH_STORAGE_KEY);
+  if (stored) {
+    const parsed = parseFloat(stored);
+    if (!Number.isNaN(parsed)) {
+      return Math.max(
+        MIN_PANEL_LEFT_WIDTH,
+        Math.min(MAX_PANEL_LEFT_WIDTH, parsed),
+      );
+    }
+  }
+  return DEFAULT_PANEL_LEFT_WIDTH;
+};
+
 export const useConversationStore = create<ConversationStore>()(
   devtools(
-    (set) => ({
+    (set, get) => ({
       // Initial state
       isRightPanelShown: getInitialRightPanelState(),
-      selectedTab: "editor" as ConversationTab,
+      // In mock mode, default to "preview" tab for testing the Preview panel
+      selectedTab: (isMockMode ? "preview" : "editor") as ConversationTab,
       images: [],
       files: [],
       loadingFiles: [],
@@ -142,6 +181,10 @@ export const useConversationStore = create<ConversationStore>()(
       planContent: null,
       conversationMode: getInitialConversationMode(),
       subConversationTaskId: null,
+      previewViewMode: "preview" as PreviewViewMode, // Default to preview mode
+      // Panel width state - synced between TopNavbar and ConversationMain
+      panelLeftWidth: getInitialPanelWidth(),
+      panelIsDragging: false,
 
       // Actions
       setIsRightPanelShown: (isRightPanelShown) =>
@@ -300,6 +343,31 @@ export const useConversationStore = create<ConversationStore>()(
 
       setPlanContent: (planContent) =>
         set({ planContent }, false, "setPlanContent"),
+
+      setPreviewViewMode: (previewViewMode) =>
+        set({ previewViewMode }, false, "setPreviewViewMode"),
+
+      // Panel width actions - for synchronized resizable panels
+      setPanelLeftWidth: (width) => {
+        const clamped = Math.max(
+          MIN_PANEL_LEFT_WIDTH,
+          Math.min(MAX_PANEL_LEFT_WIDTH, width),
+        );
+        set({ panelLeftWidth: clamped }, false, "setPanelLeftWidth");
+      },
+
+      setPanelIsDragging: (isDragging) =>
+        set({ panelIsDragging: isDragging }, false, "setPanelIsDragging"),
+
+      persistPanelWidth: () => {
+        const { panelLeftWidth } = get();
+        if (typeof window !== "undefined") {
+          localStorage.setItem(
+            PANEL_WIDTH_STORAGE_KEY,
+            JSON.stringify(panelLeftWidth),
+          );
+        }
+      },
     }),
     {
       name: "conversation-store",

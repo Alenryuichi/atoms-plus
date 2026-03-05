@@ -18,7 +18,7 @@ export function SettingsLayout({
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
-    <div className="flex flex-col h-full px-[14px] pt-8">
+    <div className="flex flex-col h-full px-6 pt-8 bg-gradient-to-b from-[#0a0a0a] via-[#0f0f0f] to-[#0a0a0a]">
       {/* Mobile header */}
       <MobileHeader
         isMobileMenuOpen={isMobileMenuOpen}

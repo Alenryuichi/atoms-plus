@@ -4,10 +4,14 @@ import { useActiveConversation } from "#/hooks/query/use-active-conversation";
 import { useConversationWebSocket } from "#/contexts/conversation-websocket-context";
 import { useConversationId } from "#/hooks/use-conversation-id";
 
+// Check if running in mock mode
+const isMockMode = import.meta.env.VITE_MOCK_API === "true";
+
 /**
  * Unified hook that returns the current WebSocket status
  * - For V0 conversations: Returns status from useWsClient
  * - For V1 conversations: Returns status from ConversationWebSocketProvider
+ * - For mock mode: Always returns "CONNECTED" to enable all features
  */
 export function useUnifiedWebSocketStatus(): V0_WebSocketStatus {
   const { conversationId } = useConversationId();
@@ -21,6 +25,11 @@ export function useUnifiedWebSocketStatus(): V0_WebSocketStatus {
     conversation?.conversation_version === "V1";
 
   const webSocketStatus = useMemo(() => {
+    // In mock mode, always return CONNECTED to enable all UI features
+    if (isMockMode && conversation) {
+      return "CONNECTED";
+    }
+
     if (isV1Conversation) {
       // Map V1 connection state to WebSocketStatus
       if (!v1Context) return "DISCONNECTED";

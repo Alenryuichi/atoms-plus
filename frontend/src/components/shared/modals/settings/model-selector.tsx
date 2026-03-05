@@ -175,7 +175,7 @@ export function ModelSelector({
       )}
     >
       <fieldset className="flex flex-col gap-2.5 w-full">
-        <label className={cn("text-sm", labelClassName)}>
+        <label className={cn("text-sm text-neutral-300", labelClassName)}>
           {t(I18nKey.LLM$PROVIDER)}
         </label>
         <Combobox
@@ -190,8 +190,15 @@ export function ModelSelector({
           onInputChange={(value) => !value && handleChangeProvider(null)}
           value={selectedProvider ?? undefined}
           groups={providerGroups}
-          triggerClassName="bg-tertiary border border-[#717888] h-10 w-full rounded-sm p-2"
-          popoverClassName="bg-tertiary rounded-xl border border-[#717888]"
+          triggerClassName={cn(
+            "bg-black/40 border border-white/10 h-10 w-full rounded-lg px-3 py-2",
+            "text-white placeholder:text-neutral-500",
+            "transition-all duration-300",
+            "hover:border-white/20 hover:bg-black/50",
+            "focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20",
+            "data-[state=open]:border-amber-500/50 data-[state=open]:ring-2 data-[state=open]:ring-amber-500/20",
+          )}
+          popoverClassName="z-[100] bg-black/90 backdrop-blur-xl rounded-xl border border-amber-500/20 shadow-xl shadow-black/50"
         />
       </fieldset>
 
@@ -207,7 +214,7 @@ export function ModelSelector({
       )}
 
       <fieldset className="flex flex-col gap-2.5 w-full">
-        <label className={cn("text-sm", labelClassName)}>
+        <label className={cn("text-sm text-neutral-300", labelClassName)}>
           {t(I18nKey.LLM$MODEL)}
         </label>
         <Combobox
@@ -221,8 +228,15 @@ export function ModelSelector({
           disabled={isDisabled || !selectedProvider}
           value={selectedModel ?? undefined}
           groups={modelGroups}
-          triggerClassName="bg-tertiary border border-[#717888] h-10 w-full rounded-sm p-2"
-          popoverClassName="bg-tertiary rounded-xl border border-[#717888]"
+          triggerClassName={cn(
+            "bg-black/40 border border-white/10 h-10 w-full rounded-lg px-3 py-2",
+            "text-white placeholder:text-neutral-500",
+            "transition-all duration-300",
+            "hover:border-white/20 hover:bg-black/50",
+            "focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/20",
+            "data-[state=open]:border-amber-500/50 data-[state=open]:ring-2 data-[state=open]:ring-amber-500/20",
+          )}
+          popoverClassName="z-[100] bg-black/90 backdrop-blur-xl rounded-xl border border-amber-500/20 shadow-xl shadow-black/50"
         />
       </fieldset>
     </div>

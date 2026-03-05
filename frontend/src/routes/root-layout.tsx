@@ -88,12 +88,16 @@ export default function MainApp() {
   const { isAuthenticated: isSupabaseAuthed, isLoading: isSupabaseLoading } =
     useSupabaseAuth();
 
+  // Check if we're in mock mode - skip auth in mock mode
+  const isMockMode = import.meta.env.VITE_MOCK_API === "true";
+
   // Use Supabase auth if configured, otherwise use the original OSS/SAAS auth
-  const useSupabaseAuthFlow = isSupabaseConfigured();
-  const effectiveIsAuthed = useSupabaseAuthFlow ? isSupabaseAuthed : isAuthed;
-  const effectiveIsLoading = useSupabaseAuthFlow
+  // In mock mode, always consider user as authenticated
+  const useSupabaseAuthFlow = isSupabaseConfigured() && !isMockMode;
+  const effectiveIsAuthed = isMockMode ? true : (useSupabaseAuthFlow ? isSupabaseAuthed : isAuthed);
+  const effectiveIsLoading = isMockMode ? false : (useSupabaseAuthFlow
     ? isSupabaseLoading
-    : isAuthLoading;
+    : isAuthLoading);
 
   const [consentFormIsOpen, setConsentFormIsOpen] = React.useState(false);
 

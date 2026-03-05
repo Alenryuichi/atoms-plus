@@ -16,6 +16,9 @@ import React, {
 import { User, Session, AuthError } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "#/lib/supabase";
 
+// Check if running in mock mode
+const isMockMode = import.meta.env.VITE_MOCK_API === "true";
+
 interface SupabaseAuthContextType {
   user: User | null;
   session: Session | null;
@@ -118,7 +121,8 @@ export function SupabaseAuthProvider({
       user,
       session,
       isLoading,
-      isAuthenticated: !!session,
+      // In mock mode, always consider the user as authenticated
+      isAuthenticated: isMockMode || !!session,
       signIn,
       signUp,
       signOut,

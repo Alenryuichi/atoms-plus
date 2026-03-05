@@ -1,15 +1,15 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "#/utils/utils";
 
-const helpLinkVariants = cva("", {
+const helpLinkVariants = cva("text-neutral-500", {
   variants: {
     size: {
       default: "text-xs",
-      settings: "text-sm text-[#A3A3A3] font-normal leading-5.5",
+      settings: "text-sm text-neutral-400 font-normal leading-5.5",
     },
     linkColor: {
-      default: "",
-      white: "text-white",
+      default: "text-amber-500 hover:text-amber-400 transition-colors",
+      white: "text-white hover:text-amber-400 transition-colors",
     },
   },
   defaultVariants: {

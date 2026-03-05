@@ -58,7 +58,7 @@ function SettingsScreen() {
     <main data-testid="settings-screen" className="h-full">
       <SettingsLayout navigationItems={navItems}>
         <div className="flex flex-col gap-6 h-full">
-          <Typography.H2>{t(currentSectionTitle)}</Typography.H2>
+          <Typography.H2 className="text-white">{t(currentSectionTitle)}</Typography.H2>
           <div className="flex-1 overflow-auto custom-scrollbar-always">
             <Outlet />
           </div>

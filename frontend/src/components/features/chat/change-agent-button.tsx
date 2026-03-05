@@ -152,20 +152,25 @@ export function ChangeAgentButton() {
         onClick={handleButtonClick}
         disabled={isButtonDisabled}
         className={cn(
-          "flex items-center border border-[#4B505F] rounded-[100px] transition-opacity",
-          !isExecutionAgent && "border-[#597FF4] bg-[#4A67BD]",
+          // Atoms Plus: Modern pill button with glass effect
+          "flex items-center gap-0.5 px-2 py-1 rounded-full transition-all duration-200",
+          "bg-black/30 border border-white/10",
+          "hover:border-amber-500/30 hover:bg-black/40",
+          // Plan mode: purple accent
+          !isExecutionAgent &&
+            "border-purple-500/40 bg-purple-500/20 hover:border-purple-500/60",
           isButtonDisabled
             ? "opacity-50 cursor-not-allowed"
-            : "cursor-pointer hover:opacity-80",
+            : "cursor-pointer",
         )}
       >
-        <div className="flex items-center gap-1 pl-1.5">
+        <div className="flex items-center gap-1.5 pl-0.5">
           {buttonIcon}
-          <Typography.Text className="text-white text-2.75 not-italic font-normal leading-5">
+          <Typography.Text className="text-neutral-300 text-sm font-medium">
             {buttonLabel}
           </Typography.Text>
         </div>
-        <ChevronDownSmallIcon width={24} height={24} color="#ffffff" />
+        <ChevronDownSmallIcon width={20} height={20} color="#a3a3a3" />
       </button>
       {contextMenuOpen && (
         <ChangeAgentContextMenu

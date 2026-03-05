@@ -1,7 +1,7 @@
-import { LoaderCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { I18nKey } from "#/i18n/declaration";
 import { cn } from "#/utils/utils";
+import { LoadingSpinner } from "#/components/shared/loading-spinner";
 
 type ConversationLoadingProps = {
   className?: string;
@@ -13,13 +13,13 @@ export function ConversationLoading({ className }: ConversationLoadingProps) {
   return (
     <div
       className={cn(
-        // Atoms Plus: Use consistent dark theme variable for loading states
-        "bg-[var(--atoms-bg-elevated)] flex flex-col items-center justify-center h-full w-full",
+        // Atoms Plus: Transparent background - let parent card show through
+        "bg-transparent flex flex-col items-center justify-center h-full w-full",
         className,
       )}
     >
-      <LoaderCircle className="animate-spin w-16 h-16" color="white" />
-      <span className="text-2xl font-normal leading-5 text-white p-4">
+      <LoadingSpinner size="large" />
+      <span className="text-lg font-medium text-neutral-400 pt-4">
         {t(I18nKey.HOME$LOADING)}
       </span>
     </div>

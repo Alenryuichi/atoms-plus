@@ -1,37 +1,29 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { useLocalStorage } from "@uidotdev/usehooks";
+import { useRef, useCallback, useEffect } from "react";
+import { useConversationStore } from "#/stores/conversation-store";
 
-interface UseResizablePanelsOptions {
-  defaultLeftWidth?: number;
-  minLeftWidth?: number;
-  maxLeftWidth?: number;
-  storageKey?: string;
-}
+/**
+ * Hook for managing resizable panels with synchronized state.
+ * Uses Zustand store for state management, allowing TopNavbar and ConversationMain
+ * to share the same panel width state.
+ */
+export function useResizablePanels() {
+  const {
+    panelLeftWidth: leftWidth,
+    panelIsDragging: isDragging,
+    setPanelLeftWidth: setLeftWidth,
+    setPanelIsDragging: setIsDragging,
+    persistPanelWidth,
+  } = useConversationStore();
 
-export function useResizablePanels({
-  defaultLeftWidth = 50,
-  minLeftWidth = 30,
-  maxLeftWidth = 80,
-  storageKey = "desktop-layout-panel-width",
-}: UseResizablePanelsOptions = {}) {
-  const [persistedWidth, setPersistedWidth] = useLocalStorage<number>(
-    storageKey,
-    defaultLeftWidth,
-  );
-
-  const [leftWidth, setLeftWidth] = useState(persistedWidth);
-  const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const clampWidth = useCallback(
-    (width: number) => Math.max(minLeftWidth, Math.min(maxLeftWidth, width)),
-    [minLeftWidth, maxLeftWidth],
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+    },
+    [setIsDragging],
   );
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
@@ -42,18 +34,18 @@ export function useResizablePanels({
       const containerWidth = containerRect.width;
       const newLeftWidth = (mouseX / containerWidth) * 100;
 
-      const clampedWidth = clampWidth(newLeftWidth);
-      setLeftWidth(clampedWidth);
+      // Store handles clamping internally
+      setLeftWidth(newLeftWidth);
     },
-    [isDragging, clampWidth],
+    [isDragging, setLeftWidth],
   );
 
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
       setIsDragging(false);
-      setPersistedWidth(leftWidth);
+      persistPanelWidth();
     }
-  }, [isDragging, leftWidth, setPersistedWidth]);
+  }, [isDragging, setIsDragging, persistPanelWidth]);
 
   useEffect(() => {
     if (isDragging) {
