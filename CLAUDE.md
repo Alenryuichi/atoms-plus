@@ -181,17 +181,24 @@ atoms-plus/
 - Vue 3 + Vite + TypeScript
 - Nuxt 3
 
-### ✅ 自动角色路由 (Auto-Role)
+### ✅ 自动角色路由 (Auto-Role via Microagents)
 
-根据用户输入自动选择最佳 AI 角色：
-- 🏗️ Alex (Software Architect) - 架构设计
-- 📋 Charlie (Product Manager) - 产品需求
-- 💻 Bob (Senior Engineer) - 代码实现 (默认)
-- 📈 Diana (Data Analyst) - 数据分析
-- 🔬 Ryan (Deep Researcher) - 深度研究
-- 📊 Evan (Project Manager) - 项目管理
-- 🔍 Stella (SEO Specialist) - SEO 优化
-- 👔 Tony (Team Leader) - 团队协调
+**架构**: 角色由 OpenHands Microagents 处理，Auto-Role API 仅用于 UI 显示。
+
+角色 Microagents 位于 `.openhands/microagents/role-*.md`：
+- 🏗️ `role-architect.md` - Alex (Software Architect)
+- 💻 `role-engineer.md` - Bob (Senior Engineer) [默认]
+- 📋 `role-product-manager.md` - Emma (Product Manager)
+- 📈 `role-data-analyst.md` - Diana (Data Analyst)
+- 🔬 `role-researcher.md` - Ryan (Deep Researcher)
+- 📊 `role-project-manager.md` - Sarah (Project Manager)
+- 🔍 `role-seo-specialist.md` - Sophie (SEO Specialist)
+- 👔 `role-team-leader.md` - Mike (Team Leader)
+
+**工作原理**:
+1. 用户输入触发 Microagent 的 `triggers` 关键词
+2. OpenHands 自动注入角色 prompt 到 Agent 上下文
+3. `/api/v1/roles/auto-detect` 读取相同的 triggers，用于 UI 显示
 
 ### ✅ Race Mode 后端
 
@@ -206,8 +213,15 @@ atoms-plus/
 
 ### ✅ Microagents
 
-7 个领域专属 Microagent：
-- `atoms-plus.md` - 平台知识库
+15 个 Microagents (8 角色 + 7 领域)：
+
+**角色 Microagents** (`type: knowledge` with triggers):
+- `role-architect.md`, `role-engineer.md`, `role-product-manager.md`
+- `role-data-analyst.md`, `role-researcher.md`, `role-project-manager.md`
+- `role-seo-specialist.md`, `role-team-leader.md`
+
+**领域 Microagents**:
+- `atoms-plus.md` - 平台知识库 (type: repo, 始终加载)
 - `scaffolding.md` - 项目脚手架指南
 - `component-generator.md` - React/Vue 组件生成
 - `api-generator.md` - API 端点生成

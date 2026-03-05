@@ -6,7 +6,6 @@ import { useCreateConversation } from "#/hooks/mutation/use-create-conversation"
 import { LoadingSpinner } from "#/components/shared/loading-spinner";
 import { I18nKey } from "#/i18n/declaration";
 import { autoDetectRole } from "#/api/role-service/role-service.api";
-import type { AgentRoleId } from "#/api/conversation-service/v1-conversation-service.types";
 
 // Atoms Plus: Role detection timeout (ms) - don't block conversation creation too long
 const ROLE_DETECTION_TIMEOUT = 2000;
@@ -195,8 +194,8 @@ export default function AtomsHome() {
 
     setIsCreating(true);
     try {
-      // Atoms Plus: Auto-detect role with timeout to avoid blocking UI
-      let agentRole: AgentRoleId | undefined;
+      // Atoms Plus: Auto-detect role for UI display only
+      // The actual prompt injection is handled by microagents in .openhands/microagents/
       const controller = new AbortController();
       const timeoutId = setTimeout(
         () => controller.abort(),
@@ -206,31 +205,29 @@ export default function AtomsHome() {
       try {
         const roleResult = await autoDetectRole(query.trim());
         clearTimeout(timeoutId);
-        agentRole = roleResult.role_id as AgentRoleId;
+        // Log detected role for UI feedback (microagents handle actual behavior)
         if (process.env.NODE_ENV === "development") {
           // eslint-disable-next-line no-console
           console.log(
-            `[Atoms Plus] Auto-detected role: ${roleResult.role_name} (${roleResult.role_id})`,
+            `[Atoms Plus] Detected role: ${roleResult.role_name} (${roleResult.role_id}) - handled by microagents`,
           );
         }
       } catch (error) {
         clearTimeout(timeoutId);
-        // Fall back to default role if detection fails or times out
+        // Role detection is optional - microagents still work without it
         if (process.env.NODE_ENV === "development") {
           const reason =
             error instanceof Error && error.name === "AbortError"
               ? "timeout"
               : "error";
           // eslint-disable-next-line no-console
-          console.log(
-            `[Atoms Plus] Role detection ${reason}, using default engineer role`,
-          );
+          console.log(`[Atoms Plus] Role detection ${reason} (non-blocking)`);
         }
       }
 
+      // Note: agentRole parameter removed - microagents handle role injection
       const result = await createConversation.mutateAsync({
         query: query.trim(),
-        agentRole,
       });
       const conversationId = result.conversation_id;
       navigate(`/conversations/${conversationId}`);
