@@ -13,7 +13,6 @@ import { useScrollToBottom } from "#/hooks/use-scroll-to-bottom";
 import { TypingIndicator } from "./typing-indicator";
 import { useWsClient } from "#/context/ws-client-provider";
 import { Messages as V0Messages } from "./messages";
-import { ChatSuggestions } from "./chat-suggestions";
 import { ScrollProvider } from "#/context/scroll-context";
 import { useInitialQueryStore } from "#/stores/initial-query-store";
 import { useSendMessage } from "#/hooks/use-send-message";
@@ -64,7 +63,6 @@ export function ChatInterface() {
     v1UiEvents,
     v1FullEvents,
     totalEvents,
-    hasSubstantiveAgentActions,
     v0UserEventsExist,
     v1UserEventsExist,
     userEventsExist,
@@ -259,17 +257,6 @@ export function ChatInterface() {
     <ScrollProvider value={scrollProviderValue}>
       {/* Atoms Plus: Transparent chat interface - parent card handles background */}
       <div className="h-full flex flex-col relative bg-transparent min-h-0">
-        {/* Atoms Plus: Show suggestions immediately for new conversations (no loading needed) */}
-        {!hasSubstantiveAgentActions &&
-          !optimisticUserMessage &&
-          !userEventsExist &&
-          !isReturningToConversation && (
-            <ChatSuggestions
-              onSuggestionsClick={(message) => setMessageToSend(message)}
-            />
-          )}
-        {/* Note: We only hide chat suggestions when there's a user message */}
-
         {/* Atoms Plus: Message area - flex-grow to fill space */}
         <div
           ref={scrollRef}
@@ -295,8 +282,6 @@ export function ChatInterface() {
                 taskStatus={taskStatus}
               />
             )}
-
-          {/* Note: Removed spinner for new conversations - ChatSuggestions shows immediately */}
 
           {(!isLoadingMessages || v0Events.length > 0) && v0UserEventsExist && (
             <V0Messages
