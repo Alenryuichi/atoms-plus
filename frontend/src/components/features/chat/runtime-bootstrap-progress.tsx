@@ -139,38 +139,47 @@ export function RuntimeBootstrapProgress({
 
   return (
     <div className="flex flex-col items-center justify-center py-12 px-6 space-y-8">
-      {/* 用户消息预览 */}
+      {/* 用户消息预览 - Amber Glassmorphism */}
       {userMessage && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-md bg-indigo-600/20 border border-indigo-500/30 rounded-2xl px-6 py-4"
+          className="max-w-md bg-[#d4a855]/10 backdrop-blur-sm border border-[#d4a855]/30 rounded-2xl px-6 py-4 shadow-[0_0_20px_rgba(212,168,85,0.1)]"
         >
-          <p className="text-sm text-indigo-300 mb-1">
+          <p className="text-sm text-[#d4a855]/80 mb-1">
             {t(I18nKey.RUNTIME$YOUR_REQUEST)}
           </p>
           <p className="text-white font-medium line-clamp-2">{userMessage}</p>
         </motion.div>
       )}
 
-      {/* 进度环 */}
+      {/* 进度环 - Amber Gradient with Glow */}
       <div className="relative w-32 h-32">
-        <svg className="w-full h-full transform -rotate-90">
+        {/* Glow effect */}
+        <div
+          className="absolute inset-0 rounded-full blur-xl opacity-30"
+          style={{
+            background: `conic-gradient(from 0deg, transparent ${100 - simulatedProgress}%, #d4a855 ${100 - simulatedProgress}%)`,
+          }}
+        />
+        <svg className="w-full h-full transform -rotate-90 relative z-10">
+          {/* Background track */}
           <circle
             cx="64"
             cy="64"
             r="56"
             stroke="currentColor"
-            strokeWidth="8"
+            strokeWidth="6"
             fill="none"
-            className="text-neutral-700"
+            className="text-neutral-800"
           />
+          {/* Progress arc */}
           <motion.circle
             cx="64"
             cy="64"
             r="56"
-            stroke="url(#gradient)"
-            strokeWidth="8"
+            stroke="url(#amber-gradient)"
+            strokeWidth="6"
             fill="none"
             strokeLinecap="round"
             strokeDasharray={352}
@@ -179,16 +188,26 @@ export function RuntimeBootstrapProgress({
               strokeDashoffset: 352 - (352 * simulatedProgress) / 100,
             }}
             transition={{ duration: 0.3, ease: "easeOut" }}
+            style={{
+              filter: "drop-shadow(0 0 6px rgba(212, 168, 85, 0.5))",
+            }}
           />
           <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#818cf8" />
-              <stop offset="100%" stopColor="#c084fc" />
+            <linearGradient
+              id="amber-gradient"
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
+            >
+              <stop offset="0%" stopColor="#b8860b" />
+              <stop offset="50%" stopColor="#d4a855" />
+              <stop offset="100%" stopColor="#f0c674" />
             </linearGradient>
           </defs>
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl font-bold text-white">
+        <div className="absolute inset-0 flex items-center justify-center z-20">
+          <span className="text-2xl font-semibold text-[#d4a855]">
             {simulatedProgress}%
           </span>
         </div>
@@ -204,22 +223,22 @@ export function RuntimeBootstrapProgress({
           className="text-center"
         >
           <p className="text-lg font-medium text-white">{statusText}</p>
-          <p className="text-sm text-neutral-400 mt-1">
+          <p className="text-sm text-neutral-500 mt-1">
             {t(I18nKey.RUNTIME$PLEASE_WAIT)}
           </p>
         </motion.div>
       </AnimatePresence>
 
-      {/* Tips */}
+      {/* Tips - Subtle amber accent */}
       <AnimatePresence mode="wait">
         <motion.p
           key={tipIndex}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="text-sm text-neutral-500 text-center max-w-sm"
+          className="text-sm text-neutral-400 text-center max-w-sm"
         >
-          💡 {t(TIPS[tipIndex])}
+          <span className="text-[#d4a855]/70">💡</span> {t(TIPS[tipIndex])}
         </motion.p>
       </AnimatePresence>
     </div>
