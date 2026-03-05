@@ -1,35 +1,23 @@
 # Atoms Plus Role System
 """
-Role-based multi-agent system for Atoms Plus with AUTO-ROUTING.
+Role-based multi-agent system for Atoms Plus.
 
-The system automatically detects the best role based on user input.
-No manual switching required - just input your task and the AI adapts.
+Architecture (v2):
+- Role definitions are stored as OpenHands microagents in .openhands/microagents/role-*.md
+- Auto-Role API reads triggers from microagent frontmatter for UI display
+- Actual prompt injection is handled natively by OpenHands Memory system
+- Single source of truth: microagent files define both detection and behavior
 
 Usage:
-    from atoms_plus.roles import auto_route, RoleRegistry
+    # The role API is available at /api/v1/roles/
+    # - GET /api/v1/roles/list - List all available roles
+    # - POST /api/v1/roles/auto-detect - Detect best role for user input
 
-    # Automatic role detection (RECOMMENDED)
-    result = auto_route("帮我设计一个用户管理系统的架构")
-    print(f"Selected: {result.role.value} ({result.confidence:.0%})")
-    # Output: Selected: architect (85%)
-
-    # Get the system prompt for the detected role
-    prompt = RoleRegistry.get_system_prompt(result.role)
-
-    # Manual role access (if needed)
-    roles = RoleRegistry.list_roles()
-    engineer = RoleRegistry.get_role(AgentRole.ENGINEER)
+    # Microagents handle prompt injection automatically based on triggers
 """
 
-from atoms_plus.roles.base import AgentRole, RoleConfig
-from atoms_plus.roles.registry import RoleRegistry
-from atoms_plus.roles.router import RoleRouter, RouteResult, auto_route
+from atoms_plus.roles.api import router
 
 __all__ = [
-    'AgentRole',
-    'RoleConfig',
-    'RoleRegistry',
-    'RoleRouter',
-    'RouteResult',
-    'auto_route',
+    'router',
 ]
