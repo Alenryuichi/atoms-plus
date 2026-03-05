@@ -221,6 +221,34 @@ class DaytonaSandboxService(SandboxService):
 
         return exposed_urls
 
+    async def _install_openhands_in_sandbox(self, sandbox: 'Sandbox') -> None:
+        """Install openhands-ai package in the Daytona sandbox.
+
+        Since Daytona SDK 0.24.x doesn't support creating sandboxes from Docker images,
+        we need to install the openhands package manually via pip.
+        """
+        _logger.info('Installing openhands-ai package in Daytona sandbox...')
+
+        # Install openhands from PyPI
+        # Using --quiet to reduce output, --no-cache-dir to save space
+        install_cmd = (
+            'pip install --quiet --no-cache-dir openhands-ai && '
+            "echo 'openhands installation complete'"
+        )
+
+        try:
+            result = await asyncio.to_thread(
+                sandbox.process.exec,
+                install_cmd,
+                timeout=300,  # pip install can take a while
+            )
+            _logger.info(
+                f'pip install result: {result.result if hasattr(result, "result") else result}'
+            )
+        except Exception as e:
+            _logger.error(f'Failed to install openhands: {e}')
+            raise SandboxError(f'Failed to install openhands in Daytona sandbox: {e}')
+
     async def _start_agent_server(
         self,
         sandbox: 'Sandbox',
@@ -228,6 +256,10 @@ class DaytonaSandboxService(SandboxService):
         spec: SandboxSpecInfo | None,
     ) -> None:
         """Start the agent server inside the Daytona sandbox."""
+        # First, install openhands package since Daytona's default Python sandbox
+        # doesn't have it pre-installed
+        await self._install_openhands_in_sandbox(sandbox)
+
         # Build environment variables
         env_vars = {
             'SESSION_API_KEY': session_api_key,
