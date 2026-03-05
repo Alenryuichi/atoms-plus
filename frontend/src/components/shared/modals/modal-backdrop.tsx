@@ -20,12 +20,12 @@ export function ModalBackdrop({ children, onClose }: ModalBackdropProps) {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-60">
+    <div className="fixed inset-0 flex items-center justify-center z-[80]">
       <div
         onClick={handleClick}
-        className="fixed inset-0 bg-[var(--atoms-bg-primary)] opacity-85 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/80 backdrop-blur-md"
       />
-      <div className="relative">{children}</div>
+      <div className="relative z-[81]">{children}</div>
     </div>
   );
 }
