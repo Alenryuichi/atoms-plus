@@ -284,9 +284,9 @@ function NavActionsDesktop({
     );
   }
 
-  // Non-chat pages: Full text buttons
+  // Non-chat pages (homepage): Only show Pricing and Resources - absolutely centered in header
   return (
-    <nav className="hidden md:flex items-center gap-4">
+    <nav className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-4 z-[5]">
       {/* Pricing Link */}
       <NavLink
         to="/pricing"
@@ -297,52 +297,6 @@ function NavActionsDesktop({
 
       {/* Resources Dropdown */}
       <ResourcesDropdown t={t} />
-
-      {/* Divider */}
-      <div className="h-5 w-px bg-neutral-700/50" />
-
-      {/* New Project Button */}
-      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-        <NavLink
-          to="/"
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg",
-            "bg-[var(--atoms-accent-primary)] hover:bg-[var(--atoms-accent-hover)]",
-            "text-white font-medium text-sm",
-            "shadow-lg shadow-amber-500/20",
-            "transition-all duration-200",
-            !isEmailVerified && "opacity-50 pointer-events-none",
-          )}
-          onClick={(e) => !isEmailVerified && e.preventDefault()}
-        >
-          <Plus className="w-4 h-4" />
-          <span>{t(I18nKey.CONVERSATION$START_NEW)}</span>
-        </NavLink>
-      </motion.div>
-
-      {/* Conversations Button */}
-      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-        <button
-          type="button"
-          onClick={() =>
-            isEmailVerified && setConversationPanelIsOpen((prev) => !prev)
-          }
-          disabled={!isEmailVerified}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg",
-            "bg-neutral-800/80 hover:bg-neutral-700/80",
-            "text-neutral-300 hover:text-white",
-            "font-medium text-sm",
-            "border border-neutral-700/50 hover:border-neutral-600/50",
-            "transition-all duration-200",
-            conversationPanelIsOpen && "bg-neutral-700/80 text-white",
-            !isEmailVerified && "opacity-50 cursor-not-allowed",
-          )}
-        >
-          <MessageSquare className="w-4 h-4" />
-          <span>{t(I18nKey.SIDEBAR$CONVERSATIONS)}</span>
-        </button>
-      </motion.div>
     </nav>
   );
 }
