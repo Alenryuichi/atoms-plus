@@ -2,16 +2,25 @@
 """
 Tool definition for delegating tasks to specific roles.
 This allows Team Leader to dispatch subtasks to other role-based agents.
+
+Note: Roles are now defined as microagents in .openhands/microagents/role-*.md
 """
 
 from __future__ import annotations
 
 from litellm import ChatCompletionToolParam, ChatCompletionToolParamFunctionChunk
 
-from atoms_plus.roles import AgentRole
-
-# 获取所有可用角色
-AVAILABLE_ROLES = [role.value for role in AgentRole]
+# Available roles (matching microagent names in .openhands/microagents/role-*.md)
+AVAILABLE_ROLES = [
+    'team_leader',
+    'product_manager',
+    'architect',
+    'project_manager',
+    'engineer',
+    'data_analyst',
+    'researcher',
+    'seo_specialist',
+]
 
 _DELEGATE_DESCRIPTION = """Delegate a subtask to a specialized role agent.
 

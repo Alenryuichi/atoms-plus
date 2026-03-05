@@ -5,6 +5,8 @@ FastAPI routes for multi-agent orchestration with real LLM integration.
 Supports:
 - Alibaba Qwen (百炼): openai/qwen-plus, openai/qwen-max
 - DeepSeek: deepseek/deepseek-chat, deepseek/deepseek-coder
+
+Note: Roles are now defined as microagents in .openhands/microagents/role-*.md
 """
 
 from __future__ import annotations
@@ -18,7 +20,7 @@ from pydantic import BaseModel, Field
 from atoms_plus.orchestrator.dispatcher import TaskDispatcher
 from atoms_plus.orchestrator.multi_agent import MultiAgentController
 from atoms_plus.orchestrator.result_aggregator import ResultAggregator
-from atoms_plus.roles import AgentRole
+from atoms_plus.orchestrator.tools import AVAILABLE_ROLES
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +58,7 @@ async def orchestrator_info() -> dict[str, Any]:
         "name": "Atoms Plus Orchestrator",
         "version": "2.0.0",
         "description": "Multi-role coordination with real LLM integration",
-        "available_roles": [role.value for role in AgentRole],
+        "available_roles": AVAILABLE_ROLES,
         "supported_models": MultiAgentController.SUPPORTED_MODELS,
         "default_model": MultiAgentController.DEFAULT_MODEL,
         "endpoints": {
@@ -87,9 +89,9 @@ async def suggest_role(request: SuggestRoleRequest) -> dict[str, Any]:
     suggested = _dispatcher.suggest_role(request.task)
     return {
         "task": request.task,
-        "suggested_role": suggested.value,
+        "suggested_role": suggested,  # Now returns string directly
         "role_info": {
-            "id": suggested.value,
+            "id": suggested,
             "capabilities": _dispatcher.ROLE_KEYWORDS.get(suggested, []),
         },
     }

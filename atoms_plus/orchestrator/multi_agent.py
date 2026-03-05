@@ -4,6 +4,8 @@ MultiAgentController: Manages parallel execution of multiple role-based agents.
 Enables Team Leader to run multiple subtasks concurrently.
 
 Uses LiteLLM to call real LLMs (Alibaba Qwen, DeepSeek, etc.)
+
+Note: Roles are now defined as microagents in .openhands/microagents/role-*.md
 """
 
 from __future__ import annotations
@@ -22,7 +24,6 @@ import litellm
 from litellm import acompletion, completion_cost
 
 from atoms_plus.orchestrator.dispatcher import Subtask
-from atoms_plus.roles import RoleRegistry
 
 # Configure litellm
 litellm.set_verbose = False
@@ -186,7 +187,7 @@ class MultiAgentController:
                 if isinstance(result, Exception):
                     error_result = AgentResult(
                         agent_id=f"{session_id}-{i}",
-                        role=subtasks[i].role.value,
+                        role=subtasks[i].role,  # Now a string
                         task=subtasks[i].task,
                         status=AgentStatus.FAILED,
                         error=str(result),
@@ -215,13 +216,16 @@ class MultiAgentController:
         - Alibaba Qwen (百炼): openai/qwen-plus, openai/qwen-max
         - DeepSeek: deepseek/deepseek-chat, deepseek/deepseek-coder
         """
-        agent_id = f"{session_id}-{subtask.role.value}"
+        agent_id = f"{session_id}-{subtask.role}"  # role is now a string
         started_at = datetime.now()
         start_time = time.time()
 
         try:
-            # Get role-specific system prompt
-            role_prompt = RoleRegistry.get_system_prompt(subtask.role)
+            # Role-specific prompts are now handled by microagents
+            # Use a generic prompt that delegates to the microagent system
+            role_prompt = f"""You are acting as a {subtask.role.replace('_', ' ').title()}.
+Complete the assigned task with expertise appropriate for this role.
+Be thorough, professional, and deliver high-quality work."""
 
             # Build user prompt
             user_prompt = f"""## Your Task
@@ -281,7 +285,7 @@ class MultiAgentController:
 
             return AgentResult(
                 agent_id=agent_id,
-                role=subtask.role.value,
+                role=subtask.role,  # Now a string
                 task=subtask.task,
                 status=AgentStatus.COMPLETED,
                 output=content,
@@ -300,7 +304,7 @@ class MultiAgentController:
             logger.error(f"[{agent_id}] LLM call failed: {e}")
             return AgentResult(
                 agent_id=agent_id,
-                role=subtask.role.value,
+                role=subtask.role,  # Now a string
                 task=subtask.task,
                 status=AgentStatus.FAILED,
                 error=str(e),

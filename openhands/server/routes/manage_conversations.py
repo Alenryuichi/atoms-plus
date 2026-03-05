@@ -261,18 +261,11 @@ async def new_conversation(
     conversation_instructions = data.conversation_instructions
     agent_role = data.agent_role
 
-    # Atoms Plus: Inject role-specific instructions if agent_role is specified
+    # Note: agent_role is now handled by microagents in .openhands/microagents/role-*.md
+    # The microagent system automatically injects role context based on triggers
+    # No manual injection needed here - just log for debugging
     if agent_role:
-        try:
-            from atoms_plus.roles import RoleRegistry
-            role_prompt = RoleRegistry.get_system_prompt(agent_role)
-            if conversation_instructions:
-                conversation_instructions = f"{role_prompt}\n\n{conversation_instructions}"
-            else:
-                conversation_instructions = role_prompt
-            logger.info(f'Applied role system prompt for: {agent_role}')
-        except Exception as e:
-            logger.warning(f'Failed to load role {agent_role}: {e}')
+        logger.info(f'Agent role specified: {agent_role} (handled by microagents)')
 
     conversation_trigger = ConversationTrigger.GUI
 

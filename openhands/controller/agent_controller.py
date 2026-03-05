@@ -529,22 +529,11 @@ class AgentController:
             if 'task' in action.inputs:
                 task_content = 'TASK: ' + action.inputs['task']
 
-                # Atoms Plus: Inject role-specific context if role is specified
+                # Note: Role context is now handled by microagents
+                # See .openhands/microagents/role-*.md for role definitions
                 role = action.inputs.get('role')
                 if role:
-                    try:
-                        from atoms_plus.roles.integration import (
-                            get_role_system_prompt_injection,
-                        )
-
-                        role_prompt = get_role_system_prompt_injection(role)
-                        if role_prompt:
-                            task_content = role_prompt + '\n\n' + task_content
-                            logger.info(f'Injected role context for delegate: {role}')
-                    except ImportError:
-                        pass  # atoms_plus not available
-                    except Exception as e:
-                        logger.warning(f'Failed to inject role context for {role}: {e}')
+                    logger.info(f'Delegate role specified: {role} (handled by microagents)')
 
                 # Add context and expected_output if provided
                 context = action.inputs.get('context')
@@ -816,19 +805,11 @@ class AgentController:
         agent_cls: type[Agent] = Agent.get_cls(action.agent)
         agent_config = self.agent_configs.get(action.agent, self.agent.config)
 
-        # Atoms Plus: Use role-specific config if role is specified in inputs
+        # Note: Role-specific config is now handled by microagents
+        # See .openhands/microagents/role-*.md for role definitions
         role = action.inputs.get('role') if action.inputs else None
         if role:
-            try:
-                from atoms_plus.roles.integration import RoleAgentAdapter
-
-                adapter = RoleAgentAdapter(role)
-                agent_config = adapter.create_agent_config(agent_config)
-                logger.info(f'Using role-specific config for delegate: {role}')
-            except ImportError:
-                pass  # atoms_plus not available
-            except Exception as e:
-                logger.warning(f'Failed to load role config for {role}: {e}')
+            logger.info(f'Delegate role: {role} (context handled by microagents)')
 
         # Make sure metrics are shared between parent and child for global accumulation
         delegate_agent = agent_cls(

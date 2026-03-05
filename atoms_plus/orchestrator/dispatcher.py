@@ -2,6 +2,8 @@
 """
 TaskDispatcher: Analyzes tasks and dispatches subtasks to appropriate roles.
 Used by Team Leader to coordinate multi-role work.
+
+Note: Roles are now defined as microagents in .openhands/microagents/role-*.md
 """
 
 from __future__ import annotations
@@ -10,7 +12,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from atoms_plus.roles import AgentRole, RoleRegistry
+from atoms_plus.orchestrator.tools import AVAILABLE_ROLES
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +21,7 @@ logger = logging.getLogger(__name__)
 class Subtask:
     """A subtask to be delegated to a specific role."""
 
-    role: AgentRole
+    role: str  # Role ID (e.g., 'architect', 'engineer')
     task: str
     context: str = ""
     expected_output: str = ""
@@ -28,7 +30,7 @@ class Subtask:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "role": self.role.value,
+            "role": self.role,
             "task": self.task,
             "context": self.context,
             "expected_output": self.expected_output,
@@ -56,7 +58,7 @@ class DispatchPlan:
 class TaskDispatcher:
     """
     Analyzes tasks and creates dispatch plans for multi-role execution.
-    
+
     This is used by Team Leader to:
     1. Analyze a complex task
     2. Break it down into subtasks
@@ -65,41 +67,41 @@ class TaskDispatcher:
     """
 
     # Role-to-task mapping for automatic assignment
-    ROLE_KEYWORDS = {
-        AgentRole.PRODUCT_MANAGER: [
+    ROLE_KEYWORDS: dict[str, list[str]] = {
+        'product_manager': [
             "requirements", "user story", "feature", "specification", "acceptance criteria",
             "PRD", "product", "stakeholder", "roadmap"
         ],
-        AgentRole.ARCHITECT: [
+        'architect': [
             "architecture", "design", "system", "pattern", "database", "schema",
             "API", "infrastructure", "scalability", "microservice"
         ],
-        AgentRole.PROJECT_MANAGER: [
+        'project_manager': [
             "timeline", "schedule", "milestone", "risk", "resource", "planning",
             "sprint", "deadline", "coordination"
         ],
-        AgentRole.ENGINEER: [
+        'engineer': [
             "implement", "code", "function", "class", "test", "bug", "fix",
             "develop", "build", "feature", "refactor"
         ],
-        AgentRole.DATA_ANALYST: [
+        'data_analyst': [
             "data", "analysis", "visualization", "chart", "metrics", "SQL",
             "query", "dashboard", "statistics", "report"
         ],
-        AgentRole.DEEP_RESEARCHER: [
+        'researcher': [
             "research", "investigate", "explore", "compare", "evaluate",
             "benchmark", "study", "survey", "documentation"
         ],
-        AgentRole.SEO_SPECIALIST: [
+        'seo_specialist': [
             "SEO", "keyword", "content", "optimization", "search", "ranking",
             "meta", "traffic", "visibility"
         ],
     }
 
-    def suggest_role(self, task: str) -> AgentRole:
+    def suggest_role(self, task: str) -> str:
         """Suggest the best role for a given task based on keywords."""
         task_lower = task.lower()
-        scores: dict[AgentRole, int] = {}
+        scores: dict[str, int] = {}
 
         for role, keywords in self.ROLE_KEYWORDS.items():
             score = sum(1 for kw in keywords if kw.lower() in task_lower)
@@ -110,19 +112,20 @@ class TaskDispatcher:
             return max(scores, key=scores.get)  # type: ignore
 
         # Default to engineer for implementation tasks
-        return AgentRole.ENGINEER
+        return 'engineer'
 
     def create_subtask(
         self,
-        role: AgentRole | str,
+        role: str,
         task: str,
         context: str = "",
         expected_output: str = "",
         priority: int = 1,
     ) -> Subtask:
         """Create a subtask for delegation."""
-        if isinstance(role, str):
-            role = AgentRole(role)
+        if role not in AVAILABLE_ROLES:
+            logger.warning(f"Unknown role '{role}', defaulting to 'engineer'")
+            role = 'engineer'
 
         return Subtask(
             role=role,
@@ -132,11 +135,7 @@ class TaskDispatcher:
             priority=priority,
         )
 
-    def get_role_prompt(self, role: AgentRole | str) -> str:
-        """Get the system prompt for a role."""
-        return RoleRegistry.get_system_prompt(role)
-
-    def get_available_roles(self) -> list[dict[str, Any]]:
-        """Get list of available roles with their info."""
-        return RoleRegistry.list_roles()
+    def get_available_roles(self) -> list[str]:
+        """Get list of available roles."""
+        return AVAILABLE_ROLES
 
