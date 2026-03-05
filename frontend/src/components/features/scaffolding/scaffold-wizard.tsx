@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { ModalBackdrop } from "#/components/shared/modals/modal-backdrop";
 import { ModalBody } from "#/components/shared/modals/modal-body";
 import { cn } from "#/utils/utils";
@@ -10,6 +10,7 @@ import { ScaffoldingConfig, ProjectType } from "./types";
 interface ScaffoldWizardProps {
   isOpen: boolean;
   onClose: () => void;
+  initialProjectType?: ProjectType;
 }
 
 export type WizardStep = "project-type" | "configuration" | "generation";
@@ -20,9 +21,14 @@ const getStepIndex = (step: WizardStep): number => {
   return 2;
 };
 
-export function ScaffoldWizard({ isOpen, onClose }: ScaffoldWizardProps) {
-  const [currentStep, setCurrentStep] = useState<WizardStep>("project-type");
-  const [config, setConfig] = useState<Partial<ScaffoldingConfig>>({});
+export function ScaffoldWizard({ isOpen, onClose, initialProjectType }: ScaffoldWizardProps) {
+  // If initialProjectType is provided, skip to configuration step
+  const [currentStep, setCurrentStep] = useState<WizardStep>(
+    initialProjectType ? "configuration" : "project-type"
+  );
+  const [config, setConfig] = useState<Partial<ScaffoldingConfig>>(
+    initialProjectType ? { projectType: initialProjectType } : {}
+  );
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationResult, setGenerationResult] = useState<{
     success: boolean;
@@ -30,6 +36,20 @@ export function ScaffoldWizard({ isOpen, onClose }: ScaffoldWizardProps) {
     nextSteps?: string[];
     errors?: string[];
   } | null>(null);
+
+  // Reset state when initialProjectType changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      if (initialProjectType) {
+        setCurrentStep("configuration");
+        setConfig({ projectType: initialProjectType });
+      } else {
+        setCurrentStep("project-type");
+        setConfig({});
+      }
+      setGenerationResult(null);
+    }
+  }, [isOpen, initialProjectType]);
 
   const generateProject = useCallback(
     async (projectConfig: ScaffoldingConfig) => {
