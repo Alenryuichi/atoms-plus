@@ -180,12 +180,15 @@ class DaytonaSandboxService(SandboxService):
             # Start the agent server in the sandbox
             await self._start_agent_server(sandbox, session_api_key, spec)
 
+            # Use the actual spec ID from the loaded spec, not a hardcoded default
+            actual_spec_id = sandbox_spec_id or (spec.id if spec else 'default')
+
             # Store sandbox info
             _daytona_sandboxes[sandbox_id] = {
                 'daytona_id': sandbox.id,
                 'daytona_sandbox': sandbox,
                 'user_id': self.user_id,
-                'sandbox_spec_id': sandbox_spec_id or 'default',
+                'sandbox_spec_id': actual_spec_id,
                 'session_api_key': session_api_key,
                 'created_at': utc_now(),
                 'exposed_urls': exposed_urls,
@@ -195,7 +198,7 @@ class DaytonaSandboxService(SandboxService):
             return SandboxInfo(
                 id=sandbox_id,
                 created_by_user_id=self.user_id,
-                sandbox_spec_id=sandbox_spec_id or 'default',
+                sandbox_spec_id=actual_spec_id,
                 status=SandboxStatus.RUNNING,
                 session_api_key=session_api_key,
                 exposed_urls=exposed_urls,
