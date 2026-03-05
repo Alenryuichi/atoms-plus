@@ -104,8 +104,8 @@ class MultiAgentController:
 
         # Define subtasks
         subtasks = [
-            Subtask(role=AgentRole.ARCHITECT, task="Design API schema"),
-            Subtask(role=AgentRole.ENGINEER, task="Implement endpoints"),
+            Subtask(role="architect", task="Design API schema"),
+            Subtask(role="engineer", task="Implement endpoints"),
         ]
 
         # Run in parallel
