@@ -69,7 +69,47 @@ async def _generate_single_interpretation(
             max_tokens=1024,
         )
         content = response.choices[0].message.content
+
+        # Handle empty or None response from LLM
+        if not content or not content.strip():
+            logger.warning(
+                f'Empty LLM response for interpretation {index + 1}'
+            )
+            return {
+                'interpretation': f'Default interpretation {index + 1}',
+                'technical_choices': ['standard approach'],
+                'key_features': ['basic implementation'],
+                'assumptions': ['using defaults'],
+            }
+
+        # Try to extract JSON from response (LLM might wrap it in markdown)
+        content = content.strip()
+        if content.startswith('```'):
+            # Extract JSON from markdown code block
+            lines = content.split('\n')
+            json_lines = []
+            in_block = False
+            for line in lines:
+                if line.startswith('```') and not in_block:
+                    in_block = True
+                    continue
+                if line.startswith('```') and in_block:
+                    break
+                if in_block:
+                    json_lines.append(line)
+            content = '\n'.join(json_lines)
+
         return json.loads(content)
+    except json.JSONDecodeError as e:
+        logger.warning(
+            f'Failed to parse JSON for interpretation {index + 1}: {e}'
+        )
+        return {
+            'interpretation': f'Interpretation {index + 1} (parse failed)',
+            'technical_choices': ['standard approach'],
+            'key_features': ['basic implementation'],
+            'assumptions': ['using defaults'],
+        }
     except Exception as e:
         logger.warning(f'Failed to generate interpretation {index + 1}: {e}')
         return {
