@@ -3,20 +3,30 @@ import { useTeamModeStore } from "#/stores/team-mode-store";
 import { useTracking } from "#/hooks/use-tracking";
 import TeamModeService from "#/api/team-mode-service/team-mode-service.api";
 import {
-  TeamWSMessage,
   AgentThought,
   TeamSessionStatus,
 } from "#/api/team-mode-service/team-mode-service.types";
 import { useClarificationStore } from "./clarification";
 import type { ClarifyingQuestion, UserAnswer } from "./clarification";
 
+// Singleton connection manager to prevent multiple WebSocket connections
+const connectionManager = {
+  ws: null as WebSocket | null,
+  sessionId: null as string | null,
+  reconnectAttempts: 0,
+  parseErrorCount: 0,
+  connecting: false,
+};
+
 /**
- * Custom hook for managing Team Mode WebSocket connection
+ * Custom hook for managing Team Mode WebSocket connection.
+ * Uses a singleton connection manager to prevent multiple connections
+ * when hook is used in multiple components.
  */
 export function useTeamModeWebSocket() {
-  const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 3;
-  const wsRef = useRef<WebSocket | null>(null);
+  const maxParseErrors = 10;
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   const { trackClarificationTriggered } = useTracking();
 
@@ -31,60 +41,167 @@ export function useTeamModeWebSocket() {
     setCurrentAgent,
   } = useTeamModeStore();
 
+  // Store sessionId in ref to avoid re-creating handleMessage on sessionId change
+  const sessionIdRef = useRef(sessionId);
+  sessionIdRef.current = sessionId;
+
   const { startClarification, reset: resetClarification } =
     useClarificationStore();
 
   const handleMessage = useCallback(
-    (event: MessageEvent) => {
-      try {
-        const message: TeamWSMessage = JSON.parse(event.data);
+    (wsEvent: MessageEvent) => {
+      // Guard: stop processing if too many errors
+      if (connectionManager.parseErrorCount >= maxParseErrors) {
+        return;
+      }
 
-        switch (message.type) {
+      try {
+        // Backend sends messages with 'event' field, frontend types use 'type'
+        // Handle both formats for compatibility
+        const rawMessage = JSON.parse(wsEvent.data);
+
+        // Reset error count on successful JSON parse
+        connectionManager.parseErrorCount = 0;
+
+        // Normalize: backend uses 'event', frontend expects 'type'
+        const messageType = rawMessage.type ?? rawMessage.event;
+
+        if (!messageType) {
+          console.warn("Team Mode WS message missing type/event:", rawMessage);
+          return;
+        }
+
+        switch (messageType) {
+          case "started": {
+            // Backend sends 'started' when graph begins execution
+            setIsRunning(true);
+            break;
+          }
+
+          case "awaiting_input": {
+            // Session is waiting for user input (reconnected to interrupted session)
+            // Keep running state but don't restart - just wait for interrupt data
+            setIsRunning(true);
+            break;
+          }
+
           case "thought": {
-            addThought(message.data as AgentThought);
+            // Backend sends thought directly in message, not nested under 'data'
+            const thought: AgentThought = rawMessage.data ?? {
+              role: rawMessage.agent,
+              content: rawMessage.content,
+              status: rawMessage.status,
+              timestamp: rawMessage.timestamp,
+            };
+            addThought(thought);
+
+            // Update current agent from thought
+            if (thought.role) {
+              setCurrentAgent(thought.role);
+            }
             break;
           }
 
           case "status": {
-            setStatus(message.data as TeamSessionStatus);
-            const statusData = message.data as TeamSessionStatus;
-            if (statusData.current_agent) {
+            const statusData = rawMessage.data as TeamSessionStatus;
+            setStatus(statusData);
+            if (statusData?.current_agent) {
               setCurrentAgent(statusData.current_agent);
             }
             break;
           }
 
+          case "completed":
           case "complete": {
-            const completeData = message.data as {
-              plan: string;
-              code: string;
-              review: string;
-            };
-            setWorkProducts(
-              completeData.plan,
-              completeData.code,
-              completeData.review,
-            );
+            // Backend sends 'completed', handle both for safety
+            const completeData = rawMessage.data as
+              | {
+                  plan: string;
+                  code: string;
+                  review: string;
+                }
+              | undefined;
+            if (completeData) {
+              setWorkProducts(
+                completeData.plan,
+                completeData.code,
+                completeData.review,
+              );
+            }
             setIsRunning(false);
             break;
           }
 
           case "error": {
-            const errorData = message.data as { error: string };
-            setError(errorData.error);
+            const errorMsg =
+              rawMessage.message ?? rawMessage.data?.error ?? "Unknown error";
+            setError(errorMsg);
             setIsRunning(false);
             break;
           }
 
-          // HITL Clarification events
+          // HITL Interrupt events (from LangGraph interrupt())
+          case "interrupt": {
+            // Safely extract interrupt data - may be nested in data or at top level
+            const interruptData = rawMessage.data ?? rawMessage;
+            const interruptType =
+              interruptData?.type ?? rawMessage.type ?? "unknown";
+
+            // Handle clarification interrupts
+            if (
+              interruptType === "clarification:questions" ||
+              interruptData?.questions ||
+              rawMessage.questions
+            ) {
+              // Questions can be at top level, in data, or nested
+              const questions = (interruptData?.questions ??
+                rawMessage.questions) as ClarifyingQuestion[] | undefined;
+              const canSkip =
+                interruptData?.can_skip ?? rawMessage.can_skip ?? true;
+              const clarifySessionId =
+                interruptData?.session_id ??
+                rawMessage.session_id ??
+                sessionIdRef.current ??
+                "";
+
+              // Only proceed if we have valid questions
+              if (
+                questions &&
+                Array.isArray(questions) &&
+                questions.length > 0
+              ) {
+                const highestPriority =
+                  questions.find((q) => q?.priority === "critical")?.priority ||
+                  questions.find((q) => q?.priority === "important")
+                    ?.priority ||
+                  "nice-to-have";
+
+                trackClarificationTriggered({
+                  questionCount: questions.length,
+                  priority: highestPriority,
+                  sessionId: clarifySessionId,
+                });
+
+                startClarification(clarifySessionId, questions, canSkip);
+              } else {
+                // eslint-disable-next-line no-console
+                console.warn(
+                  "Interrupt received but no valid questions:",
+                  rawMessage,
+                );
+              }
+            }
+            break;
+          }
+
+          // Legacy clarification events (direct, not via interrupt)
           case "clarification:questions": {
-            const clarifyData = message.data as {
+            const clarifyData = rawMessage.data as {
               session_id: string;
               questions: ClarifyingQuestion[];
               can_skip: boolean;
             };
 
-            // Track clarification triggered
             const highestPriority =
               clarifyData.questions.find((q) => q.priority === "critical")
                 ?.priority ||
@@ -107,20 +224,41 @@ export function useTeamModeWebSocket() {
           }
 
           case "clarification:complete": {
-            // Server acknowledged answers, resume graph
             resetClarification();
+            break;
+          }
+
+          case "clarification:received":
+          case "clarification:skipped": {
+            // Server acknowledged the clarification response
+            // Reset the clarification UI
+            resetClarification();
+            break;
+          }
+
+          case "pong": {
+            // Heartbeat response - ignore
             break;
           }
 
           default:
             // eslint-disable-next-line no-console
-            console.warn("Unknown Team Mode WS message type:", message.type);
+            console.warn("Unknown Team Mode WS message type:", messageType);
         }
       } catch (err) {
-        console.error("Failed to parse Team Mode WS message:", err);
+        connectionManager.parseErrorCount += 1;
+        console.error(
+          `Failed to parse Team Mode WS message (${connectionManager.parseErrorCount}/${maxParseErrors}):`,
+          err,
+        );
+        if (connectionManager.parseErrorCount >= maxParseErrors) {
+          setError("Too many WebSocket message parse errors");
+          setIsRunning(false);
+        }
       }
     },
     [
+      // Note: sessionId removed - using sessionIdRef to avoid re-creating callback
       addThought,
       setStatus,
       setWorkProducts,
@@ -138,7 +276,7 @@ export function useTeamModeWebSocket() {
    */
   const sendClarificationAnswer = useCallback(
     (answers: UserAnswer[], skipped: boolean) => {
-      const ws = wsRef.current;
+      const { ws } = connectionManager;
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(
           JSON.stringify({
@@ -151,52 +289,94 @@ export function useTeamModeWebSocket() {
     [],
   );
 
-  const connect = useCallback((): (() => void) | undefined => {
-    if (!sessionId) return undefined;
+  const connect = useCallback(
+    (targetSessionId: string): (() => void) | undefined => {
+      if (!targetSessionId) return undefined;
 
-    const url = TeamModeService.getStreamUrl(sessionId);
-    const ws = new WebSocket(url);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      reconnectAttempts.current = 0;
-      setIsRunning(true);
-      setError(null);
-    };
-
-    ws.onmessage = handleMessage;
-
-    ws.onerror = () => {
-      setError("WebSocket connection error");
-    };
-
-    ws.onclose = (event) => {
-      wsRef.current = null;
-      if (!event.wasClean && reconnectAttempts.current < maxReconnectAttempts) {
-        reconnectAttempts.current += 1;
-        setTimeout(connect, 1000 * reconnectAttempts.current);
-      } else {
-        setIsRunning(false);
+      // Skip if already connected or connecting to this session (singleton check)
+      if (
+        connectionManager.sessionId === targetSessionId &&
+        (connectionManager.ws?.readyState === WebSocket.OPEN ||
+          connectionManager.ws?.readyState === WebSocket.CONNECTING ||
+          connectionManager.connecting)
+      ) {
+        return undefined;
       }
-    };
 
-    setWs(ws);
-
-    return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
+      // Close existing connection if connecting to a different session
+      if (connectionManager.ws) {
+        connectionManager.ws.close();
+        connectionManager.ws = null;
       }
-      wsRef.current = null;
-    };
-  }, [sessionId, handleMessage, setWs, setIsRunning, setError]);
+
+      connectionManager.connecting = true;
+      connectionManager.sessionId = targetSessionId;
+
+      const url = TeamModeService.getStreamUrl(targetSessionId);
+      const ws = new WebSocket(url);
+      connectionManager.ws = ws;
+
+      ws.onopen = () => {
+        connectionManager.reconnectAttempts = 0;
+        connectionManager.connecting = false;
+        setIsRunning(true);
+        setError(null);
+      };
+
+      ws.onmessage = handleMessage;
+
+      ws.onerror = () => {
+        connectionManager.connecting = false;
+        setError("WebSocket connection error");
+      };
+
+      ws.onclose = (event) => {
+        connectionManager.ws = null;
+        connectionManager.connecting = false;
+        const currentSessionId = connectionManager.sessionId;
+        if (
+          !event.wasClean &&
+          connectionManager.reconnectAttempts < maxReconnectAttempts &&
+          currentSessionId === targetSessionId
+        ) {
+          connectionManager.reconnectAttempts += 1;
+          setTimeout(
+            () => connect(targetSessionId),
+            1000 * connectionManager.reconnectAttempts,
+          );
+        } else {
+          connectionManager.sessionId = null;
+          setIsRunning(false);
+        }
+      };
+
+      setWs(ws);
+
+      const cleanup = () => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close();
+        }
+        if (connectionManager.ws === ws) {
+          connectionManager.ws = null;
+          connectionManager.sessionId = null;
+          connectionManager.connecting = false;
+        }
+      };
+
+      cleanupRef.current = cleanup;
+      return cleanup;
+    },
+    [handleMessage, setWs, setIsRunning, setError],
+  );
 
   // Auto-connect when sessionId changes
   useEffect(() => {
-    if (sessionId) {
-      const cleanup = connect();
+    if (sessionId && sessionId !== connectionManager.sessionId) {
+      const cleanup = connect(sessionId);
       return cleanup;
     }
     return undefined;
+    // Note: connect is stable due to useCallback, so this won't cause loops
   }, [sessionId, connect]);
 
   return { connect, sendClarificationAnswer };

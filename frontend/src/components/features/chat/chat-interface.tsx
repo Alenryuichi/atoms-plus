@@ -39,7 +39,10 @@ import { getStatusColor, getStatusText } from "#/utils/utils";
 import { AutoRoleIndicator } from "#/components/features/auto-role";
 import { RuntimeBootstrapProgress } from "./runtime-bootstrap-progress";
 import type { RuntimeStatus } from "#/types/runtime-status";
-import { TeamModeToggle } from "#/components/features/team-mode";
+import {
+  TeamModeToggle,
+  useTeamModeWebSocket,
+} from "#/components/features/team-mode";
 import { useTeamModeStore } from "#/stores/team-mode-store";
 import { useCreateTeamSession } from "#/hooks/mutation/use-create-team-session";
 
@@ -95,6 +98,10 @@ export function ChatInterface() {
   } = useTeamModeStore();
   const createTeamSession = useCreateTeamSession();
 
+  // Initialize Team Mode WebSocket connection when session exists
+  // This hook auto-connects when sessionId changes in the store
+  useTeamModeWebSocket();
+
   // Show Team Mode errors as toast
   React.useEffect(() => {
     if (teamModeError) {
@@ -137,9 +144,68 @@ export function ChatInterface() {
     "positive" | "negative"
   >("positive");
   const [feedbackModalIsOpen, setFeedbackModalIsOpen] = React.useState(false);
-  const { selectedRepository, replayJson } = useInitialQueryStore();
+  const { selectedRepository, replayJson, initialPrompt, clearInitialPrompt } =
+    useInitialQueryStore();
   const params = useParams();
   const { mutateAsync: uploadFiles } = useUnifiedUploadFiles();
+
+  // Team Mode: Handle initial query from home page
+  // When user submits a query from AtomsHome with Team Mode enabled,
+  // the query is stored in initialQueryStore instead of being sent via conversation creation.
+  // This effect triggers the Team Mode API once the conversation is ready.
+  //
+  // IMPORTANT: For V1 conversations, the URL initially contains a "task-{uuid}" format
+  // which is a start task ID, NOT the conversation ID. We must wait for the task to
+  // complete and the URL to be updated to the actual conversation ID before calling
+  // the Team Mode API, otherwise we get "Conversation not found" errors.
+  const hasTriggeredInitialQuery = React.useRef(false);
+  React.useEffect(() => {
+    // Skip if no initial prompt or no conversation ID yet
+    if (!initialPrompt || !params.conversationId || !isTeamModeEnabled) {
+      return;
+    }
+
+    // CRITICAL: Skip if this is a task ID (format: "task-{uuid}")
+    // The task polling hook (useTaskPolling) will navigate to the real conversation ID
+    // once the task is READY. Wait for that navigation before triggering Team Mode.
+    if (isTask) {
+      return;
+    }
+
+    // Skip if already triggered (prevent double execution)
+    if (hasTriggeredInitialQuery.current) {
+      return;
+    }
+    hasTriggeredInitialQuery.current = true;
+
+    // At this point, params.conversationId is the real conversation ID (not task-{uuid})
+    // For V0, it might be a hex string or UUID; for V1 after navigation, it's the app_conversation_id
+    const { conversationId } = params;
+
+    // Trigger Team Mode with the stored query
+    posthog.capture("team_mode_session_started", {
+      query_character_length: initialPrompt.length,
+      conversation_id: conversationId,
+      source: "initial_prompt",
+    });
+
+    createTeamSession.mutate({
+      task: initialPrompt,
+      conversationId,
+    });
+
+    setOptimisticUserMessage(initialPrompt);
+    clearInitialPrompt();
+  }, [
+    initialPrompt,
+    params.conversationId,
+    isTeamModeEnabled,
+    isTask, // Add isTask to dependencies
+    createTeamSession,
+    setOptimisticUserMessage,
+    clearInitialPrompt,
+    posthog,
+  ]);
 
   const optimisticUserMessage = getOptimisticUserMessage();
 
@@ -171,15 +237,20 @@ export function ChatInterface() {
 
     // Team Mode: When enabled, create a Team Mode session with conversation binding
     // This enables the Handoff mechanism to execute code via CodeActAgent
-    if (isTeamModeEnabled && params.conversationId) {
+    // Note: isTask check not needed here since handleSendMessage is only called from
+    // an active conversation (user typing in chat), not during initial task creation.
+    if (isTeamModeEnabled && params.conversationId && !isTask) {
+      // At this point, params.conversationId is the real conversation ID
+      const { conversationId } = params;
+
       posthog.capture("team_mode_session_started", {
         query_character_length: content.length,
-        conversation_id: params.conversationId,
+        conversation_id: conversationId,
       });
 
       createTeamSession.mutate({
         task: content,
-        conversationId: params.conversationId,
+        conversationId,
       });
 
       setOptimisticUserMessage(content);

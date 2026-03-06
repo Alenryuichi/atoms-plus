@@ -20,6 +20,8 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
 
+from langgraph.types import Command
+
 from atoms_plus.team_mode.graph import (
     compile_team_graph,
     get_async_sqlite_checkpointer,
@@ -298,12 +300,67 @@ async def recover_session(request: RecoverSessionRequest) -> SessionStatusRespon
     )
 
 
+async def _handle_clarification_response(
+    websocket: WebSocket, session: dict, session_id: str
+) -> None:
+    """
+    Handle user clarification response when session is in awaiting_input state.
+
+    This is called when a client reconnects to a session that's waiting for input.
+    """
+    while True:
+        user_message = await websocket.receive_json()
+        msg_type = user_message.get('type') or user_message.get('event')
+
+        if msg_type == 'clarification:answer':
+            answers = user_message.get('data', {}).get(
+                'answers', user_message.get('answers', [])
+            )
+            logger.info(f'[WS] Received clarification answers: {len(answers)}')
+
+            # Update session state with answers and mark as ready to resume
+            session['clarification_answers'] = answers
+            session['status'] = 'ready_to_resume'
+            session.pop('pending_interrupt', None)
+
+            await websocket.send_json(
+                {
+                    'event': 'clarification:received',
+                    'session_id': session_id,
+                    'answers_count': len(answers),
+                }
+            )
+            # Note: Graph will need to be resumed by the original connection
+            # or a new stream call. This prevents infinite restarts.
+            return
+        elif msg_type == 'clarification:skip':
+            logger.info('[WS] User skipped clarification')
+            session['clarification_answers'] = []
+            session['clarification_skipped'] = True
+            session['status'] = 'ready_to_resume'
+            session.pop('pending_interrupt', None)
+
+            await websocket.send_json(
+                {
+                    'event': 'clarification:skipped',
+                    'session_id': session_id,
+                }
+            )
+            return
+        elif msg_type == 'ping':
+            await websocket.send_json({'event': 'pong'})
+        else:
+            logger.warning(f'[WS] Unknown message type during HITL wait: {msg_type}')
+
+
 @router.websocket('/sessions/{session_id}/stream')
 async def stream_session(websocket: WebSocket, session_id: str) -> None:
     """
     WebSocket endpoint for real-time session streaming.
 
     Streams agent thoughts and state updates as they happen.
+    Handles reconnections gracefully - if session is awaiting_input,
+    don't restart the graph, just wait for user response.
     """
     await websocket.accept()
     logger.info(f'[WS] Client connected to session {session_id}')
@@ -315,6 +372,34 @@ async def stream_session(websocket: WebSocket, session_id: str) -> None:
 
     session = sessions[session_id]
     state = session['state']
+    current_status = session.get('status', 'pending')
+
+    # If session is already awaiting user input, don't restart the graph
+    # Just wait for the user's clarification response
+    if current_status == 'awaiting_input':
+        logger.info(f'[WS] Session {session_id} is awaiting_input, waiting for user response')
+        await websocket.send_json({
+            'event': 'awaiting_input',
+            'session_id': session_id,
+            'message': 'Session is waiting for your clarification response',
+        })
+
+        # Get pending interrupt data from session if available
+        pending_interrupt = session.get('pending_interrupt')
+        if pending_interrupt:
+            await websocket.send_json({
+                'event': 'interrupt',
+                'type': pending_interrupt.get('type', 'clarification:questions'),
+                **pending_interrupt,
+            })
+
+        # Wait for user clarification
+        try:
+            await _handle_clarification_response(websocket, session, session_id)
+        except Exception as e:
+            logger.error(f'[WS] Error handling clarification: {e}')
+            await websocket.send_json({'event': 'error', 'message': str(e)})
+        return
 
     try:
         # Compile graph with async checkpointer
@@ -329,8 +414,129 @@ async def stream_session(websocket: WebSocket, session_id: str) -> None:
         config = {'configurable': {'thread_id': session_id}}
 
         async for chunk in graph.astream(state, config):
+            # Handle interrupt chunks (HITL)
+            # When interrupt() is called, chunk contains '__interrupt__' key
+            if '__interrupt__' in chunk:
+                interrupts = chunk['__interrupt__']
+                for intr in interrupts:
+                    # Extract interrupt payload (the value passed to interrupt())
+                    payload = intr.value if hasattr(intr, 'value') else intr
+                    logger.info(f'[WS] Interrupt received: {type(payload)}')
+
+                    # Send interrupt event to frontend
+                    if isinstance(payload, dict):
+                        # Forward the interrupt payload as-is (e.g., clarification questions)
+                        await websocket.send_json(
+                            {
+                                'event': 'interrupt',
+                                'type': payload.get('type', 'unknown'),
+                                **payload,
+                            }
+                        )
+                    else:
+                        await websocket.send_json(
+                            {
+                                'event': 'interrupt',
+                                'type': 'generic',
+                                'value': str(payload),
+                            }
+                        )
+
+                # Update session status to waiting for user input
+                session['status'] = 'awaiting_input'
+                # Store the interrupt payload so reconnections can resend it
+                if isinstance(payload, dict):
+                    session['pending_interrupt'] = payload
+                else:
+                    session['pending_interrupt'] = {'type': 'generic', 'value': str(payload)}
+
+                # HITL: Wait for user response via WebSocket
+                # Keep connection open and wait for clarification:answer or clarification:skip
+                logger.info('[WS] Waiting for user clarification response...')
+                resume_value: Any = None
+                try:
+                    while True:
+                        user_message = await websocket.receive_json()
+                        msg_type = user_message.get('type') or user_message.get('event')
+
+                        if msg_type == 'clarification:answer':
+                            answers = user_message.get('answers', [])
+                            logger.info(
+                                f'[WS] Received clarification answers: {len(answers)}'
+                            )
+                            resume_value = {'answers': answers, 'skipped': False}
+                            session['status'] = 'running'
+                            break
+                        elif msg_type == 'clarification:skip':
+                            logger.info('[WS] User skipped clarification')
+                            resume_value = {'answers': [], 'skipped': True}
+                            session['status'] = 'running'
+                            break
+                        elif msg_type == 'ping':
+                            await websocket.send_json({'event': 'pong'})
+                        else:
+                            logger.warning(
+                                f'[WS] Unknown message type during HITL: {msg_type}'
+                            )
+
+                except Exception as hitl_error:
+                    logger.error(f'[WS] HITL error: {hitl_error}')
+                    session['status'] = 'error'
+                    await websocket.send_json(
+                        {
+                            'event': 'error',
+                            'message': f'Clarification error: {hitl_error}',
+                        }
+                    )
+                    return
+
+                # Resume graph execution with Command(resume=...)
+                # This continues the graph from where it was interrupted
+                logger.info(f'[WS] Resuming graph with: {resume_value}')
+                session.pop('pending_interrupt', None)
+                await websocket.send_json({
+                    'event': 'clarification:resumed',
+                    'session_id': session_id,
+                })
+
+                # Continue streaming with resumed execution
+                async for resume_chunk in graph.astream(
+                    Command(resume=resume_value), config
+                ):
+                    # Process resumed chunks the same way
+                    if '__interrupt__' in resume_chunk:
+                        # Another interrupt - recursively handle
+                        logger.warning('[WS] Nested interrupt during resume - not supported yet')
+                        continue
+                    for node_name, node_state in resume_chunk.items():
+                        if not isinstance(node_state, dict):
+                            continue
+                        thought = node_state.get('thought') or node_state.get('thoughts')
+                        if thought:
+                            await websocket.send_json({
+                                'event': 'thought',
+                                'node': node_name,
+                                'thought': thought,
+                            })
+                        if node_state.get('error'):
+                            await websocket.send_json({
+                                'event': 'error',
+                                'node': node_name,
+                                'error': node_state['error'],
+                            })
+
+                # After resume completes, we're done with this chunk
+                continue
+
             # Extract node name and state update
             for node_name, node_state in chunk.items():
+                # Skip non-dict values (safety check)
+                if not isinstance(node_state, dict):
+                    logger.warning(
+                        f'[WS] Unexpected node_state type: {type(node_state)}'
+                    )
+                    continue
+
                 # Send thought updates
                 thoughts = node_state.get('thoughts', [])
                 if thoughts:

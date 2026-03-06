@@ -240,9 +240,10 @@ async def get_async_sqlite_checkpointer():
     Get async SQLite checkpointer for persistence.
 
     Uses aiosqlite for async database operations.
+    Falls back to MemorySaver if SQLite fails.
 
     Returns:
-        AsyncSqliteSaver instance or None if not available
+        Checkpointer instance (AsyncSqliteSaver, SqliteSaver, or MemorySaver)
     """
     global _async_checkpointer
 
@@ -262,9 +263,20 @@ async def get_async_sqlite_checkpointer():
     except ImportError as e:
         logger.warning(f'[Graph] Async checkpointer not available: {e}')
         # Fallback to sync checkpointer
-        return get_sqlite_checkpointer()
+        sync_cp = get_sqlite_checkpointer()
+        if sync_cp:
+            return sync_cp
     except Exception as e:
         logger.error(f'[Graph] Failed to initialize async checkpointer: {e}')
+
+    # Ultimate fallback: MemorySaver (always works, but no persistence)
+    try:
+        from langgraph.checkpoint.memory import MemorySaver
+
+        logger.warning('[Graph] Using MemorySaver fallback (no persistence)')
+        return MemorySaver()
+    except ImportError:
+        logger.error('[Graph] MemorySaver not available - HITL will not work!')
         return None
 
 

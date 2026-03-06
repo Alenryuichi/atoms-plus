@@ -46,7 +46,7 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 #### 环境变量
 
 ```
-LLM_API_KEY=sk-1d30db2d6c864ad5b12065aaf30a0efc
+LLM_API_KEY=<your-api-key>
 LLM_BASE_URL=https://coding.dashscope.aliyuncs.com/v1
 LLM_MODEL=openai/MiniMax-M2.5
 LLM_MAX_OUTPUT_TOKENS=4096

@@ -12,6 +12,8 @@ import { CountUp } from "#/components/ui/count-up";
 import { DarkVeil } from "#/components/ui/dark-veil";
 import { ScaffoldBentoGrid } from "#/components/features/scaffolding";
 import { I18nKey } from "#/i18n/declaration";
+import { useTeamModeStore } from "#/stores/team-mode-store";
+import { useInitialQueryStore } from "#/stores/initial-query-store";
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
@@ -121,6 +123,11 @@ export default function AtomsHome() {
   const [isTyping, setIsTyping] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const createConversation = useCreateConversation();
+  // Team Mode: Access store to check if enabled
+  const isTeamModeEnabled = useTeamModeStore((state) => state.isEnabled);
+  const setInitialPrompt = useInitialQueryStore(
+    (state) => state.setInitialPrompt,
+  );
 
   // Refs for GSAP animations
   const containerRef = useRef<HTMLDivElement>(null);
@@ -288,11 +295,24 @@ export default function AtomsHome() {
 
     setIsCreating(true);
     try {
-      const result = await createConversation.mutateAsync({
-        query: query.trim(),
-      });
-      const conversationId = result.conversation_id;
-      navigate(`/conversations/${conversationId}`);
+      // Team Mode: When enabled, create conversation WITHOUT the initial query
+      // Store the query in initialQueryStore so chat-interface can handle it
+      // This ensures the first message goes through Team Mode API
+      if (isTeamModeEnabled) {
+        setInitialPrompt(query.trim());
+        const result = await createConversation.mutateAsync({
+          // Don't pass query - let chat-interface handle it via Team Mode
+        });
+        const conversationId = result.conversation_id;
+        navigate(`/conversations/${conversationId}`);
+      } else {
+        // Normal flow: create conversation WITH initial query
+        const result = await createConversation.mutateAsync({
+          query: query.trim(),
+        });
+        const conversationId = result.conversation_id;
+        navigate(`/conversations/${conversationId}`);
+      }
     } catch {
       setIsCreating(false);
     }
