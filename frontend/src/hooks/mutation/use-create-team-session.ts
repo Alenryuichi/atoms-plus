@@ -25,7 +25,10 @@ export interface CreateTeamSessionParams {
  */
 export function useCreateTeamSession() {
   const queryClient = useQueryClient();
-  const { setSessionId, setError, clearThoughts } = useTeamModeStore();
+  // Use individual selectors to prevent re-renders when unrelated state changes
+  const setSessionId = useTeamModeStore((state) => state.setSessionId);
+  const setError = useTeamModeStore((state) => state.setError);
+  const clearThoughts = useTeamModeStore((state) => state.clearThoughts);
 
   return useMutation({
     mutationFn: (params: CreateTeamSessionParams) => {

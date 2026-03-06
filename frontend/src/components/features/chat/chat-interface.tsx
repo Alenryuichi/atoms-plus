@@ -91,11 +91,10 @@ export function ChatInterface() {
   const { handleBuildPlanClick } = useHandleBuildPlanClick();
 
   // Team Mode integration
-  const {
-    isEnabled: isTeamModeEnabled,
-    error: teamModeError,
-    setError: setTeamModeError,
-  } = useTeamModeStore();
+  // Use individual selectors to prevent re-renders when unrelated state changes
+  const isTeamModeEnabled = useTeamModeStore((state) => state.isEnabled);
+  const teamModeError = useTeamModeStore((state) => state.error);
+  const setTeamModeError = useTeamModeStore((state) => state.setError);
   const createTeamSession = useCreateTeamSession();
 
   // Initialize Team Mode WebSocket connection when session exists

@@ -30,23 +30,27 @@ export function useTeamModeWebSocket() {
 
   const { trackClarificationTriggered } = useTracking();
 
-  const {
-    sessionId,
-    setWs,
-    setIsRunning,
-    setError,
-    addThought,
-    setStatus,
-    setWorkProducts,
-    setCurrentAgent,
-  } = useTeamModeStore();
+  // Use individual selectors to prevent re-renders when unrelated state changes
+  // This is critical to avoid infinite loops - destructuring causes re-renders
+  // on ANY store change, even if the values we use haven't changed
+  const sessionId = useTeamModeStore((state) => state.sessionId);
+  const setWs = useTeamModeStore((state) => state.setWs);
+  const setIsRunning = useTeamModeStore((state) => state.setIsRunning);
+  const setError = useTeamModeStore((state) => state.setError);
+  const addThought = useTeamModeStore((state) => state.addThought);
+  const setStatus = useTeamModeStore((state) => state.setStatus);
+  const setWorkProducts = useTeamModeStore((state) => state.setWorkProducts);
+  const setCurrentAgent = useTeamModeStore((state) => state.setCurrentAgent);
 
   // Store sessionId in ref to avoid re-creating handleMessage on sessionId change
   const sessionIdRef = useRef(sessionId);
   sessionIdRef.current = sessionId;
 
-  const { startClarification, reset: resetClarification } =
-    useClarificationStore();
+  // Use individual selectors for clarification store too
+  const startClarification = useClarificationStore(
+    (state) => state.startClarification,
+  );
+  const resetClarification = useClarificationStore((state) => state.reset);
 
   const handleMessage = useCallback(
     (wsEvent: MessageEvent) => {
