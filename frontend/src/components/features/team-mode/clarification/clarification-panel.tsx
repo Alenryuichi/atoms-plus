@@ -176,11 +176,7 @@ export function ClarificationPanel({ onSubmit }: ClarificationPanelProps) {
             {t(I18nKey.CLARIFICATION$SKIP_ALL)}
           </Button>
         )}
-        <Button
-          size="sm"
-          onClick={handleSubmit}
-          disabled={answeredCount === 0}
-        >
+        <Button size="sm" onClick={handleSubmit} disabled={answeredCount === 0}>
           {t(I18nKey.CLARIFICATION$SUBMIT_ANSWERS)}
         </Button>
       </div>

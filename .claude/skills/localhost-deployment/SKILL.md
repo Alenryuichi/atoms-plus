@@ -159,6 +159,40 @@ curl -s https://coding.dashscope.aliyuncs.com/v1/chat/completions \
 | 3000 | App Server | FastAPI 后端 |
 | 8000+ | Agent Server | 每个沙盒一个端口 |
 
+## 架构验证
+
+### 检查 V1 进程状态
+
+```bash
+# 检查 Agent Server 进程
+ps aux | grep "openhands.agent_server" | grep -v grep
+
+# 检查动态端口
+lsof -i :8000-8100 | grep python
+
+# 检查沙盒目录
+ls -la /tmp/openhands-sandboxes/
+
+# 检查对话状态
+curl -s http://localhost:3000/api/v1/app-conversations/search?limit=3 | jq '.items[] | {id, sandbox_status}'
+```
+
+### 确认 V1 架构正在使用
+
+如果看到以下特征，说明 V1 正在工作：
+
+| 特征 | 检查方法 | 预期结果 |
+|------|----------|----------|
+| 独立进程 | `ps aux \| grep agent_server` | 多个 `openhands.agent_server` 进程 |
+| 动态端口 | `lsof -i :8000-8100` | 端口 800x 被 Python 占用 |
+| 沙盒目录 | `ls /tmp/openhands-sandboxes/` | 存在 `{sandbox_id}/` 子目录 |
+
+### 架构最佳实践
+
+- **1 会话 = 1 Sandbox**: 保持状态一致性
+- **Team Mode 复用 Sandbox**: 避免创建独立沙盒导致文件同步问题
+- **端口范围**: Agent Server 从 8000 开始动态分配 (base_port + offset)
+
 ## 相关文件
 
 - `atoms_plus/atoms_server.py` - 扩展服务器入口

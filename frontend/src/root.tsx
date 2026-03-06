@@ -23,9 +23,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body className="h-full bg-base">
-        <TooltipProvider delayDuration={300}>
-          {children}
-        </TooltipProvider>
+        <TooltipProvider delayDuration={300}>{children}</TooltipProvider>
         <ScrollRestoration />
         <Scripts />
         <Toaster />

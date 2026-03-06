@@ -18388,5 +18388,20 @@
     "en": "Enable multi-agent collaboration",
     "zh-CN": "启用多代理协作",
     "ja": "マルチエージェント連携を有効化"
+  },
+  "TEAM_MODE$ERROR_TOOLTIP": {
+    "en": "Team Mode encountered an error",
+    "zh-CN": "团队模式遇到错误",
+    "ja": "チームモードでエラーが発生しました"
+  },
+  "TEAM_MODE$COMPLETED_TOOLTIP": {
+    "en": "Team Mode task completed successfully",
+    "zh-CN": "团队模式任务已完成",
+    "ja": "チームモードタスクが完了しました"
+  },
+  "TEAM_MODE$PROGRESS": {
+    "en": "Progress",
+    "zh-CN": "进度",
+    "ja": "進捗"
   }
 }

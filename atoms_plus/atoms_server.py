@@ -26,9 +26,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# 导入 OpenHands 基础应用 (用于注册路由)
-from atoms_plus.orchestrator.api import router as orchestrator_router
-
 # 导入 Atoms Plus 扩展路由
 from atoms_plus.race_mode.api import router as race_router
 from atoms_plus.roles.api import router as roles_router
@@ -46,10 +43,6 @@ base_app.include_router(race_router, prefix='/api/v1')
 # Roles API - 角色系统
 # 路由前缀: /api/v1/roles/*
 base_app.include_router(roles_router)
-
-# Orchestrator API - 多角色协调
-# 路由前缀: /api/v1/orchestrator/*
-base_app.include_router(orchestrator_router)
 
 # Scaffolding API - 项目脚手架
 # 路由前缀: /api/v1/scaffolding/*
@@ -86,11 +79,6 @@ def atoms_plus_info():
                 'name': 'Agent Roles',
                 'path': '/api/v1/roles',
                 'description': '8种专业角色切换',
-            },
-            {
-                'name': 'Orchestrator',
-                'path': '/api/v1/orchestrator',
-                'description': '多角色并行协调',
             },
             {
                 'name': 'Scaffolding',
