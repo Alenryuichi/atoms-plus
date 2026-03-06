@@ -793,10 +793,10 @@ export function TopNavbar() {
         />
 
         {/* Right: User Actions - absolutely positioned */}
-        <div className="absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center gap-4">
-          {/* Conversations Icon Button (Homepage only) */}
+        <div className="absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center gap-3">
+          {/* Conversations Icon Button (Homepage only) - pure icon style */}
           {isHomePage && (
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <button
                 type="button"
                 onClick={() =>
@@ -805,16 +805,14 @@ export function TopNavbar() {
                 disabled={!isEmailVerified}
                 aria-label={t(I18nKey.SIDEBAR$CONVERSATIONS)}
                 className={cn(
-                  "p-2 rounded-lg",
-                  "bg-neutral-800/60 hover:bg-neutral-700/80",
-                  "text-neutral-300 hover:text-white",
-                  "border border-neutral-700/50 hover:border-neutral-600/50",
+                  "p-2 rounded-md",
+                  "text-neutral-300 hover:text-white hover:bg-white/10",
                   "transition-all duration-200",
-                  conversationPanelIsOpen && "bg-neutral-700/80 text-white",
+                  conversationPanelIsOpen && "text-white bg-white/10",
                   !isEmailVerified && "opacity-50 cursor-not-allowed",
                 )}
               >
-                <MessageSquare className="w-5 h-5" />
+                <MessageSquare className="h-4 w-4" strokeWidth={1.5} />
               </button>
             </motion.div>
           )}
