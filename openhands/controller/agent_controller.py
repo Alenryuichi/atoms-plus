@@ -533,7 +533,9 @@ class AgentController:
                 # See .openhands/microagents/role-*.md for role definitions
                 role = action.inputs.get('role')
                 if role:
-                    logger.info(f'Delegate role specified: {role} (handled by microagents)')
+                    logger.info(
+                        f'Delegate role specified: {role} (handled by microagents)'
+                    )
 
                 # Add context and expected_output if provided
                 context = action.inputs.get('context')

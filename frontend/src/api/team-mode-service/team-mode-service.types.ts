@@ -32,16 +32,24 @@ export interface TeamModeInfo {
   status: string;
 }
 
+export type ExecutionMode = "plan_only" | "execute";
+
 export interface TeamSessionCreateRequest {
   task: string;
   model?: string;
   max_iterations?: number;
+  /** OpenHands conversation ID to bind to (enables code execution) */
+  conversation_id?: string;
 }
 
 export interface TeamSessionCreateResponse {
   session_id: string;
   status: string;
   created_at: string;
+  /** Execution mode: 'execute' if bound to conversation, 'plan_only' otherwise */
+  execution_mode: ExecutionMode;
+  /** Warning message if conversation binding failed */
+  binding_warning?: string;
 }
 
 export interface TeamSessionStatus {

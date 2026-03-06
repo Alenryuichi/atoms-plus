@@ -3,7 +3,7 @@
 Router: Conditional edge logic for LangGraph StateGraph.
 
 Determines which agent should act next based on current state.
-Implements the revision loop and completion logic.
+Implements the revision loop, completion logic, and handoff decisions.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from typing import Literal
 
-from atoms_plus.team_mode.state import TeamState
+from atoms_plus.team_mode.state import ExecutionMode, TeamState
 
 logger = logging.getLogger(__name__)
 
@@ -131,3 +131,39 @@ def check_for_error(state: TeamState) -> Literal['error', 'continue']:
         logger.error(f'[Router] Error detected: {state["error"]}')
         return 'error'
     return 'continue'
+
+
+def should_handoff(state: TeamState) -> Literal['handoff', 'end']:
+    """
+    Determine if we should handoff to OpenHands CodeActAgent for execution.
+
+    Logic:
+    - If execution_mode is 'execute' AND conversation_id is set → handoff
+    - Otherwise → end (plan-only mode)
+
+    Args:
+        state: Current TeamState
+
+    Returns:
+        "handoff" to delegate to CodeActAgent, "end" to finish
+    """
+    execution_mode = state.get('execution_mode', ExecutionMode.PLAN_ONLY.value)
+    conversation_id = state.get('conversation_id')
+    sandbox_url = state.get('sandbox_url')
+    sandbox_api_key = state.get('sandbox_api_key')
+
+    # Check if execution is enabled and sandbox info is available
+    if execution_mode == ExecutionMode.EXECUTE.value:
+        if all([conversation_id, sandbox_url, sandbox_api_key]):
+            logger.info(
+                f'[Router] Execution enabled, handing off to OpenHands '
+                f'(conversation_id={conversation_id})'
+            )
+            return 'handoff'
+        else:
+            logger.warning(
+                '[Router] Execution enabled but sandbox info missing, skipping handoff'
+            )
+
+    logger.info('[Router] Plan-only mode, ending without handoff')
+    return 'end'

@@ -5,8 +5,9 @@ from atoms_plus.team_mode.router import (
     check_for_error,
     route_initial_task,
     should_continue_after_review,
+    should_handoff,
 )
-from atoms_plus.team_mode.state import create_initial_state
+from atoms_plus.team_mode.state import ExecutionMode, create_initial_state
 
 
 class TestShouldContinueAfterReview:
@@ -119,3 +120,71 @@ class TestCheckForError:
         """Should return 'continue' when no error."""
         state = create_initial_state('Test', 's1', 'u1')
         assert check_for_error(state) == 'continue'
+
+
+class TestShouldHandoff:
+    """Tests for handoff routing decisions."""
+
+    def test_returns_end_when_plan_only_mode(self):
+        """Should return 'end' when execution_mode is plan_only."""
+        state = create_initial_state('Test', 's1', 'u1')
+        state['execution_mode'] = ExecutionMode.PLAN_ONLY.value
+
+        result = should_handoff(state)
+        assert result == 'end'
+
+    def test_returns_end_when_no_execution_mode(self):
+        """Should return 'end' when execution_mode is not set."""
+        state = create_initial_state('Test', 's1', 'u1')
+        # execution_mode defaults to plan_only
+
+        result = should_handoff(state)
+        assert result == 'end'
+
+    def test_returns_handoff_when_execute_mode_with_sandbox(self):
+        """Should return 'handoff' when execute mode and sandbox info present."""
+        state = create_initial_state(
+            'Test',
+            's1',
+            'u1',
+            conversation_id='conv-123',
+            sandbox_url='http://localhost:8003',
+            sandbox_api_key='api-key',
+            execution_mode=ExecutionMode.EXECUTE.value,
+        )
+
+        result = should_handoff(state)
+        assert result == 'handoff'
+
+    def test_returns_end_when_execute_mode_but_missing_conversation_id(self):
+        """Should return 'end' when execute mode but no conversation_id."""
+        state = create_initial_state('Test', 's1', 'u1')
+        state['execution_mode'] = ExecutionMode.EXECUTE.value
+        state['sandbox_url'] = 'http://localhost:8003'
+        state['sandbox_api_key'] = 'api-key'
+        state['conversation_id'] = None
+
+        result = should_handoff(state)
+        assert result == 'end'
+
+    def test_returns_end_when_execute_mode_but_missing_sandbox_url(self):
+        """Should return 'end' when execute mode but no sandbox_url."""
+        state = create_initial_state('Test', 's1', 'u1')
+        state['execution_mode'] = ExecutionMode.EXECUTE.value
+        state['conversation_id'] = 'conv-123'
+        state['sandbox_api_key'] = 'api-key'
+        state['sandbox_url'] = None
+
+        result = should_handoff(state)
+        assert result == 'end'
+
+    def test_returns_end_when_execute_mode_but_missing_api_key(self):
+        """Should return 'end' when execute mode but no sandbox_api_key."""
+        state = create_initial_state('Test', 's1', 'u1')
+        state['execution_mode'] = ExecutionMode.EXECUTE.value
+        state['conversation_id'] = 'conv-123'
+        state['sandbox_url'] = 'http://localhost:8003'
+        state['sandbox_api_key'] = None
+
+        result = should_handoff(state)
+        assert result == 'end'

@@ -57,6 +57,13 @@ class AgentThought:
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
+class ExecutionMode(str, Enum):
+    """Execution mode for Team Mode."""
+
+    PLAN_ONLY = 'plan_only'  # Generate plan/code but don't execute
+    EXECUTE = 'execute'  # Execute via OpenHands CodeAct
+
+
 class TeamState(TypedDict):
     """
     Shared state for Team Mode LangGraph.
@@ -79,6 +86,11 @@ class TeamState(TypedDict):
         user_id: User who initiated the session
         model: LLM model being used
         error: Any error that occurred
+        conversation_id: OpenHands conversation ID (for sandbox reuse)
+        sandbox_url: Sandbox HTTP URL (e.g., http://localhost:8003)
+        sandbox_api_key: Session API key for sandbox access
+        execution_mode: Whether to execute code or just generate plan
+        handoff_message: Message sent to OpenHands for execution
     """
 
     # Core conversation (auto-merged)
@@ -116,6 +128,13 @@ class TeamState(TypedDict):
     clarification_skipped: bool  # True if user skipped all questions
     refined_requirements: str | None  # Output after clarification
 
+    # OpenHands Integration (CodeAct execution)
+    conversation_id: str | None  # OpenHands conversation ID
+    sandbox_url: str | None  # Sandbox HTTP URL
+    sandbox_api_key: str | None  # Session API key
+    execution_mode: str  # 'plan_only' or 'execute'
+    handoff_message: str | None  # Message sent to OpenHands for execution
+
 
 def create_initial_state(
     task: str,
@@ -123,8 +142,28 @@ def create_initial_state(
     user_id: str,
     model: str = 'qwen-plus',
     max_iterations: int = 3,
+    conversation_id: str | None = None,
+    sandbox_url: str | None = None,
+    sandbox_api_key: str | None = None,
+    execution_mode: str = ExecutionMode.PLAN_ONLY.value,
 ) -> TeamState:
-    """Create initial state for a new Team Mode session."""
+    """
+    Create initial state for a new Team Mode session.
+
+    Args:
+        task: The user's task description
+        session_id: Unique session identifier
+        user_id: User who initiated the session
+        model: LLM model to use
+        max_iterations: Maximum revision iterations
+        conversation_id: OpenHands conversation ID (enables execution mode)
+        sandbox_url: Sandbox HTTP URL (e.g., http://localhost:8003)
+        sandbox_api_key: Session API key for sandbox access
+        execution_mode: 'plan_only' or 'execute'
+
+    Returns:
+        Initial TeamState
+    """
     return TeamState(
         messages=[],
         task=task,
@@ -145,4 +184,10 @@ def create_initial_state(
         clarification_required=False,
         clarification_skipped=False,
         refined_requirements=None,
+        # OpenHands Integration
+        conversation_id=conversation_id,
+        sandbox_url=sandbox_url,
+        sandbox_api_key=sandbox_api_key,
+        execution_mode=execution_mode,
+        handoff_message=None,
     )

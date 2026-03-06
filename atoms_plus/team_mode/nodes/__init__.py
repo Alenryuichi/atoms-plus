@@ -24,6 +24,7 @@ Each node:
 
 from atoms_plus.team_mode.nodes.architect import architect_node
 from atoms_plus.team_mode.nodes.engineer import engineer_node
+from atoms_plus.team_mode.nodes.handoff import handoff_to_openhands
 from atoms_plus.team_mode.nodes.pm import pm_node
 
 
@@ -66,6 +67,7 @@ def __getattr__(name):
 __all__ = [
     'architect_node',
     'engineer_node',
+    'handoff_to_openhands',
     'pm_node',
     'pm_detect_ambiguity_node',
     'pm_await_clarification_node',

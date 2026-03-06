@@ -4,15 +4,39 @@ import { TeamSessionCreateRequest } from "#/api/team-mode-service/team-mode-serv
 import { useTeamModeStore } from "#/stores/team-mode-store";
 
 /**
+ * Parameters for creating a Team Mode session
+ */
+export interface CreateTeamSessionParams {
+  /** The task/message to process */
+  task: string;
+  /** Optional model override */
+  model?: string;
+  /** Maximum iterations for the planning loop */
+  maxIterations?: number;
+  /** OpenHands conversation ID - enables code execution via CodeActAgent handoff */
+  conversationId?: string;
+}
+
+/**
  * Hook to create a new Team Mode session
+ *
+ * When `conversationId` is provided, the session will be bound to the existing
+ * OpenHands conversation, enabling the Handoff mechanism to execute code.
  */
 export function useCreateTeamSession() {
   const queryClient = useQueryClient();
   const { setSessionId, setError, clearThoughts } = useTeamModeStore();
 
   return useMutation({
-    mutationFn: (request: TeamSessionCreateRequest) =>
-      TeamModeService.createSession(request),
+    mutationFn: (params: CreateTeamSessionParams) => {
+      const request: TeamSessionCreateRequest = {
+        task: params.task,
+        model: params.model,
+        max_iterations: params.maxIterations,
+        conversation_id: params.conversationId,
+      };
+      return TeamModeService.createSession(request);
+    },
     onMutate: () => {
       // Clear previous session data
       clearThoughts();
@@ -21,6 +45,11 @@ export function useCreateTeamSession() {
     onSuccess: (data) => {
       // Store session ID to trigger WebSocket connection
       setSessionId(data.session_id);
+
+      // Show warning if conversation binding failed but session was still created
+      if (data.binding_warning) {
+        setError(`Code execution disabled: ${data.binding_warning}`);
+      }
 
       // Invalidate session status queries
       queryClient.invalidateQueries({

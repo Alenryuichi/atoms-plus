@@ -10,7 +10,7 @@ The graph follows this flow:
    - If clear: PM → Architect
 2. PM → Architect → Engineer → Architect (review)
 3. If review needs revision → Engineer (loop)
-4. If review approved → Complete
+4. If review approved → handoff (if execution enabled) → Complete
 
 Graph Structure:
     [START] → pm_detect_ambiguity
@@ -23,7 +23,11 @@ Graph Structure:
                     ↓
                    pm → architect → engineer → architect_review
                                                       ↓
-                                      [complete] ← ─ ─ → [revise] → engineer
+                                      [revise] → engineer
+                                                      ↓
+                                      [complete] → (execute?) ─── yes ──→ handoff → END
+                                                      │
+                                                     no → END
 """
 
 from __future__ import annotations
@@ -38,13 +42,14 @@ from langgraph.graph import END, StateGraph
 from atoms_plus.team_mode.nodes import (
     architect_node,
     engineer_node,
+    handoff_to_openhands,
     pm_await_clarification_node,
     pm_detect_ambiguity_node,
     pm_node,
     pm_refine_requirements_node,
     should_clarify,
 )
-from atoms_plus.team_mode.router import should_continue_after_review
+from atoms_plus.team_mode.router import should_continue_after_review, should_handoff
 from atoms_plus.team_mode.state import TeamState
 
 logger = logging.getLogger(__name__)
@@ -90,6 +95,7 @@ def create_team_graph(enable_clarification: bool = True) -> StateGraph:
     graph.add_node('architect', architect_node)
     graph.add_node('engineer', engineer_node)
     graph.add_node('architect_review', architect_review_node)
+    graph.add_node('handoff', handoff_to_openhands)
 
     if enable_clarification:
         # Set entry point to ambiguity detection
@@ -117,15 +123,32 @@ def create_team_graph(enable_clarification: bool = True) -> StateGraph:
     graph.add_edge('architect', 'engineer')
     graph.add_edge('engineer', 'architect_review')
 
+    # Combined routing function for architect_review
+    def route_after_review(state: TeamState) -> str:
+        """Route after architect review: revise, handoff, or end."""
+        # First check if we need to revise
+        review_decision = should_continue_after_review(state)
+        if review_decision == 'revise':
+            return 'revise'
+
+        # Review is complete, check if we should handoff for execution
+        handoff_decision = should_handoff(state)
+        return handoff_decision  # 'handoff' or 'end'
+
     # Add conditional edge for review decision
+    # Routes to: revise (loop), handoff (execute), or end (plan-only)
     graph.add_conditional_edges(
         'architect_review',
-        should_continue_after_review,
+        route_after_review,
         {
             'revise': 'engineer',
-            'complete': END,
+            'handoff': 'handoff',
+            'end': END,
         },
     )
+
+    # After handoff, end the graph
+    graph.add_edge('handoff', END)
 
     node_list = (
         'pm_detect_ambiguity, pm_await_clarification, pm_refine_requirements, '
@@ -134,7 +157,7 @@ def create_team_graph(enable_clarification: bool = True) -> StateGraph:
     )
     logger.info(
         f'[Graph] Graph created with nodes: {node_list}'
-        'pm, architect, engineer, architect_review'
+        'pm, architect, engineer, architect_review, handoff'
     )
     return graph
 

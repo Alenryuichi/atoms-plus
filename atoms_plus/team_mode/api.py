@@ -6,14 +6,16 @@ Provides:
 - REST endpoints for session management
 - WebSocket endpoint for real-time streaming
 - Integration with existing atoms_server.py
+- OpenHands conversation integration for code execution
 """
 
 from __future__ import annotations
 
 import logging
-import uuid
+import uuid as uuid_module
 from datetime import datetime
 from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel, Field
@@ -24,11 +26,26 @@ from atoms_plus.team_mode.graph import (
     get_session_state,
     list_saved_sessions,
 )
-from atoms_plus.team_mode.state import create_initial_state
+from atoms_plus.team_mode.state import ExecutionMode, create_initial_state
+from openhands.app_server.app_conversation.app_conversation_service import (
+    AppConversationService,
+)
+from openhands.app_server.config import (
+    depends_app_conversation_service,
+    depends_sandbox_service,
+)
+from openhands.app_server.sandbox.sandbox_service import SandboxService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix='/api/v1/team', tags=['team-mode'])
+
+# Dependency injection for OpenHands services
+# Note: These are resolved at module load time, which is the standard pattern
+# in OpenHands (see app_conversation_router.py). This requires atoms_server.py
+# to import this module AFTER AppServerConfig is initialized.
+app_conversation_service_dependency = depends_app_conversation_service()
+sandbox_service_dependency = depends_sandbox_service()
 
 
 # Request/Response Models
@@ -38,6 +55,11 @@ class StartSessionRequest(BaseModel):
     task: str = Field(..., description='The task to accomplish')
     model: str = Field(default='qwen-plus', description='LLM model to use')
     max_iterations: int = Field(default=3, ge=1, le=10)
+    # OpenHands integration (optional)
+    conversation_id: str | None = Field(
+        default=None,
+        description='OpenHands conversation ID to bind to (enables code execution)',
+    )
 
 
 class SessionResponse(BaseModel):
@@ -46,6 +68,14 @@ class SessionResponse(BaseModel):
     session_id: str
     status: str
     created_at: str
+    execution_mode: str = Field(
+        default='plan_only',
+        description="'execute' if bound to conversation, 'plan_only' otherwise",
+    )
+    binding_warning: str | None = Field(
+        default=None,
+        description='Warning message if conversation binding failed',
+    )
 
 
 class SessionStatusResponse(BaseModel):
@@ -79,17 +109,74 @@ async def get_team_mode_info() -> dict[str, Any]:
 
 
 @router.post('/sessions', response_model=SessionResponse)
-async def create_session(request: StartSessionRequest) -> SessionResponse:
-    """Create a new Team Mode session."""
-    session_id = str(uuid.uuid4())
+async def create_session(
+    request: StartSessionRequest,
+    app_conversation_service: AppConversationService = app_conversation_service_dependency,
+    sandbox_service: SandboxService = sandbox_service_dependency,
+) -> SessionResponse:
+    """
+    Create a new Team Mode session.
 
-    # Create initial state
+    If conversation_id is provided, the session will be bound to the existing
+    OpenHands conversation and can execute code via CodeActAgent handoff.
+    """
+    session_id = str(uuid_module.uuid4())
+
+    # Initialize sandbox info (will be populated if conversation_id is provided)
+    conversation_id: str | None = None
+    sandbox_url: str | None = None
+    sandbox_api_key: str | None = None
+    execution_mode = ExecutionMode.PLAN_ONLY.value
+    binding_warning: str | None = None
+
+    # If conversation_id provided, lookup sandbox info
+    if request.conversation_id:
+        try:
+            conv_uuid = UUID(request.conversation_id)
+            conversation = await app_conversation_service.get_app_conversation(
+                conv_uuid
+            )
+
+            if conversation:
+                conversation_id = request.conversation_id
+                # Get sandbox info
+                sandbox = await sandbox_service.get_sandbox(conversation.sandbox_id)
+                if sandbox:
+                    sandbox_api_key = sandbox.session_api_key
+                    # Build sandbox URL from conversation_url or sandbox info
+                    if conversation.conversation_url:
+                        # Extract base URL from conversation_url
+                        # e.g., http://localhost:8003/api/conversations/xxx -> http://localhost:8003
+                        url_parts = conversation.conversation_url.rsplit('/api/', 1)
+                        sandbox_url = url_parts[0] if url_parts else None
+                    execution_mode = ExecutionMode.EXECUTE.value
+                    logger.info(
+                        f'[API] Bound to OpenHands conversation {conversation_id}, '
+                        f'sandbox_url={sandbox_url}'
+                    )
+                else:
+                    binding_warning = (
+                        f'Sandbox not found for conversation {conversation_id}'
+                    )
+                    logger.warning(f'[API] {binding_warning}')
+            else:
+                binding_warning = f'Conversation not found: {request.conversation_id}'
+                logger.warning(f'[API] {binding_warning}')
+        except ValueError as e:
+            binding_warning = f'Invalid conversation_id format: {e}'
+            logger.warning(f'[API] {binding_warning}')
+
+    # Create initial state with sandbox info
     state = create_initial_state(
         task=request.task,
         session_id=session_id,
         user_id='anonymous',  # TODO: Get from auth
         model=request.model,
         max_iterations=request.max_iterations,
+        conversation_id=conversation_id,
+        sandbox_url=sandbox_url,
+        sandbox_api_key=sandbox_api_key,
+        execution_mode=execution_mode,
     )
 
     sessions[session_id] = {
@@ -98,12 +185,14 @@ async def create_session(request: StartSessionRequest) -> SessionResponse:
         'created_at': datetime.utcnow().isoformat(),
     }
 
-    logger.info(f'[API] Created session {session_id}')
+    logger.info(f'[API] Created session {session_id}, execution_mode={execution_mode}')
 
     return SessionResponse(
         session_id=session_id,
         status='created',
         created_at=sessions[session_id]['created_at'],
+        execution_mode=execution_mode,
+        binding_warning=binding_warning,
     )
 
 

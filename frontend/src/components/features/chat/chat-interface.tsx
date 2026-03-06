@@ -40,6 +40,8 @@ import { AutoRoleIndicator } from "#/components/features/auto-role";
 import { RuntimeBootstrapProgress } from "./runtime-bootstrap-progress";
 import type { RuntimeStatus } from "#/types/runtime-status";
 import { TeamModeToggle } from "#/components/features/team-mode";
+import { useTeamModeStore } from "#/stores/team-mode-store";
+import { useCreateTeamSession } from "#/hooks/mutation/use-create-team-session";
 
 function getEntryPoint(
   hasRepository: boolean | null,
@@ -84,6 +86,22 @@ export function ChatInterface() {
 
   const { curAgentState } = useAgentState();
   const { handleBuildPlanClick } = useHandleBuildPlanClick();
+
+  // Team Mode integration
+  const {
+    isEnabled: isTeamModeEnabled,
+    error: teamModeError,
+    setError: setTeamModeError,
+  } = useTeamModeStore();
+  const createTeamSession = useCreateTeamSession();
+
+  // Show Team Mode errors as toast
+  React.useEffect(() => {
+    if (teamModeError) {
+      displayErrorToast(`Team Mode: ${teamModeError}`);
+      setTeamModeError(null); // Clear after showing
+    }
+  }, [teamModeError, setTeamModeError]);
 
   // Disable Build button while agent is running (streaming)
   const isAgentRunning =
@@ -150,6 +168,26 @@ export function ChatInterface() {
     // Create mutable copies of the arrays
     const images = [...originalImages];
     const files = [...originalFiles];
+
+    // Team Mode: When enabled, create a Team Mode session with conversation binding
+    // This enables the Handoff mechanism to execute code via CodeActAgent
+    if (isTeamModeEnabled && params.conversationId) {
+      posthog.capture("team_mode_session_started", {
+        query_character_length: content.length,
+        conversation_id: params.conversationId,
+      });
+
+      createTeamSession.mutate({
+        task: content,
+        conversationId: params.conversationId,
+      });
+
+      setOptimisticUserMessage(content);
+      setMessageToSend("");
+      return;
+    }
+
+    // Normal message flow (Team Mode disabled)
     if (totalEvents === 0) {
       posthog.capture("initial_query_submitted", {
         entry_point: getEntryPoint(
