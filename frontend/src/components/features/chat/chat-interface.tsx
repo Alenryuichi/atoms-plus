@@ -401,7 +401,11 @@ export function ChatInterface() {
             />
           )}
 
-          {showV1Messages && v1UserEventsExist && (
+          {/* Render V1Messages if:
+              1. showV1Messages is true AND
+              2. Either v1UserEventsExist OR we have an optimisticUserMessage
+                 (to display the initial prompt while waiting for first event) */}
+          {showV1Messages && (v1UserEventsExist || optimisticUserMessage) && (
             <V1Messages messages={v1UiEvents} allEvents={v1FullEvents} />
           )}
         </div>

@@ -200,29 +200,44 @@ export function useTeamModeWebSocket() {
 
           // Legacy clarification events (direct, not via interrupt)
           case "clarification:questions": {
-            const clarifyData = rawMessage.data as {
-              session_id: string;
-              questions: ClarifyingQuestion[];
-              can_skip: boolean;
-            };
+            const clarifyData = rawMessage.data as
+              | {
+                  session_id: string;
+                  questions: ClarifyingQuestion[];
+                  can_skip: boolean;
+                }
+              | undefined;
+
+            // Guard against missing or malformed data
+            if (
+              !clarifyData?.questions ||
+              !Array.isArray(clarifyData.questions)
+            ) {
+              // eslint-disable-next-line no-console
+              console.warn(
+                "clarification:questions missing questions array:",
+                rawMessage,
+              );
+              break;
+            }
 
             const highestPriority =
-              clarifyData.questions.find((q) => q.priority === "critical")
+              clarifyData.questions.find((q) => q?.priority === "critical")
                 ?.priority ||
-              clarifyData.questions.find((q) => q.priority === "important")
+              clarifyData.questions.find((q) => q?.priority === "important")
                 ?.priority ||
               "nice-to-have";
 
             trackClarificationTriggered({
               questionCount: clarifyData.questions.length,
               priority: highestPriority,
-              sessionId: clarifyData.session_id,
+              sessionId: clarifyData.session_id ?? "",
             });
 
             startClarification(
-              clarifyData.session_id,
+              clarifyData.session_id ?? "",
               clarifyData.questions,
-              clarifyData.can_skip,
+              clarifyData.can_skip ?? true,
             );
             break;
           }
