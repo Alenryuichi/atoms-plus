@@ -7,7 +7,7 @@ import { useConfig } from "#/hooks/query/use-config";
 
 interface UserActionsProps {
   onLogout: () => void;
-  user?: { avatar_url: string };
+  user?: { avatar_url: string; email?: string; name?: string };
   isLoading?: boolean;
 }
 
@@ -49,6 +49,8 @@ export function UserActions({ onLogout, user, isLoading }: UserActionsProps) {
     >
       <UserAvatar
         avatarUrl={user?.avatar_url}
+        userEmail={user?.email}
+        userName={user?.name}
         onClick={toggleAccountMenu}
         isLoading={isLoading}
       />

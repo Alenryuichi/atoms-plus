@@ -1,4 +1,4 @@
-import { ArrowUp } from "lucide-react";
+import { IconArrowUp } from "@tabler/icons-react";
 import { cn } from "#/utils/utils";
 
 export interface ChatSendButtonProps {
@@ -39,9 +39,9 @@ export function ChatSendButton({
       onClick={handleSubmit}
       disabled={disabled}
     >
-      <ArrowUp
-        className="w-5 h-5"
-        strokeWidth={2.5}
+      <IconArrowUp
+        size={20}
+        stroke={2.5}
         color={disabled ? "#6b7280" : "#1a1a1a"}
       />
     </button>

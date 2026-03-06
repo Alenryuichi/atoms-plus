@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 import { Typography } from "#/ui/typography";
 
 interface ToggleButtonProps {
@@ -27,7 +27,11 @@ export function ToggleButton({
         </Typography.Text>
       </div>
       <Typography.Text className="text-gray-300">
-        {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+        {isExpanded ? (
+          <IconChevronDown size={18} stroke={1.5} />
+        ) : (
+          <IconChevronRight size={18} stroke={1.5} />
+        )}
       </Typography.Text>
     </button>
   );

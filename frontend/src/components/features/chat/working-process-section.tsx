@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ChevronUp, Check, Circle, Loader2 } from "lucide-react";
+import {
+  IconChevronDown,
+  IconChevronUp,
+  IconCheck,
+  IconCircle,
+  IconLoader2,
+} from "@tabler/icons-react";
 import { Card, CardContent, CardHeader } from "#/components/ui/card";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Button } from "#/components/ui/button";
@@ -30,11 +36,23 @@ interface WorkingProcessSectionProps {
 
 // Atoms Plus: Dark theme status icons
 const statusIcons = {
-  todo: <Circle className="h-4 w-4 text-[var(--atoms-text-muted)]" />,
-  in_progress: (
-    <Loader2 className="h-4 w-4 text-[var(--atoms-accent-primary)] animate-spin" />
+  todo: (
+    <IconCircle
+      size={16}
+      stroke={1.5}
+      className="text-[var(--atoms-text-muted)]"
+    />
   ),
-  done: <Check className="h-4 w-4 text-[var(--atoms-success)]" />,
+  in_progress: (
+    <IconLoader2
+      size={16}
+      stroke={1.5}
+      className="text-[var(--atoms-accent-primary)] animate-spin"
+    />
+  ),
+  done: (
+    <IconCheck size={16} stroke={1.5} className="text-[var(--atoms-success)]" />
+  ),
 };
 
 export function WorkingProcessSection({
@@ -72,9 +90,17 @@ export function WorkingProcessSection({
               </span>
             </div>
             {isOpen ? (
-              <ChevronUp className="h-4 w-4 text-[var(--atoms-text-muted)] group-hover:text-[var(--atoms-text-primary)] transition-colors" />
+              <IconChevronUp
+                size={16}
+                stroke={1.5}
+                className="text-[var(--atoms-text-muted)] group-hover:text-[var(--atoms-text-primary)] transition-colors"
+              />
             ) : (
-              <ChevronDown className="h-4 w-4 text-[var(--atoms-text-muted)] group-hover:text-[var(--atoms-text-primary)] transition-colors" />
+              <IconChevronDown
+                size={16}
+                stroke={1.5}
+                className="text-[var(--atoms-text-muted)] group-hover:text-[var(--atoms-text-primary)] transition-colors"
+              />
             )}
           </CollapsibleTrigger>
           {/* Atoms Plus: Gradient progress bar */}

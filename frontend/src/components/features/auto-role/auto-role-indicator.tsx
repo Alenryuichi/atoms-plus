@@ -10,7 +10,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { User } from "lucide-react";
+import { IconUser } from "@tabler/icons-react";
 import { cn } from "#/lib/utils";
 import {
   Tooltip,
@@ -124,7 +124,7 @@ export function AutoRoleIndicator({
               {isDetecting ? (
                 <div className="w-4 h-4 rounded-full border-2 border-amber-500/50 border-t-amber-500 animate-spin" />
               ) : (
-                <User className="w-4 h-4 text-amber-500" strokeWidth={2} />
+                <IconUser size={16} stroke={2} className="text-amber-500" />
               )}
             </motion.div>
 

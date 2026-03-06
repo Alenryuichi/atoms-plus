@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Globe, Check } from "lucide-react";
+import { IconWorld, IconCheck } from "@tabler/icons-react";
 import { motion } from "framer-motion";
 import { AvailableLanguages } from "#/i18n";
 import { Button } from "#/components/ui/button";
@@ -44,7 +44,7 @@ export function LanguageSwitcher({
             )}
             aria-label="Change language"
           >
-            <Globe className="h-4 w-4" strokeWidth={1.5} />
+            <IconWorld size={16} stroke={1.5} />
             {variant === "full" && (
               <span className="ml-2 text-sm">
                 {currentLanguage?.label || "English"}
@@ -69,7 +69,7 @@ export function LanguageSwitcher({
           >
             <span>{lang.label}</span>
             {i18n.language === lang.value && (
-              <Check className="h-4 w-4 text-amber-400" />
+              <IconCheck size={16} stroke={1.5} className="text-amber-400" />
             )}
           </DropdownMenuItem>
         ))}
