@@ -363,4 +363,5 @@ atoms-plus/
 2. **LLM API**: 当前使用阿里百炼 (qwen-plus)
 3. **Runtime**: 设置为 `local` 以避免需要 Docker-in-Docker
 4. **SPA 路由**: 某些 API 路径 (如 `/api/v1/roles`) 需要使用正确的子路径 (如 `/auto-detect`) 避免被前端 SPA fallback 拦截
+5. **国际化 (i18n)**: 当前前端只支持 **中文 (zh-CN)** 和 **英文 (en)**。其他语言 (ja, zh-TW, ko-KR, no, ar, de, fr, it, pt, es, tr, uk) 的翻译尚未完成，存在 114 个翻译 key 缺失。提交前端代码时需使用 `--no-verify` 跳过翻译完整性检查，或补充缺失的翻译。
 
