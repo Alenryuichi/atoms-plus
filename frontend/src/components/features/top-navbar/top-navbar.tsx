@@ -3,13 +3,13 @@ import { useLocation, NavLink, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Menu,
-  X,
-  ChevronDown,
-  Plus,
-  MessageSquare,
-  RefreshCw,
-} from "lucide-react";
+  IconMenu2,
+  IconX,
+  IconChevronDown,
+  IconPlus,
+  IconMessageCircle,
+  IconRefresh,
+} from "@tabler/icons-react";
 import { useGitUser } from "#/hooks/query/use-git-user";
 import { UserActions } from "../sidebar/user-actions";
 import { CreditsDisplay } from "../sidebar/credits-display";
@@ -63,9 +63,11 @@ function ResourcesDropdown({
         onClick={() => setIsOpen(!isOpen)}
       >
         {t(I18nKey.ATOMS$NAV_RESOURCES)}
-        <ChevronDown
+        <IconChevronDown
+          size={16}
+          stroke={1.5}
           className={cn(
-            "h-4 w-4 transition-transform duration-200",
+            "transition-transform duration-200",
             isOpen && "rotate-180",
           )}
         />
@@ -191,7 +193,7 @@ function NavActionsDesktop({
               onClick={(e) => !isEmailVerified && e.preventDefault()}
               title={t(I18nKey.CONVERSATION$START_NEW)}
             >
-              <Plus className="w-5 h-5" strokeWidth={2.5} />
+              <IconPlus size={20} stroke={2.5} />
             </NavLink>
           </motion.div>
 
@@ -215,7 +217,7 @@ function NavActionsDesktop({
               )}
               title={t(I18nKey.SIDEBAR$CONVERSATIONS)}
             >
-              <MessageSquare className="w-5 h-5" />
+              <IconMessageCircle size={20} stroke={1.5} />
             </button>
           </motion.div>
         </div>
@@ -279,7 +281,7 @@ function NavActionsDesktop({
             )}
             title={t(I18nKey.BUTTON$REFRESH)}
           >
-            <RefreshCw className="w-4 h-4" />
+            <IconRefresh size={16} stroke={1.5} />
           </motion.button>
         </div>
       </nav>
@@ -329,7 +331,7 @@ function NavActionsDesktop({
               )}
               onClick={(e) => !isEmailVerified && e.preventDefault()}
             >
-              <Plus className="w-4 h-4" />
+              <IconPlus size={16} stroke={1.5} />
               <span>{t(I18nKey.CONVERSATION$START_NEW)}</span>
             </NavLink>
           </motion.div>
@@ -353,7 +355,7 @@ function NavActionsDesktop({
                 !isEmailVerified && "opacity-50 cursor-not-allowed",
               )}
             >
-              <MessageSquare className="w-4 h-4" />
+              <IconMessageCircle size={16} stroke={1.5} />
               <span>{t(I18nKey.SIDEBAR$CONVERSATIONS)}</span>
             </button>
           </motion.div>
@@ -522,7 +524,13 @@ function MobileMenuAuthed({
             <CreditsDisplay />
             <UserActions
               user={
-                user.data ? { avatar_url: user.data.avatar_url } : undefined
+                user.data
+                  ? {
+                      avatar_url: user.data.avatar_url,
+                      email: user.data.email,
+                      name: user.data.name,
+                    }
+                  : undefined
               }
               onLogout={logout}
               isLoading={user.isFetching}
@@ -743,9 +751,9 @@ export function TopNavbar() {
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             >
               {mobileMenuOpen ? (
-                <X className="h-5 w-5" />
+                <IconX size={20} stroke={1.5} />
               ) : (
-                <Menu className="h-5 w-5" />
+                <IconMenu2 size={20} stroke={1.5} />
               )}
             </Button>
           </div>
@@ -812,7 +820,7 @@ export function TopNavbar() {
                   !isEmailVerified && "opacity-50 cursor-not-allowed",
                 )}
               >
-                <MessageSquare className="h-4 w-4" strokeWidth={1.5} />
+                <IconMessageCircle size={16} stroke={1.5} />
               </button>
             </motion.div>
           )}
@@ -821,7 +829,13 @@ export function TopNavbar() {
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <UserActions
               user={
-                user.data ? { avatar_url: user.data.avatar_url } : undefined
+                user.data
+                  ? {
+                      avatar_url: user.data.avatar_url,
+                      email: user.data.email,
+                      name: user.data.name,
+                    }
+                  : undefined
               }
               onLogout={logout}
               isLoading={user.isFetching}
@@ -838,9 +852,9 @@ export function TopNavbar() {
           aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
         >
           {mobileMenuOpen ? (
-            <X className="h-5 w-5" />
+            <IconX size={20} stroke={1.5} />
           ) : (
-            <Menu className="h-5 w-5" />
+            <IconMenu2 size={20} stroke={1.5} />
           )}
         </Button>
       </header>

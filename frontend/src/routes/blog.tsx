@@ -1,6 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { Calendar, ArrowRight, User, Loader2 } from "lucide-react";
+import {
+  IconCalendar,
+  IconArrowRight,
+  IconUser,
+  IconLoader2,
+} from "@tabler/icons-react";
 import { I18nKey } from "#/i18n/declaration";
 import { cn } from "#/lib/utils";
 import { useBlogPosts } from "#/hooks/query/use-blog-posts";
@@ -74,17 +79,21 @@ function BlogCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4 text-xs text-neutral-500">
             <span className="flex items-center gap-1">
-              <User className="h-3 w-3" />
+              <IconUser size={12} stroke={1.5} />
               {post.author}
             </span>
             <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
+              <IconCalendar size={12} stroke={1.5} />
               {new Date(post.date).toLocaleDateString()}
             </span>
           </div>
           <div className="flex items-center text-sm text-indigo-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
             {t(I18nKey.ATOMS$RESOURCES_BLOG_READ_MORE)}
-            <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+            <IconArrowRight
+              size={16}
+              stroke={1.5}
+              className="ml-1 group-hover:translate-x-1 transition-transform"
+            />
           </div>
         </div>
       </div>
@@ -99,7 +108,11 @@ export default function BlogPage() {
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-base">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        <IconLoader2
+          size={32}
+          stroke={1.5}
+          className="animate-spin text-indigo-500"
+        />
       </div>
     );
   }

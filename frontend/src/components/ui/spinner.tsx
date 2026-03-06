@@ -1,6 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import * as React from "react";
-import { Loader2 } from "lucide-react";
+import { IconLoader2 } from "@tabler/icons-react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "#/lib/utils";
 
@@ -27,11 +27,12 @@ export interface SpinnerProps
 
 const Spinner = React.forwardRef<SVGSVGElement, SpinnerProps>(
   ({ className, size, label = "Loading...", ...props }, ref) => (
-    <Loader2
+    <IconLoader2
       ref={ref}
       className={cn(spinnerVariants({ size, className }))}
       aria-label={label}
       role="status"
+      stroke={1.5}
       {...props}
     />
   ),

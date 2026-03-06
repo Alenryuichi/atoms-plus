@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { IconArrowRight, IconLoader2 } from "@tabler/icons-react";
 import { I18nKey } from "#/i18n/declaration";
 import { cn } from "#/lib/utils";
 import { useUseCaseCategories, useUseCases } from "#/hooks/query/use-use-cases";
@@ -74,7 +74,11 @@ function UseCaseCard({
         </p>
         <div className="flex items-center text-sm text-indigo-400 font-medium">
           {t(I18nKey.ATOMS$RESOURCES_USECASE_READ_MORE)}
-          <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+          <IconArrowRight
+            size={16}
+            stroke={1.5}
+            className="ml-1 group-hover:translate-x-1 transition-transform"
+          />
         </div>
       </div>
     </motion.div>
@@ -93,7 +97,11 @@ export default function UseCasesPage() {
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-base">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        <IconLoader2
+          size={32}
+          stroke={1.5}
+          className="animate-spin text-indigo-500"
+        />
       </div>
     );
   }

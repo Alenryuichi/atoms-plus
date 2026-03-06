@@ -1,4 +1,4 @@
-import { Paperclip } from "lucide-react";
+import { IconPaperclip } from "@tabler/icons-react";
 import { cn } from "#/utils/utils";
 
 export interface ChatAddFileButtonProps {
@@ -33,9 +33,9 @@ export function ChatAddFileButton({
       onClick={handleFileIconClick}
       disabled={disabled}
     >
-      <Paperclip
-        className="w-4 h-4"
-        strokeWidth={1.5}
+      <IconPaperclip
+        size={16}
+        stroke={1.5}
         color={disabled ? "#6b7280" : "#d4a855"}
       />
     </button>
