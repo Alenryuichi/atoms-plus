@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { User } from "lucide-react";
 import { cn } from "#/lib/utils";
 import {
@@ -113,53 +113,49 @@ export function AutoRoleIndicator({
               className,
             )}
           >
-            <AnimatePresence mode="wait">
-              {/* Role Icon */}
-              <motion.div
-                key={`icon-${currentRole.role_id}`}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.2 }}
-                className="flex items-center justify-center"
-              >
-                {isDetecting ? (
-                  <div className="w-4 h-4 rounded-full border-2 border-amber-500/50 border-t-amber-500 animate-spin" />
-                ) : (
-                  <User className="w-4 h-4 text-amber-500" strokeWidth={2} />
-                )}
-              </motion.div>
+            {/* Role Icon - animate on role change */}
+            <motion.div
+              key={`icon-${currentRole.role_id}`}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.2 }}
+              className="flex items-center justify-center"
+            >
+              {isDetecting ? (
+                <div className="w-4 h-4 rounded-full border-2 border-amber-500/50 border-t-amber-500 animate-spin" />
+              ) : (
+                <User className="w-4 h-4 text-amber-500" strokeWidth={2} />
+              )}
+            </motion.div>
 
-              {/* Role Name */}
-              <motion.div
-                key={`name-${currentRole.role_id}`}
-                initial={{ opacity: 0, x: -4 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 4 }}
-                transition={{ duration: 0.2 }}
-                className="flex items-center gap-1.5"
-              >
-                {showDetails ? (
-                  <div className="flex flex-col leading-none">
-                    <span className="text-xs font-semibold text-amber-500">
-                      {currentRole.role_name}
-                    </span>
-                    <span className="text-[10px] text-neutral-400">
-                      {currentRole.role_title}
-                    </span>
-                  </div>
-                ) : (
-                  <>
-                    <span className="font-medium text-xs text-amber-500">
-                      {currentRole.role_name}
-                    </span>
-                    <span className="text-[10px] text-neutral-500">
-                      {t("AUTO_ROLE$RESPONDING")}
-                    </span>
-                  </>
-                )}
-              </motion.div>
-            </AnimatePresence>
+            {/* Role Name - animate on role change */}
+            <motion.div
+              key={`name-${currentRole.role_id}`}
+              initial={{ opacity: 0, x: -4 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex items-center gap-1.5"
+            >
+              {showDetails ? (
+                <div className="flex flex-col leading-none">
+                  <span className="text-xs font-semibold text-amber-500">
+                    {currentRole.role_name}
+                  </span>
+                  <span className="text-[10px] text-neutral-400">
+                    {currentRole.role_title}
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <span className="font-medium text-xs text-amber-500">
+                    {currentRole.role_name}
+                  </span>
+                  <span className="text-[10px] text-neutral-500">
+                    {t("AUTO_ROLE$RESPONDING")}
+                  </span>
+                </>
+              )}
+            </motion.div>
           </div>
         </TooltipTrigger>
         <TooltipContent

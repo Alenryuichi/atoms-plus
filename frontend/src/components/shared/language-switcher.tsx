@@ -44,7 +44,7 @@ export function LanguageSwitcher({
             )}
             aria-label="Change language"
           >
-            <Globe className="h-4 w-4" />
+            <Globe className="h-4 w-4" strokeWidth={1.5} />
             {variant === "full" && (
               <span className="ml-2 text-sm">
                 {currentLanguage?.label || "English"}
