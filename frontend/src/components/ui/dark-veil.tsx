@@ -1,16 +1,20 @@
 "use client";
 
+/**
+ * DarkVeil - ReactBits WebGL animated background
+ * Source: https://www.reactbits.dev/backgrounds/dark-veil
+ * Uses OGL for WebGL rendering with CPPN neural network shader
+ */
+
 import { useRef, useEffect } from "react";
 import { Renderer, Program, Mesh, Triangle, Vec2 } from "ogl";
 import { cn } from "#/utils/utils";
 
-// GLSL Vertex Shader
 const vertex = `
 attribute vec2 position;
 void main(){gl_Position=vec4(position,0.0,1.0);}
 `;
 
-// GLSL Fragment Shader - Original ReactBits CPPN shader with hue shift for amber theme
 const fragment = `
 #ifdef GL_ES
 precision lowp float;
@@ -85,29 +89,30 @@ interface DarkVeilProps {
   noiseIntensity?: number;
   /** Scanline intensity (0-1) */
   scanlineIntensity?: number;
-  /** Scanline frequency */
-  scanlineFrequency?: number;
-  /** Warp amount for distortion effect */
-  warpAmount?: number;
   /** Animation speed multiplier */
   speed?: number;
-  /** Resolution scale for performance (0.5 = half res) */
+  /** Scanline frequency */
+  scanlineFrequency?: number;
+  /** Warp distortion amount */
+  warpAmount?: number;
+  /** Resolution scale (0.5 = half resolution for better performance) */
   resolutionScale?: number;
   /** Additional CSS classes */
   className?: string;
 }
 
 /**
- * DarkVeil - WebGL animated background with CPPN neural network patterns
- * Based on ReactBits DarkVeil component
+ * DarkVeil - ReactBits WebGL animated background
+ * Uses OGL for WebGL rendering with CPPN neural network shader
+ * Source: https://www.reactbits.dev/backgrounds/dark-veil
  */
 export function DarkVeil({
-  hueShift = 30, // Default to amber-ish hue
+  hueShift = 0,
   noiseIntensity = 0,
   scanlineIntensity = 0,
+  speed = 0.5,
   scanlineFrequency = 0,
   warpAmount = 0,
-  speed = 0.6,
   resolutionScale = 1,
   className = "",
 }: DarkVeilProps) {
@@ -120,18 +125,10 @@ export function DarkVeil({
     const parent = canvas.parentElement;
     if (!parent) return undefined;
 
-    // Use a try-catch to handle WebGL initialization errors gracefully
-    let renderer: Renderer;
-    try {
-      renderer = new Renderer({
-        dpr: Math.min(window.devicePixelRatio, 2),
-        canvas,
-      });
-    } catch {
-      // eslint-disable-next-line no-console
-      console.warn("DarkVeil: WebGL not supported, skipping background");
-      return undefined;
-    }
+    const renderer = new Renderer({
+      dpr: Math.min(window.devicePixelRatio, 2),
+      canvas,
+    });
 
     const { gl } = renderer;
     const geometry = new Triangle(gl);
@@ -163,7 +160,7 @@ export function DarkVeil({
     resize();
 
     const start = performance.now();
-    let frameId = 0;
+    let frame = 0;
 
     const loop = () => {
       program.uniforms.uTime.value =
@@ -174,25 +171,22 @@ export function DarkVeil({
       program.uniforms.uScanFreq.value = scanlineFrequency;
       program.uniforms.uWarp.value = warpAmount;
       renderer.render({ scene: mesh });
-      frameId = requestAnimationFrame(loop);
+      frame = requestAnimationFrame(loop);
     };
 
     loop();
 
     return () => {
-      cancelAnimationFrame(frameId);
+      cancelAnimationFrame(frame);
       window.removeEventListener("resize", resize);
-      // Cleanup WebGL context to prevent memory leaks
-      const ext = gl.getExtension("WEBGL_lose_context");
-      if (ext) ext.loseContext();
     };
   }, [
     hueShift,
     noiseIntensity,
     scanlineIntensity,
+    speed,
     scanlineFrequency,
     warpAmount,
-    speed,
     resolutionScale,
   ]);
 
@@ -200,7 +194,7 @@ export function DarkVeil({
     <canvas
       ref={canvasRef}
       className={cn(
-        "absolute inset-0 w-full h-full pointer-events-none",
+        "absolute inset-0 w-full h-full block pointer-events-none",
         className,
       )}
     />

@@ -115,6 +115,7 @@ function ResourcesDropdown({
 // Desktop Navigation Actions Component
 interface NavActionsDesktopProps {
   isConversationPage: boolean;
+  isHomePage: boolean;
   isEmailVerified: boolean;
   conversationPanelIsOpen: boolean;
   setConversationPanelIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -123,6 +124,7 @@ interface NavActionsDesktopProps {
 
 function NavActionsDesktop({
   isConversationPage,
+  isHomePage,
   isEmailVerified,
   conversationPanelIsOpen,
   setConversationPanelIsOpen,
@@ -284,9 +286,18 @@ function NavActionsDesktop({
     );
   }
 
-  // Non-chat pages: Full text buttons
+  // Non-chat pages: Full text buttons - centered in viewport
+  // Homepage: Only show Pricing and Resources (no divider, no new conversation, no conversations button)
+  // Other pages: Show all items
   return (
-    <nav className="hidden md:flex items-center gap-4">
+    <nav
+      className="absolute hidden md:flex items-center gap-4 z-[5]"
+      style={{
+        left: "50%",
+        top: "50%",
+        transform: "translate(-50%, -50%)",
+      }}
+    >
       {/* Pricing Link */}
       <NavLink
         to="/pricing"
@@ -298,51 +309,56 @@ function NavActionsDesktop({
       {/* Resources Dropdown */}
       <ResourcesDropdown t={t} />
 
-      {/* Divider */}
-      <div className="h-5 w-px bg-neutral-700/50" />
+      {/* Non-homepage: Show divider, new conversation, and conversations button */}
+      {!isHomePage && (
+        <>
+          {/* Divider */}
+          <div className="h-5 w-px bg-neutral-700/50" />
 
-      {/* New Project Button */}
-      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-        <NavLink
-          to="/"
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg",
-            "bg-[var(--atoms-accent-primary)] hover:bg-[var(--atoms-accent-hover)]",
-            "text-white font-medium text-sm",
-            "shadow-lg shadow-amber-500/20",
-            "transition-all duration-200",
-            !isEmailVerified && "opacity-50 pointer-events-none",
-          )}
-          onClick={(e) => !isEmailVerified && e.preventDefault()}
-        >
-          <Plus className="w-4 h-4" />
-          <span>{t(I18nKey.CONVERSATION$START_NEW)}</span>
-        </NavLink>
-      </motion.div>
+          {/* New Project Button */}
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <NavLink
+              to="/"
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg",
+                "bg-[var(--atoms-accent-primary)] hover:bg-[var(--atoms-accent-hover)]",
+                "text-white font-medium text-sm",
+                "shadow-lg shadow-amber-500/20",
+                "transition-all duration-200",
+                !isEmailVerified && "opacity-50 pointer-events-none",
+              )}
+              onClick={(e) => !isEmailVerified && e.preventDefault()}
+            >
+              <Plus className="w-4 h-4" />
+              <span>{t(I18nKey.CONVERSATION$START_NEW)}</span>
+            </NavLink>
+          </motion.div>
 
-      {/* Conversations Button */}
-      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-        <button
-          type="button"
-          onClick={() =>
-            isEmailVerified && setConversationPanelIsOpen((prev) => !prev)
-          }
-          disabled={!isEmailVerified}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-lg",
-            "bg-neutral-800/80 hover:bg-neutral-700/80",
-            "text-neutral-300 hover:text-white",
-            "font-medium text-sm",
-            "border border-neutral-700/50 hover:border-neutral-600/50",
-            "transition-all duration-200",
-            conversationPanelIsOpen && "bg-neutral-700/80 text-white",
-            !isEmailVerified && "opacity-50 cursor-not-allowed",
-          )}
-        >
-          <MessageSquare className="w-4 h-4" />
-          <span>{t(I18nKey.SIDEBAR$CONVERSATIONS)}</span>
-        </button>
-      </motion.div>
+          {/* Conversations Button */}
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <button
+              type="button"
+              onClick={() =>
+                isEmailVerified && setConversationPanelIsOpen((prev) => !prev)
+              }
+              disabled={!isEmailVerified}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg",
+                "bg-neutral-800/80 hover:bg-neutral-700/80",
+                "text-neutral-300 hover:text-white",
+                "font-medium text-sm",
+                "border border-neutral-700/50 hover:border-neutral-600/50",
+                "transition-all duration-200",
+                conversationPanelIsOpen && "bg-neutral-700/80 text-white",
+                !isEmailVerified && "opacity-50 cursor-not-allowed",
+              )}
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>{t(I18nKey.SIDEBAR$CONVERSATIONS)}</span>
+            </button>
+          </motion.div>
+        </>
+      )}
     </nav>
   );
 }
@@ -621,6 +637,9 @@ export function TopNavbar() {
   // Determine if we're on the landing page (home page and not authenticated)
   const isLandingPage = pathname === "/" && !effectiveIsAuthed;
 
+  // Determine if we're on the home page (authenticated or not)
+  const isHomePage = pathname === "/";
+
   // Determine if we're on a conversation page (hide Pricing/Resources)
   const isConversationPage = pathname.startsWith("/conversations/");
 
@@ -671,18 +690,19 @@ export function TopNavbar() {
             "fixed top-0 left-0 right-0 z-50",
             "h-16 px-4 md:px-8 lg:px-12",
             "bg-transparent",
-            "flex items-center",
+            // CSS Grid: 3 equal columns for perfect centering
+            "grid grid-cols-3 items-center",
           )}
         >
           {/* Left: Logo */}
-          <div className="flex items-center flex-shrink-0">
+          <div className="flex items-center justify-start">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <OpenHandsLogoButton />
             </motion.div>
           </div>
 
-          {/* Center: Navigation Links (Desktop) - absolute centered */}
-          <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+          {/* Center: Navigation Links (Desktop) - centered in middle column */}
+          <nav className="hidden md:flex items-center justify-center gap-1">
             <NavLink
               to="/pricing"
               className="px-4 py-2 text-sm font-medium text-neutral-300 hover:text-white transition-colors"
@@ -692,40 +712,43 @@ export function TopNavbar() {
             <ResourcesDropdown t={t} />
           </nav>
 
-          {/* Right: Auth Buttons (Desktop) */}
-          <div className="hidden md:flex items-center gap-3 ml-auto">
-            <LanguageSwitcher />
+          {/* Right: Auth Buttons (Desktop) + Mobile Menu Button */}
+          <div className="flex items-center justify-end gap-3">
+            {/* Desktop Auth */}
+            <div className="hidden md:flex items-center gap-3">
+              <LanguageSwitcher />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-neutral-300 hover:text-white hover:bg-transparent"
+                onClick={handleLogin}
+              >
+                {t(I18nKey.ATOMS$NAV_LOGIN)}
+              </Button>
+              <Button
+                size="sm"
+                className="bg-white text-black hover:bg-neutral-200 font-medium px-4"
+                onClick={handleSignup}
+              >
+                {t(I18nKey.ATOMS$NAV_SIGNUP)}
+              </Button>
+            </div>
+
+            {/* Mobile Menu Button */}
             <Button
               variant="ghost"
-              size="sm"
-              className="text-neutral-300 hover:text-white hover:bg-transparent"
-              onClick={handleLogin}
+              size="icon"
+              className="md:hidden text-white hover:bg-white/10"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             >
-              {t(I18nKey.ATOMS$NAV_LOGIN)}
-            </Button>
-            <Button
-              size="sm"
-              className="bg-white text-black hover:bg-neutral-200 font-medium px-4"
-              onClick={handleSignup}
-            >
-              {t(I18nKey.ATOMS$NAV_SIGNUP)}
+              {mobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </Button>
           </div>
-
-          {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden text-white hover:bg-white/10 ml-auto"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </Button>
         </header>
 
         {/* Mobile Menu - Landing */}
@@ -762,6 +785,7 @@ export function TopNavbar() {
         {/* Center: Navigation Actions - uses same p-3 gap-3 as ConversationMain for alignment */}
         <NavActionsDesktop
           isConversationPage={isConversationPage}
+          isHomePage={isHomePage}
           isEmailVerified={isEmailVerified}
           conversationPanelIsOpen={conversationPanelIsOpen}
           setConversationPanelIsOpen={setConversationPanelIsOpen}
@@ -770,6 +794,30 @@ export function TopNavbar() {
 
         {/* Right: User Actions - absolutely positioned */}
         <div className="absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center gap-4">
+          {/* Conversations Icon Button (Homepage only) */}
+          {isHomePage && (
+            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+              <button
+                type="button"
+                onClick={() =>
+                  isEmailVerified && setConversationPanelIsOpen((prev) => !prev)
+                }
+                disabled={!isEmailVerified}
+                aria-label={t(I18nKey.SIDEBAR$CONVERSATIONS)}
+                className={cn(
+                  "p-2 rounded-lg",
+                  "bg-neutral-800/60 hover:bg-neutral-700/80",
+                  "text-neutral-300 hover:text-white",
+                  "border border-neutral-700/50 hover:border-neutral-600/50",
+                  "transition-all duration-200",
+                  conversationPanelIsOpen && "bg-neutral-700/80 text-white",
+                  !isEmailVerified && "opacity-50 cursor-not-allowed",
+                )}
+              >
+                <MessageSquare className="w-5 h-5" />
+              </button>
+            </motion.div>
+          )}
           <LanguageSwitcher />
           <CreditsDisplay />
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
