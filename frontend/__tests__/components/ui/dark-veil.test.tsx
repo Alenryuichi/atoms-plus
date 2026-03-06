@@ -1,44 +1,42 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/react";
-import { DarkVeil } from "#/components/ui/dark-veil";
 
-// Mock WebGL context
-const mockLoseContext = vi.fn();
-const mockGetExtension = vi.fn().mockReturnValue({
-  loseContext: mockLoseContext,
+// Mock ogl module with proper class implementations - must be before component import
+vi.mock("ogl", () => {
+  const mockSetFn = () => {};
+  const mockGl = {
+    getExtension: () => ({ loseContext: () => {} }),
+    canvas: { width: 100, height: 100 },
+    drawingBufferWidth: 100,
+    drawingBufferHeight: 100,
+  };
+
+  return {
+    Renderer: class MockRenderer {
+      gl = mockGl;
+      setSize() {}
+      render() {}
+    },
+    Program: class MockProgram {
+      uniforms = {
+        uTime: { value: 0 },
+        uResolution: { value: { set: mockSetFn } },
+        uHueShift: { value: 0 },
+        uNoise: { value: 0 },
+        uScan: { value: 0 },
+        uScanFreq: { value: 0 },
+        uWarp: { value: 0 },
+      };
+    },
+    Mesh: class MockMesh {},
+    Triangle: class MockTriangle {},
+    Vec2: class MockVec2 {
+      set() {}
+    },
+  };
 });
 
-const mockGl = {
-  getExtension: mockGetExtension,
-  canvas: document.createElement("canvas"),
-  drawingBufferWidth: 100,
-  drawingBufferHeight: 100,
-};
-
-// Mock ogl module
-vi.mock("ogl", () => ({
-  Renderer: vi.fn().mockImplementation(() => ({
-    gl: mockGl,
-    setSize: vi.fn(),
-    render: vi.fn(),
-  })),
-  Program: vi.fn().mockImplementation(() => ({
-    uniforms: {
-      uTime: { value: 0 },
-      uResolution: { value: { set: vi.fn() } },
-      uHueShift: { value: 0 },
-      uNoise: { value: 0 },
-      uScan: { value: 0 },
-      uScanFreq: { value: 0 },
-      uWarp: { value: 0 },
-    },
-  })),
-  Mesh: vi.fn(),
-  Triangle: vi.fn(),
-  Vec2: vi.fn().mockImplementation(() => ({
-    set: vi.fn(),
-  })),
-}));
+import { DarkVeil } from "#/components/ui/dark-veil";
 
 describe("DarkVeil", () => {
   beforeEach(() => {
@@ -102,8 +100,8 @@ describe("DarkVeil", () => {
   it("cleans up on unmount without errors", () => {
     const { unmount } = render(<DarkVeil />);
 
-    // Run any pending animation frames
-    vi.runAllTimers();
+    // Advance a few timer ticks (not all, as RAF creates an infinite loop)
+    vi.advanceTimersByTime(100);
 
     // Should unmount without throwing
     expect(() => unmount()).not.toThrow();
