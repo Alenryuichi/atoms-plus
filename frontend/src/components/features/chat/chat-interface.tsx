@@ -39,8 +39,7 @@ import { getStatusColor, getStatusText } from "#/utils/utils";
 import { AutoRoleIndicator } from "#/components/features/auto-role";
 import { RuntimeBootstrapProgress } from "./runtime-bootstrap-progress";
 import type { RuntimeStatus } from "#/types/runtime-status";
-import { TeamModePanel, TeamModeToggle } from "#/components/features/team-mode";
-import { useTeamModeStore } from "#/stores/team-mode-store";
+import { TeamModeToggle } from "#/components/features/team-mode";
 
 function getEntryPoint(
   hasRepository: boolean | null,
@@ -55,7 +54,6 @@ export function ChatInterface() {
   const posthog = usePostHog();
   const { setMessageToSend } = useConversationStore();
   const { data: conversation } = useActiveConversation();
-  const { isEnabled: isTeamModeEnabled } = useTeamModeStore();
   const { errorMessage, removeErrorMessage } = useErrorMessageStore();
   const { isLoadingMessages } = useWsClient();
   const { isTask, taskStatus, taskDetail } = useTaskPolling();
@@ -350,9 +348,6 @@ export function ChatInterface() {
               onDismiss={removeErrorMessage}
             />
           )}
-
-          {/* Team Mode Panel - above chat input */}
-          {isTeamModeEnabled && <TeamModePanel />}
 
           <InteractiveChatBox onSubmit={handleSendMessage} />
         </div>

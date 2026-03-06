@@ -111,6 +111,7 @@ def atoms_plus_health():
 
 # 导入 listen.py 中完整配置的 app (包含 CORS middleware + socketio)
 # 这样所有请求都会经过正确的 middleware 链
+from openhands.server.listen import app  # noqa: E402, F401
 
 # ==================== 直接运行 ====================
 

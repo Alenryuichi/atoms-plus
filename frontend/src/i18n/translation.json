@@ -18353,5 +18353,40 @@
     "en": "Skip (Dev Mode)",
     "zh-CN": "跳过 (开发模式)",
     "ja": "スキップ (開発モード)"
+  },
+  "TEAM_MODE$TEAM": {
+    "en": "Team",
+    "zh-CN": "团队",
+    "ja": "チーム"
+  },
+  "TEAM_MODE$TITLE": {
+    "en": "Team Mode",
+    "zh-CN": "团队模式",
+    "ja": "チームモード"
+  },
+  "TEAM_MODE$TOGGLE_LABEL": {
+    "en": "Toggle Team Mode",
+    "zh-CN": "切换团队模式",
+    "ja": "チームモードを切り替え"
+  },
+  "TEAM_MODE$ACTIVE_TOOLTIP": {
+    "en": "Team Mode: Multi-agent collaboration active",
+    "zh-CN": "团队模式：多代理协作已启用",
+    "ja": "チームモード：マルチエージェント連携中"
+  },
+  "TEAM_MODE$ENABLE_TOOLTIP": {
+    "en": "Enable Team Mode for multi-agent collaboration",
+    "zh-CN": "启用团队模式以进行多代理协作",
+    "ja": "マルチエージェント連携を有効化"
+  },
+  "TEAM_MODE$ACTIVE_DESCRIPTION": {
+    "en": "Multi-agent collaboration active",
+    "zh-CN": "多代理协作已启用",
+    "ja": "マルチエージェント連携中"
+  },
+  "TEAM_MODE$ENABLE_DESCRIPTION": {
+    "en": "Enable multi-agent collaboration",
+    "zh-CN": "启用多代理协作",
+    "ja": "マルチエージェント連携を有効化"
   }
 }

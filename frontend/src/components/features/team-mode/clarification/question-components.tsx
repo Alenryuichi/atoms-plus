@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button } from "@heroui/react";
 import { useTranslation } from "react-i18next";
+import { Button } from "#/components/ui/button";
 import { I18nKey } from "#/i18n/declaration";
 import type { ClarifyingQuestion, UserAnswer } from "./types";
 
@@ -21,7 +21,7 @@ function SkipButton({
   const { t } = useTranslation();
   return (
     <div className="flex items-center justify-between text-xs">
-      <Button size="sm" variant="flat" color="default" onPress={onSkip}>
+      <Button size="sm" variant="ghost" onClick={onSkip}>
         {t(I18nKey.CLARIFICATION$SKIP_QUESTION)}
       </Button>
       {question.ai_suggestion && (

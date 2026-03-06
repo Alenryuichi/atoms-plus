@@ -10,6 +10,7 @@ import "./tailwind.css";
 import "./index.css";
 import React from "react";
 import { Toaster } from "react-hot-toast";
+import { TooltipProvider } from "#/components/ui/tooltip";
 import { useInvitation } from "#/hooks/use-invitation";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -22,7 +23,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body className="h-full bg-base">
-        {children}
+        <TooltipProvider delayDuration={300}>
+          {children}
+        </TooltipProvider>
         <ScrollRestoration />
         <Scripts />
         <Toaster />

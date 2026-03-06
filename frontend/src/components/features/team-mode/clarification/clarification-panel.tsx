@@ -1,5 +1,5 @@
-import { Button } from "@heroui/react";
 import { useTranslation } from "react-i18next";
+import { Button } from "#/components/ui/button";
 import { I18nKey } from "#/i18n/declaration";
 import { useTracking } from "#/hooks/use-tracking";
 import { useClarificationStore } from "./use-clarification-store";
@@ -172,20 +172,14 @@ export function ClarificationPanel({ onSubmit }: ClarificationPanelProps) {
       {/* Footer */}
       <div className="px-4 py-3 border-t border-primary-200 bg-primary-100/50 dark:bg-primary-900/20 flex justify-between">
         {canSkip && (
-          <Button
-            size="sm"
-            variant="flat"
-            color="default"
-            onPress={handleSkipAll}
-          >
+          <Button size="sm" variant="ghost" onClick={handleSkipAll}>
             {t(I18nKey.CLARIFICATION$SKIP_ALL)}
           </Button>
         )}
         <Button
           size="sm"
-          color="primary"
-          onPress={handleSubmit}
-          isDisabled={answeredCount === 0}
+          onClick={handleSubmit}
+          disabled={answeredCount === 0}
         >
           {t(I18nKey.CLARIFICATION$SUBMIT_ANSWERS)}
         </Button>
