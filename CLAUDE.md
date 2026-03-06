@@ -156,6 +156,10 @@ atoms-plus/
 |------|------|------|------|
 | `/atoms-plus` | GET | ✅ | 版本信息 (v0.3.0) |
 | `/atoms-plus/health` | GET | ✅ | 健康检查 |
+| `/api/v1/team/` | GET | ✅ | Team Mode 信息 |
+| `/api/v1/team/sessions` | POST | ✅ | 创建 Team Mode 会话 |
+| `/api/v1/team/sessions/{id}` | GET | ✅ | 获取会话状态 |
+| `/api/v1/team/sessions/{id}/stream` | WS | ✅ | WebSocket 实时流 |
 | `/api/v1/scaffolding/templates` | GET | ✅ | 获取 4 个项目模板 |
 | `/api/v1/scaffolding/generate` | POST | ✅ | 生成项目 |
 | `/api/v1/roles/auto-detect` | POST | ✅ | 自动角色检测 |
@@ -210,6 +214,50 @@ atoms-plus/
 - OpenAI: gpt-4o, gpt-4o-mini, gpt-4-turbo
 - Google: gemini-2.0-flash, gemini-1.5-pro
 - Mistral: mistral-large-latest
+
+### ✅ Team Mode (LangGraph 1.0)
+
+**多代理协作** - 可见的多代理思考过程，实时流式输出：
+
+| 组件 | 文件 | 说明 |
+|------|------|------|
+| **State** | `atoms_plus/team_mode/state.py` | `TeamState` TypedDict for LangGraph |
+| **Graph** | `atoms_plus/team_mode/graph.py` | `StateGraph` with PM → Architect → Engineer |
+| **Router** | `atoms_plus/team_mode/router.py` | Conditional edge routing logic |
+| **Nodes** | `atoms_plus/team_mode/nodes/` | Agent implementations (base, pm, architect, engineer, clarification) |
+| **Clarification** | `atoms_plus/team_mode/clarification/` | ClarifyGPT-style HITL requirement clarification |
+| **API** | `atoms_plus/team_mode/api.py` | FastAPI + WebSocket endpoints |
+| **Store** | `frontend/src/stores/team-mode-store.ts` | Zustand state management |
+| **Components** | `frontend/src/components/features/team-mode/` | React UI components |
+| **Hooks** | `frontend/src/hooks/query/use-team-*.ts` | TanStack Query hooks |
+| **Persistence** | SQLite via `langgraph-checkpoint-sqlite` | Session recovery |
+
+**MVP 角色**: PM (需求分析) → Architect (架构设计) → Engineer (代码实现) → Architect (代码审核)
+
+**HITL Clarification (新功能)**:
+基于 ClarifyGPT 论文的需求澄清流程：
+- `pm_detect_ambiguity` - 生成3种代码解释，计算相似度，>40分触发澄清
+- `pm_await_clarification` - 使用 LangGraph `interrupt()` 暂停等待用户输入
+- `pm_refine_requirements` - 根据用户回答精炼需求
+
+**前端组件**:
+- `ClarificationPanel` - 显示问题和收集答案
+- `use-clarification-store.ts` - Zustand store 管理澄清状态
+- WebSocket 事件: `clarification:questions`, `clarification:answer`, `clarification:skip`
+
+**测试命令**: `poetry run pytest tests/unit/test_team_mode/ -v` (73 tests)
+
+**环境变量**: `TEAM_MODE_DB` - SQLite 数据库路径 (默认: `team_mode.db`)
+
+**API 端点**:
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/v1/team/` | GET | Team Mode 信息 |
+| `/api/v1/team/sessions` | POST | 创建会话 |
+| `/api/v1/team/sessions/{id}` | GET | 会话状态 |
+| `/api/v1/team/sessions/{id}/stream` | WS | WebSocket 流式输出 |
+| `/api/v1/team/sessions/saved` | GET | 列出已保存会话 |
+| `/api/v1/team/sessions/recover` | POST | 恢复已保存会话 |
 
 ### ✅ Orchestrator 后端
 
