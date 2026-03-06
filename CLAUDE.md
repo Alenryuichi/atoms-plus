@@ -47,14 +47,34 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ```
 LLM_API_KEY=sk-1d30db2d6c864ad5b12065aaf30a0efc
-LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-LLM_MODEL=qwen-plus
+LLM_BASE_URL=https://coding.dashscope.aliyuncs.com/v1
+LLM_MODEL=openai/MiniMax-M2.5
+LLM_MAX_OUTPUT_TOKENS=4096
+LLM_TIMEOUT=180
+OH_SECRET_KEY=szqgnj7u5pf9bhvynuq67183m2la55yw
+SANDBOX_API_KEY=sk-oh-etrszt3bL2TQm5DrG9yP61FB7XkoDIO0
 PERMITTED_CORS_ORIGINS=https://frontend-ten-beta-79.vercel.app
 RUNTIME=local
 OH_ENABLE_BROWSER=false
-OH_PERSISTENCE_DIR=/data
+OH_PERSISTENCE_DIR=/.openhands
+OH_DISABLE_MCP=true
 WEB_HOST=0.0.0.0
 ```
+
+#### 阿里百炼 Coding API 可用模型
+
+> **重要**: 所有模型在 LiteLLM 中需要加 `openai/` 前缀，因为 API 兼容 OpenAI 协议
+
+| 模型 | LiteLLM 格式 | 图片理解 |
+|------|-------------|---------|
+| qwen3.5-plus | `openai/qwen3.5-plus` | ✅ |
+| kimi-k2.5 | `openai/kimi-k2.5` | ✅ |
+| glm-5 | `openai/glm-5` | ❌ |
+| MiniMax-M2.5 | `openai/MiniMax-M2.5` | ❌ |
+| qwen3-max-2026-01-23 | `openai/qwen3-max-2026-01-23` | ❌ |
+| qwen3-coder-next | `openai/qwen3-coder-next` | ❌ |
+| qwen3-coder-plus | `openai/qwen3-coder-plus` | ❌ |
+| glm-4.7 | `openai/glm-4.7` | ❌ |
 
 ### 数据库 (Supabase)
 

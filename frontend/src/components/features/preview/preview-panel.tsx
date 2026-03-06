@@ -13,7 +13,7 @@ import {
 } from "@codesandbox/sandpack-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileCode } from "lucide-react";
+import { IconFileCode } from "@tabler/icons-react";
 import { I18nKey } from "#/i18n/declaration";
 import { useWorkspaceFiles } from "#/hooks/query/use-workspace-files";
 import { useWorkspaceFileContent } from "#/hooks/query/use-workspace-file-content";
@@ -88,7 +88,10 @@ function getSandpackFileName(filePath: string): string {
   return `/${fileName}`;
 }
 
-export const PreviewPanel = forwardRef<PreviewPanelHandle>((_props, ref) => {
+function PreviewPanelComponent(
+  _props: object,
+  ref: React.Ref<PreviewPanelHandle>,
+) {
   const { t } = useTranslation();
   const runtimeIsReady = useRuntimeIsReady();
   const { conversationId } = useConversationId();
@@ -118,8 +121,7 @@ export const PreviewPanel = forwardRef<PreviewPanelHandle>((_props, ref) => {
   // Fetch selected file content
   const {
     data: fileContent,
-    isLoading: isLoadingContent,
-    error: contentError,
+    // isLoading and error are handled by Sandpack internally
     refetch: refetchContent,
   } = useWorkspaceFileContent(selectedFile);
 
@@ -141,13 +143,13 @@ export const PreviewPanel = forwardRef<PreviewPanelHandle>((_props, ref) => {
   const sandpackFiles = useMemo(() => {
     // In mock mode, use all mock files for complete React project support
     if (isMockMode) {
-      const files: Record<string, { code: string }> = {};
+      const mockFiles: Record<string, { code: string }> = {};
       Object.entries(MOCK_FILE_CONTENTS).forEach(([path, code]) => {
         // Convert file path to Sandpack format (e.g., "src/App.tsx" -> "/src/App.tsx")
         const sandpackPath = path.startsWith("/") ? path : `/${path}`;
-        files[sandpackPath] = { code };
+        mockFiles[sandpackPath] = { code };
       });
-      return files;
+      return mockFiles;
     }
 
     // Normal mode: use single file content
@@ -167,11 +169,15 @@ export const PreviewPanel = forwardRef<PreviewPanelHandle>((_props, ref) => {
   }, [fileContent, selectedFile]);
 
   // In mock mode, always use react-ts template for full React project support
-  const template = isMockMode
-    ? "react-ts"
-    : selectedFile
-      ? getFileTemplate(selectedFile)
-      : "static";
+  const getTemplate = ():
+    | "react-ts"
+    | "static"
+    | ReturnType<typeof getFileTemplate> => {
+    if (isMockMode) return "react-ts";
+    if (selectedFile) return getFileTemplate(selectedFile);
+    return "static";
+  };
+  const template = getTemplate();
 
   // Handle refresh - exposed via ref for parent component
   const handleRefresh = () => {
@@ -225,7 +231,11 @@ export const PreviewPanel = forwardRef<PreviewPanelHandle>((_props, ref) => {
   if (!isLoadingFiles && (!files || files.length === 0)) {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center bg-transparent text-neutral-500 p-4">
-        <FileCode className="w-12 h-12 mb-4 opacity-40 text-amber-500/50" />
+        <IconFileCode
+          size={48}
+          stroke={1.5}
+          className="mb-4 opacity-40 text-amber-500/50"
+        />
         <p className="text-center">{t(I18nKey.PREVIEW$NO_FILES)}</p>
       </div>
     );
@@ -303,4 +313,9 @@ export const PreviewPanel = forwardRef<PreviewPanelHandle>((_props, ref) => {
       </div>
     </div>
   );
-});
+}
+
+export const PreviewPanel = forwardRef<PreviewPanelHandle>(
+  PreviewPanelComponent,
+);
+PreviewPanel.displayName = "PreviewPanel";

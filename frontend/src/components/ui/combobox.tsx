@@ -16,7 +16,12 @@
  * ```
  */
 import * as React from "react";
-import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
+import {
+  IconCheck,
+  IconSelector,
+  IconLoader2,
+  IconX,
+} from "@tabler/icons-react";
 import { cn } from "#/lib/utils";
 import { Button } from "#/components/ui/button";
 import {
@@ -187,7 +192,7 @@ export function Combobox({
         data-testid={`${testId}-item-${item.value}`}
       >
         {item.label}
-        <Check
+        <IconCheck
           className={cn(
             "ml-auto h-4 w-4",
             selectedValue === item.value ? "opacity-100" : "opacity-0",
@@ -217,7 +222,7 @@ export function Combobox({
             {startContent}
             {isLoading ? (
               <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <IconLoader2 size={16} stroke={1.5} className="animate-spin" />
                 Loading...
               </span>
             ) : (
@@ -226,12 +231,18 @@ export function Combobox({
           </span>
           <span className="flex items-center gap-1">
             {isClearable && selectedValue && !disabled && !isLoading && (
-              <X
-                className="h-4 w-4 opacity-50 hover:opacity-100 cursor-pointer"
+              <IconX
+                className="opacity-50 hover:opacity-100 cursor-pointer"
+                size={16}
+                stroke={1.5}
                 onClick={handleClear}
               />
             )}
-            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+            <IconSelector
+              size={16}
+              stroke={1.5}
+              className="shrink-0 opacity-50"
+            />
           </span>
         </Button>
       </PopoverTrigger>

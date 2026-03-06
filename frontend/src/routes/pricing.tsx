@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { Check, X, Zap, Loader2 } from "lucide-react";
+import { IconCheck, IconX, IconBolt, IconLoader2 } from "@tabler/icons-react";
 import { I18nKey } from "#/i18n/declaration";
 import { Button } from "#/components/ui/button";
 import { cn } from "#/lib/utils";
@@ -67,9 +67,17 @@ function PricingCard({
         {tier.features.map((feature, idx) => (
           <li key={idx} className="flex items-center gap-3">
             {feature.included ? (
-              <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+              <IconCheck
+                size={20}
+                stroke={2}
+                className="text-green-500 flex-shrink-0"
+              />
             ) : (
-              <X className="h-5 w-5 text-neutral-600 flex-shrink-0" />
+              <IconX
+                size={20}
+                stroke={2}
+                className="text-neutral-600 flex-shrink-0"
+              />
             )}
             <span
               className={cn(
@@ -105,7 +113,11 @@ export default function PricingPage() {
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-base">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        <IconLoader2
+          size={32}
+          stroke={1.5}
+          className="animate-spin text-indigo-500"
+        />
       </div>
     );
   }
@@ -124,7 +136,7 @@ export default function PricingPage() {
           variants={itemVariants}
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-4">
-            <Zap className="h-4 w-4 text-indigo-400" />
+            <IconBolt size={16} stroke={1.5} className="text-indigo-400" />
             <span className="text-sm text-indigo-400 font-medium">
               {t(I18nKey.ATOMS$PRICING_BADGE)}
             </span>

@@ -39,7 +39,7 @@ export function SettingsModal({ onClose, settings }: SettingsModalProps) {
               onClick={onClose}
               className="px-3 py-1.5 text-sm font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/20 transition-colors"
             >
-              Skip (Dev Mode)
+              {t(I18nKey.SETTINGS$SKIP_DEV_MODE)}
             </button>
           )}
         </div>

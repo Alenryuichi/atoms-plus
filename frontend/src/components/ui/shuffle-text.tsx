@@ -35,7 +35,7 @@ export function ShuffleText({
     const totalIterations = targetText.length;
 
     intervalRef.current = setInterval(() => {
-      setDisplayText((prev) => {
+      setDisplayText(() => {
         const chars = targetText.split("");
         return chars
           .map((char, index) => {

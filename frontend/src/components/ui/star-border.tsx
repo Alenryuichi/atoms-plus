@@ -29,17 +29,22 @@ export function StarBorder<T extends React.ElementType = "button">({
   const defaultInnerClass =
     "relative z-10 bg-gradient-to-b from-neutral-900 to-neutral-950 border border-neutral-800 text-white text-center py-3 px-6 rounded-xl";
 
+  // Extract style from rest to combine with our style
+  const restProps = rest as React.ComponentPropsWithoutRef<T>;
+  const combinedStyle = {
+    padding: `${thickness}px 0`,
+    ...restProps.style,
+  };
+
   return (
     <Component
       className={cn(
         "relative inline-block overflow-hidden rounded-xl",
         className,
       )}
-      {...(rest as React.ComponentPropsWithoutRef<T>)}
-      style={{
-        padding: `${thickness}px 0`,
-        ...(rest as React.ComponentPropsWithoutRef<T>).style,
-      }}
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      {...restProps}
+      style={combinedStyle}
     >
       {/* Bottom star movement */}
       <div

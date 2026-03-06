@@ -250,7 +250,7 @@ function GlobalSpotlight({
   const isMobile = useMobileDetection();
 
   useEffect(() => {
-    if (isMobile || !gridRef?.current || !enabled) return;
+    if (isMobile || !gridRef?.current || !enabled) return undefined;
 
     // Create spotlight element
     const spotlight = document.createElement("div");
@@ -340,12 +340,16 @@ function GlobalSpotlight({
         ease: "power2.out",
       });
 
-      const targetOpacity =
-        minDistance <= proximity
-          ? 0.7
-          : minDistance <= fadeDistance
-            ? ((fadeDistance - minDistance) / (fadeDistance - proximity)) * 0.7
-            : 0;
+      const getTargetOpacity = (): number => {
+        if (minDistance <= proximity) return 0.7;
+        if (minDistance <= fadeDistance) {
+          return (
+            ((fadeDistance - minDistance) / (fadeDistance - proximity)) * 0.7
+          );
+        }
+        return 0;
+      };
+      const targetOpacity = getTargetOpacity();
 
       gsap.to(spotlightRef.current, {
         opacity: targetOpacity,
