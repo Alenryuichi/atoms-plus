@@ -28,6 +28,7 @@ from atoms_plus.team_mode.graph import (
     get_session_state,
     list_saved_sessions,
 )
+from atoms_plus.team_mode.nodes.base import get_llm_config
 from atoms_plus.team_mode.state import ExecutionMode, create_initial_state
 from openhands.app_server.app_conversation.app_conversation_service import (
     AppConversationService,
@@ -55,7 +56,10 @@ class StartSessionRequest(BaseModel):
     """Request to start a new Team Mode session."""
 
     task: str = Field(..., description='The task to accomplish')
-    model: str = Field(default='qwen-plus', description='LLM model to use')
+    model: str | None = Field(
+        default=None,
+        description='LLM model to use (if not provided, uses user settings from ~/.openhands/settings.json)',
+    )
     max_iterations: int = Field(default=3, ge=1, le=10)
     # OpenHands integration (optional)
     conversation_id: str | None = Field(
@@ -96,6 +100,10 @@ class SessionStatusResponse(BaseModel):
 
 # In-memory session storage (replace with Redis in production)
 sessions: dict[str, dict[str, Any]] = {}
+
+# Track active graph executions to prevent concurrent runs
+# Key: session_id, Value: True if execution is in progress
+_active_executions: dict[str, bool] = {}
 
 
 @router.get('/')
@@ -168,12 +176,19 @@ async def create_session(
             binding_warning = f'Invalid conversation_id format: {e}'
             logger.warning(f'[API] {binding_warning}')
 
+    # Get model from request or user settings
+    model = request.model
+    if not model:
+        llm_config = get_llm_config()
+        model = llm_config['model']
+        logger.info(f'[API] Using model from user settings: {model}')
+
     # Create initial state with sandbox info
     state = create_initial_state(
         task=request.task,
         session_id=session_id,
         user_id='anonymous',  # TODO: Get from auth
-        model=request.model,
+        model=model,
         max_iterations=request.max_iterations,
         conversation_id=conversation_id,
         sandbox_url=sandbox_url,
@@ -361,6 +376,10 @@ async def stream_session(websocket: WebSocket, session_id: str) -> None:
     Streams agent thoughts and state updates as they happen.
     Handles reconnections gracefully - if session is awaiting_input,
     don't restart the graph, just wait for user response.
+
+    IMPORTANT: Only one execution per session is allowed at a time.
+    Additional WebSocket connections will receive status updates but won't
+    trigger new graph executions.
     """
     await websocket.accept()
     logger.info(f'[WS] Client connected to session {session_id}')
@@ -401,10 +420,35 @@ async def stream_session(websocket: WebSocket, session_id: str) -> None:
             await websocket.send_json({'event': 'error', 'message': str(e)})
         return
 
+    # Check if execution is already in progress for this session
+    if _active_executions.get(session_id):
+        logger.warning(f'[WS] Execution already in progress for session {session_id}, ignoring')
+        await websocket.send_json({
+            'event': 'already_running',
+            'session_id': session_id,
+            'message': 'Graph execution is already in progress for this session',
+        })
+        # Keep connection open but don't start new execution
+        try:
+            while True:
+                msg = await websocket.receive_json()
+                if msg.get('type') == 'ping':
+                    await websocket.send_json({'event': 'pong'})
+        except WebSocketDisconnect:
+            logger.info(f'[WS] Observer disconnected from session {session_id}')
+        except Exception:
+            pass
+        return
+
+    # Mark execution as active
+    _active_executions[session_id] = True
+
     try:
         # Compile graph with async checkpointer
         checkpointer = await get_async_sqlite_checkpointer()
-        graph = compile_team_graph(checkpointer)
+        # TODO: Re-enable clarification when LLM JSON parsing is fixed
+        # Current MiniMax-M2.5 model returns empty responses causing parsing errors
+        graph = compile_team_graph(checkpointer, enable_clarification=False)
 
         # Update session status
         session['status'] = 'running'
@@ -563,6 +607,14 @@ async def stream_session(websocket: WebSocket, session_id: str) -> None:
     except Exception as e:
         logger.error(f'[WS] Error in session {session_id}: {e}')
         session['status'] = 'error'
-        await websocket.send_json({'event': 'error', 'message': str(e)})
+        try:
+            await websocket.send_json({'event': 'error', 'message': str(e)})
+        except Exception:
+            pass  # Connection may already be closed
     finally:
-        await websocket.close()
+        # Clear execution flag so new executions can start
+        _active_executions.pop(session_id, None)
+        try:
+            await websocket.close()
+        except Exception:
+            pass  # May already be closed

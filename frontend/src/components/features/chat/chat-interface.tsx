@@ -41,8 +41,13 @@ import { RuntimeBootstrapProgress } from "./runtime-bootstrap-progress";
 import type { RuntimeStatus } from "#/types/runtime-status";
 import {
   TeamModeToggle,
+  TeamModeThoughts,
   useTeamModeWebSocket,
 } from "#/components/features/team-mode";
+import {
+  ClarificationPanel,
+  type UserAnswer,
+} from "#/components/features/team-mode/clarification";
 import { useTeamModeStore } from "#/stores/team-mode-store";
 import { useCreateTeamSession } from "#/hooks/mutation/use-create-team-session";
 
@@ -99,7 +104,15 @@ export function ChatInterface() {
 
   // Initialize Team Mode WebSocket connection when session exists
   // This hook auto-connects when sessionId changes in the store
-  useTeamModeWebSocket();
+  const { sendClarificationAnswer } = useTeamModeWebSocket();
+
+  // Handle clarification submission from HITL panel
+  const handleClarificationSubmit = React.useCallback(
+    (answers: UserAnswer[], skipped: boolean) => {
+      sendClarificationAnswer(answers, skipped);
+    },
+    [sendClarificationAnswer],
+  );
 
   // Show Team Mode errors as toast
   React.useEffect(() => {
@@ -408,6 +421,9 @@ export function ChatInterface() {
           {showV1Messages && (v1UserEventsExist || optimisticUserMessage) && (
             <V1Messages messages={v1UiEvents} allEvents={v1FullEvents} />
           )}
+
+          {/* Team Mode: Show agent thoughts during collaboration */}
+          {isTeamModeEnabled && <TeamModeThoughts />}
         </div>
 
         {/* Atoms Plus: Bottom control area - transparent background */}
@@ -459,6 +475,11 @@ export function ChatInterface() {
               message={errorMessage}
               onDismiss={removeErrorMessage}
             />
+          )}
+
+          {/* Team Mode: HITL Clarification Panel */}
+          {isTeamModeEnabled && (
+            <ClarificationPanel onSubmit={handleClarificationSubmit} />
           )}
 
           <InteractiveChatBox onSubmit={handleSendMessage} />

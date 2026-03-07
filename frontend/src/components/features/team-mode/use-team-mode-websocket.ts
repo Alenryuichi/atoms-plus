@@ -67,8 +67,10 @@ export function useTeamModeWebSocket() {
         // Reset error count on successful JSON parse
         connectionManager.parseErrorCount = 0;
 
-        // Normalize: backend uses 'event', frontend expects 'type'
-        const messageType = rawMessage.type ?? rawMessage.event;
+        // Normalize: backend uses 'event' for primary message type
+        // Note: 'type' is used for sub-types (e.g., interrupt type)
+        // Prioritize 'event' over 'type' to correctly route messages
+        const messageType = rawMessage.event ?? rawMessage.type;
 
         if (!messageType) {
           console.warn("Team Mode WS message missing type/event:", rawMessage);
