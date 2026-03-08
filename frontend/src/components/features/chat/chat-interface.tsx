@@ -50,6 +50,7 @@ import {
 } from "#/components/features/team-mode/clarification";
 import { useTeamModeStore } from "#/stores/team-mode-store";
 import { useCreateTeamSession } from "#/hooks/mutation/use-create-team-session";
+import { AGENT_DISPLAY_INFO } from "#/api/team-mode-service/team-mode-service.types";
 
 function getEntryPoint(
   hasRepository: boolean | null,
@@ -98,6 +99,8 @@ export function ChatInterface() {
   // Team Mode integration
   // Use individual selectors to prevent re-renders when unrelated state changes
   const isTeamModeEnabled = useTeamModeStore((state) => state.isEnabled);
+  const isTeamModeRunning = useTeamModeStore((state) => state.isRunning);
+  const teamModeCurrentAgent = useTeamModeStore((state) => state.currentAgent);
   const teamModeError = useTeamModeStore((state) => state.error);
   const setTeamModeError = useTeamModeStore((state) => state.setError);
   const createTeamSession = useCreateTeamSession();
@@ -432,18 +435,29 @@ export function ChatInterface() {
           <div className="flex items-center justify-between relative">
             {/* Left: Role + Status indicators (same height h-8) */}
             <div className="flex items-center gap-2">
-              {/* Auto Role Indicator - Shows current responding role */}
-              <AutoRoleIndicator showDetails={false} />
+              {/* Auto Role Indicator - Shows current responding role
+                  Hidden when Team Mode is enabled to avoid confusion with
+                  Team Mode's own role indicators */}
+              {!isTeamModeEnabled && <AutoRoleIndicator showDetails={false} />}
 
               {/* Team Mode Toggle - compact inline version */}
               <TeamModeToggle compact />
 
-              {/* Status Indicator - Shows agent state */}
-              {isStartingStatus && (
+              {/* Status Indicator - Shows agent state or Team Mode status */}
+              {isTeamModeRunning && teamModeCurrentAgent ? (
+                // Team Mode: Show current agent status
                 <ChatStatusIndicator
-                  statusColor={serverStatusColor}
-                  status={serverStatusText}
+                  statusColor="#f59e0b"
+                  status={`${AGENT_DISPLAY_INFO[teamModeCurrentAgent].icon} ${AGENT_DISPLAY_INFO[teamModeCurrentAgent].name} 处理中...`}
                 />
+              ) : (
+                // Normal mode: Show OpenHands agent status
+                isStartingStatus && (
+                  <ChatStatusIndicator
+                    statusColor={serverStatusColor}
+                    status={serverStatusText}
+                  />
+                )
               )}
 
               <ConfirmationModeEnabled />
