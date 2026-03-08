@@ -627,6 +627,9 @@ export function TopNavbar() {
   // Determine if we're on a conversation page (hide Pricing/Resources)
   const isConversationPage = pathname.startsWith("/conversations/");
 
+  // Get chat panel collapsed state for hiding logo when collapsed
+  const { isChatPanelCollapsed } = useConversationStore();
+
   React.useEffect(() => {
     if (pathname === "/settings") {
       setSettingsModalIsOpen(false);
@@ -759,8 +762,14 @@ export function TopNavbar() {
         {/* Background layer */}
         <div className="absolute inset-0 bg-[#0a0a0b]/95 backdrop-blur-xl border-b border-neutral-800/50" />
 
-        {/* Left: Logo - absolutely positioned */}
-        <div className="absolute left-4 md:left-8 lg:left-12 top-1/2 -translate-y-1/2 z-10">
+        {/* Left: Logo - absolutely positioned, hidden when chat panel is collapsed on conversation page */}
+        <div
+          className={cn(
+            "absolute left-4 md:left-8 lg:left-12 top-1/2 -translate-y-1/2 z-10",
+            "transition-opacity duration-300",
+            isConversationPage && isChatPanelCollapsed && "opacity-0 pointer-events-none",
+          )}
+        >
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <OpenHandsLogoButton />
           </motion.div>
