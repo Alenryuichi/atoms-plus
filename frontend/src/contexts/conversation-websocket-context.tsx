@@ -166,9 +166,14 @@ export function ConversationWebSocketProvider({
   const wsUrl = useMemo(() => {
     // Don't attempt connection if we're missing required data
     if (!conversationId || !conversationUrl) {
+      // eslint-disable-next-line no-console
+      console.log("[WS Debug] Missing data:", { conversationId, conversationUrl });
       return null;
     }
-    return buildWebSocketUrl(conversationId, conversationUrl);
+    const url = buildWebSocketUrl(conversationId, conversationUrl);
+    // eslint-disable-next-line no-console
+    console.log("[WS Debug] Built WebSocket URL:", url);
+    return url;
   }, [conversationId, conversationUrl]);
 
   const planningAgentWsUrl = useMemo(() => {
@@ -414,9 +419,13 @@ export function ConversationWebSocketProvider({
           // TODO: Tests
           if (isConversationStateUpdateEvent(event)) {
             if (isFullStateConversationStateUpdateEvent(event)) {
+              // eslint-disable-next-line no-console
+              console.log("[WS Debug] Setting execution_status:", event.value.execution_status);
               setExecutionStatus(event.value.execution_status);
             }
             if (isAgentStatusConversationStateUpdateEvent(event)) {
+              // eslint-disable-next-line no-console
+              console.log("[WS Debug] Setting agent_status:", event.value);
               setExecutionStatus(event.value);
             }
             if (isStatsConversationStateUpdateEvent(event)) {

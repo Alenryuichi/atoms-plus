@@ -334,10 +334,15 @@ export function useTeamModeWebSocket() {
       connectionManager.sessionId = targetSessionId;
 
       const url = TeamModeService.getStreamUrl(targetSessionId);
+      // eslint-disable-next-line no-console
+      console.log("[Team Mode WS] Connecting to:", url);
+
       const ws = new WebSocket(url);
       connectionManager.ws = ws;
 
       ws.onopen = () => {
+        // eslint-disable-next-line no-console
+        console.log("[Team Mode WS] Connected successfully");
         connectionManager.reconnectAttempts = 0;
         connectionManager.connecting = false;
         setIsRunning(true);
@@ -346,9 +351,11 @@ export function useTeamModeWebSocket() {
 
       ws.onmessage = handleMessage;
 
-      ws.onerror = () => {
+      ws.onerror = (event) => {
+        // eslint-disable-next-line no-console
+        console.error("[Team Mode WS] Connection error:", event, "URL:", url);
         connectionManager.connecting = false;
-        setError("WebSocket connection error");
+        setError(`WebSocket connection error (URL: ${url})`);
       };
 
       ws.onclose = (event) => {

@@ -564,7 +564,10 @@ async def stream_session(websocket: WebSocket, session_id: str) -> None:
                         msg_type = user_message.get('type') or user_message.get('event')
 
                         if msg_type == 'clarification:answer':
-                            answers = user_message.get('answers', [])
+                            # Frontend sends answers in data.answers, fallback to top-level
+                            answers = user_message.get('data', {}).get(
+                                'answers', user_message.get('answers', [])
+                            )
                             logger.info(
                                 f'[WS] Received clarification answers: {len(answers)}'
                             )
