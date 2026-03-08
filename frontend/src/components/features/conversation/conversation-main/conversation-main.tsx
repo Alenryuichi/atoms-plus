@@ -41,9 +41,8 @@ export function ConversationMain() {
       <div
         ref={containerRef}
         className={cn(
-          // Atoms Plus: Add gap between panels for visual separation
-          // Key: min-h-0 + overflow-hidden prevents children from expanding beyond container
-          "flex flex-1 min-h-0 overflow-hidden gap-3 p-3",
+          // Atoms Plus: Clean layout with side-by-side floating cards
+          "flex flex-1 min-h-0 overflow-hidden gap-2 p-2 pt-0",
           isMobile ? "flex-col" : "transition-all duration-300 ease-in-out",
         )}
         style={
@@ -52,18 +51,12 @@ export function ConversationMain() {
             : undefined
         }
       >
-        {/* Chat Panel - Left side glass card */}
-        {/* CRITICAL: Do NOT use flex-1 class here, as it overrides flexGrow!
-            We need dynamic flexGrow values to match TopNavbar's proportional sizing */}
+        {/* Chat Panel - Left side floating glass card */}
         <div
           className={cn(
-            // Atoms Plus: Key fix - min-h-0 for proper height constraint
-            // Note: Removed flex-1 to allow dynamic flexGrow from inline style
             "flex flex-col min-h-0 overflow-hidden",
-            // Atoms Plus: Glass card effect with rounded corners
-            "bg-black/40 backdrop-blur-xl rounded-2xl",
-            "border border-white/10",
-            "shadow-2xl shadow-black/30",
+            "bg-[#0a0b0d] border border-white/5",
+            "rounded-xl",
             isMobile
               ? getMobileChatPanelClass(isRightPanelShown)
               : "transition-all duration-300 ease-in-out",
@@ -71,8 +64,6 @@ export function ConversationMain() {
           style={
             !isMobile
               ? {
-                  // Use flexGrow with flexBasis: 0 to distribute space proportionally
-                  // This matches TopNavbar's layout for perfect alignment
                   flexGrow: isRightPanelShown ? leftWidth : 1,
                   flexShrink: 1,
                   flexBasis: 0,
@@ -86,23 +77,17 @@ export function ConversationMain() {
           />
         </div>
 
-        {/* Resize Handle - only shown on desktop when right panel is visible */}
+        {/* Resize Handle - thin and subtle */}
         {!isMobile && isRightPanelShown && (
           <ResizeHandle onMouseDown={handleMouseDown} />
         )}
 
-        {/* Tab Content Panel - Right side glass card */}
-        {/* CRITICAL: Do NOT use flex-1 class here, as it overrides flexGrow!
-            We need dynamic flexGrow values to match TopNavbar's proportional sizing */}
+        {/* Tab Content Panel - Right side floating glass card */}
         <div
           className={cn(
-            // Atoms Plus: Key fix - min-h-0 for proper height constraint
-            // Note: Removed flex-1 to allow dynamic flexGrow from inline style
             "flex flex-col min-h-0 transition-all duration-300 ease-in-out overflow-hidden",
-            // Atoms Plus: Glass card effect with rounded corners
-            "bg-black/40 backdrop-blur-xl rounded-2xl",
-            "border border-white/10",
-            "shadow-2xl shadow-black/30",
+            "bg-[#0a0b0d] border border-white/5",
+            "rounded-xl shadow-2xl shadow-black/50",
             isMobile
               ? cn(
                   "absolute bottom-4 left-3 right-3 top-160",
@@ -115,8 +100,6 @@ export function ConversationMain() {
           style={
             !isMobile
               ? {
-                  // Use flexGrow with flexBasis: 0 to distribute space proportionally
-                  // This matches TopNavbar's layout for perfect alignment
                   flexGrow: isRightPanelShown ? rightWidth : 0,
                   flexShrink: 1,
                   flexBasis: 0,
@@ -125,13 +108,7 @@ export function ConversationMain() {
               : undefined
           }
         >
-          <div
-            className={cn(
-              isMobile
-                ? "h-full flex flex-col gap-3 pb-2 md:pb-0 pt-2 min-h-0"
-                : "flex flex-col flex-1 gap-3 min-w-max h-full min-h-0",
-            )}
-          >
+          <div className="flex flex-col flex-1 min-h-0 h-full">
             <ConversationTabContent />
           </div>
         </div>

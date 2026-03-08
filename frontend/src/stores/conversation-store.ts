@@ -21,6 +21,8 @@ export type ConversationMode = "code" | "plan";
 
 export type PreviewViewMode = "split" | "editor" | "preview";
 
+export type PreviewSubTab = "design" | "console";
+
 // Panel width constants
 const PANEL_WIDTH_STORAGE_KEY = "desktop-layout-panel-width";
 const DEFAULT_PANEL_LEFT_WIDTH = 50;
@@ -48,6 +50,7 @@ interface ConversationState {
   conversationMode: ConversationMode;
   subConversationTaskId: string | null; // Task ID for sub-conversation creation
   previewViewMode: PreviewViewMode; // Preview panel view mode (split/editor/preview)
+  previewSubTab: PreviewSubTab; // Sub-tab within preview panel (design/console)
   // Panel width state - shared between TopNavbar and ConversationMain
   panelLeftWidth: number; // Left panel width as percentage (30-80)
   panelIsDragging: boolean; // Whether user is currently dragging the resize handle
@@ -78,6 +81,7 @@ interface ConversationActions {
   setSubConversationTaskId: (taskId: string | null) => void;
   setPlanContent: (planContent: string | null) => void;
   setPreviewViewMode: (previewViewMode: PreviewViewMode) => void;
+  setPreviewSubTab: (previewSubTab: PreviewSubTab) => void;
   // Panel width actions
   setPanelLeftWidth: (width: number) => void;
   setPanelIsDragging: (isDragging: boolean) => void;
