@@ -69,8 +69,8 @@ test.describe("Daytona Conversation Flow", () => {
   });
 
   test("roles list is available", async ({ request }) => {
-    // Note: The trailing slash is required for this endpoint
-    const response = await request.get(`${BACKEND_URL}/api/v1/roles/`);
+    // The endpoint is /api/v1/roles/list (not just /api/v1/roles/)
+    const response = await request.get(`${BACKEND_URL}/api/v1/roles/list`);
     expect(response.ok()).toBeTruthy();
 
     const data = await response.json();

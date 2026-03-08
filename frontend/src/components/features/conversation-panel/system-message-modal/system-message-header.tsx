@@ -1,7 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { BaseModalTitle } from "#/components/shared/modals/confirmation-modals/base-modal";
-import { Typography } from "#/ui/typography";
-import { cn } from "#/utils/utils";
 
 interface SystemMessageHeaderProps {
   agentClass: string | null;
@@ -15,35 +12,37 @@ export function SystemMessageHeader({
   const { t } = useTranslation();
 
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-6 w-full",
-        !!agentClass && !!openhandsVersion ? "gap-6" : "gap-0",
+    <div className="flex flex-col gap-4 w-full">
+      {/* Modal title with refined typography */}
+      <h2 className="text-lg font-semibold text-white/90 tracking-tight">
+        {t("SYSTEM_MESSAGE_MODAL$TITLE")}
+      </h2>
+
+      {/* Metadata badges */}
+      {(agentClass || openhandsVersion) && (
+        <div className="flex flex-wrap gap-3">
+          {agentClass && (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+              <span className="text-xs text-white/50">
+                {t("SYSTEM_MESSAGE_MODAL$AGENT_CLASS")}
+              </span>
+              <span className="text-xs font-medium text-white/80">
+                {agentClass}
+              </span>
+            </div>
+          )}
+          {openhandsVersion && (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+              <span className="text-xs text-white/50">
+                {t("SYSTEM_MESSAGE_MODAL$OPENHANDS_VERSION")}
+              </span>
+              <span className="text-xs font-medium text-white/80">
+                {openhandsVersion}
+              </span>
+            </div>
+          )}
+        </div>
       )}
-    >
-      <BaseModalTitle title={t("SYSTEM_MESSAGE_MODAL$TITLE")} />
-      <div className="flex flex-col gap-2">
-        {agentClass && (
-          <div className="text-sm">
-            <Typography.Text className="font-semibold text-gray-300">
-              {t("SYSTEM_MESSAGE_MODAL$AGENT_CLASS")}
-            </Typography.Text>{" "}
-            <Typography.Text className="font-medium text-gray-100">
-              {agentClass}
-            </Typography.Text>
-          </div>
-        )}
-        {openhandsVersion && (
-          <div className="text-sm">
-            <Typography.Text className="font-semibold text-gray-300">
-              {t("SYSTEM_MESSAGE_MODAL$OPENHANDS_VERSION")}
-            </Typography.Text>{" "}
-            <Typography.Text className="text-gray-100">
-              {openhandsVersion}
-            </Typography.Text>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

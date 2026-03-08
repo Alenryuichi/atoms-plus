@@ -61,6 +61,11 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# Team Mode LangGraph state persistence
+team_mode.db
+team_mode.db-shm
+team_mode.db-wal
+
 # Flask stuff:
 instance/
 .webassets-cache

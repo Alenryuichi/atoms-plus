@@ -9,6 +9,7 @@ import { useAgentState } from "#/hooks/use-agent-state";
 import { processFiles, processImages } from "#/utils/file-processing";
 import { useSubConversationTaskPolling } from "#/hooks/query/use-sub-conversation-task-polling";
 import { isTaskPolling } from "#/utils/utils";
+import { useTeamModeStore } from "#/stores/team-mode-store";
 
 interface InteractiveChatBoxProps {
   onSubmit: (message: string, images: File[], files: File[]) => void;
@@ -29,6 +30,9 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
   } = useConversationStore();
   const { curAgentState } = useAgentState();
   const { data: conversation } = useActiveConversation();
+
+  // Team Mode: Check if team collaboration is running
+  const isTeamModeRunning = useTeamModeStore((state) => state.isRunning);
 
   // Poll sub-conversation task to check if it's loading
   const { taskStatus: subConversationTaskStatus } =
@@ -137,10 +141,15 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
     clearAllFiles();
   };
 
+  // Disable input when:
+  // - Agent is loading or awaiting confirmation
+  // - Sub-conversation task is polling
+  // - Team Mode is running (PM/Architect/Engineer collaboration in progress)
   const isDisabled =
     curAgentState === AgentState.LOADING ||
     curAgentState === AgentState.AWAITING_USER_CONFIRMATION ||
-    isTaskPolling(subConversationTaskStatus);
+    isTaskPolling(subConversationTaskStatus) ||
+    isTeamModeRunning;
 
   return (
     <div data-testid="interactive-chat-box">

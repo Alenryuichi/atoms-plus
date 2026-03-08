@@ -122,6 +122,79 @@ export const useTracking = () => {
     });
   };
 
+  // Team Mode Clarification Analytics
+  const trackClarificationTriggered = ({
+    questionCount,
+    priority,
+    sessionId,
+  }: {
+    questionCount: number;
+    priority: string;
+    sessionId: string;
+  }) => {
+    posthog.capture("clarification_triggered", {
+      question_count: questionCount,
+      highest_priority: priority,
+      session_id: sessionId,
+      ...commonProperties,
+    });
+  };
+
+  const trackClarificationAnswered = ({
+    questionId,
+    questionType,
+    sessionId,
+  }: {
+    questionId: string;
+    questionType: string;
+    sessionId: string;
+  }) => {
+    posthog.capture("clarification_answered", {
+      question_id: questionId,
+      question_type: questionType,
+      session_id: sessionId,
+      ...commonProperties,
+    });
+  };
+
+  const trackClarificationSkipped = ({
+    all,
+    questionId,
+    sessionId,
+  }: {
+    all: boolean;
+    questionId?: string;
+    sessionId: string;
+  }) => {
+    posthog.capture("clarification_skipped", {
+      skip_all: all,
+      question_id: questionId || null,
+      session_id: sessionId,
+      ...commonProperties,
+    });
+  };
+
+  const trackClarificationSubmitted = ({
+    answeredCount,
+    skippedCount,
+    totalCount,
+    sessionId,
+  }: {
+    answeredCount: number;
+    skippedCount: number;
+    totalCount: number;
+    sessionId: string;
+  }) => {
+    posthog.capture("clarification_submitted", {
+      answered_count: answeredCount,
+      skipped_count: skippedCount,
+      total_count: totalCount,
+      answer_rate: totalCount > 0 ? answeredCount / totalCount : 0,
+      session_id: sessionId,
+      ...commonProperties,
+    });
+  };
+
   return {
     trackLoginButtonClick,
     trackConversationCreated,
@@ -134,5 +207,10 @@ export const useTracking = () => {
     trackCreditLimitReached,
     trackAddTeamMembersButtonClick,
     trackOnboardingCompleted,
+    // Clarification tracking
+    trackClarificationTriggered,
+    trackClarificationAnswered,
+    trackClarificationSkipped,
+    trackClarificationSubmitted,
   };
 };

@@ -26,98 +26,96 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# 导入 OpenHands 基础应用 (用于注册路由)
-from openhands.server.app import app as base_app
-
 # 导入 Atoms Plus 扩展路由
 from atoms_plus.race_mode.api import router as race_router
 from atoms_plus.roles.api import router as roles_router
-from atoms_plus.orchestrator.api import router as orchestrator_router
 from atoms_plus.scaffolding.api import router as scaffolding_router
+from atoms_plus.team_mode.api import router as team_router
+from openhands.server.app import app as base_app
 
 # ==================== 注册扩展路由 ====================
 # 注意：路由必须在导入 listen.py 之前注册，因为 listen.py 会包装 base_app
 
 # Race Mode API - 多模型竞速对比
 # 路由前缀: /api/v1/race/*
-base_app.include_router(race_router, prefix="/api/v1")
+base_app.include_router(race_router, prefix='/api/v1')
 
 # Roles API - 角色系统
 # 路由前缀: /api/v1/roles/*
 base_app.include_router(roles_router)
 
-# Orchestrator API - 多角色协调
-# 路由前缀: /api/v1/orchestrator/*
-base_app.include_router(orchestrator_router)
-
 # Scaffolding API - 项目脚手架
 # 路由前缀: /api/v1/scaffolding/*
-base_app.include_router(scaffolding_router, prefix="/api/v1")
+base_app.include_router(scaffolding_router, prefix='/api/v1')
+
+# Team Mode API - 多智能体协作 (LangGraph)
+# 路由前缀: /api/v1/team/*
+base_app.include_router(team_router)
 
 
 # ==================== 扩展端点 ====================
 
 
-@base_app.get("/atoms-plus")
+@base_app.get('/atoms-plus')
 def atoms_plus_info():
     """Atoms Plus 信息端点"""
     return {
-        "name": "Atoms Plus",
-        "version": "0.3.0",
-        "description": "OpenHands 扩展层 - 复刻 Atoms.dev 功能",
-        "features": [
+        'name': 'Atoms Plus',
+        'version': '0.3.0',
+        'description': 'OpenHands 扩展层 - 复刻 Atoms.dev 功能',
+        'features': [
             {
-                "name": "Race Mode",
-                "path": "/api/v1/race",
-                "description": "多模型并行竞速对比",
+                'name': 'Team Mode',
+                'path': '/api/v1/team',
+                'description': '多智能体协作 (LangGraph)',
+                'status': 'beta',
             },
             {
-                "name": "Agent Roles",
-                "path": "/api/v1/roles",
-                "description": "8种专业角色切换",
+                'name': 'Race Mode',
+                'path': '/api/v1/race',
+                'description': '多模型并行竞速对比',
             },
             {
-                "name": "Orchestrator",
-                "path": "/api/v1/orchestrator",
-                "description": "多角色并行协调",
+                'name': 'Agent Roles',
+                'path': '/api/v1/roles',
+                'description': '8种专业角色切换',
             },
             {
-                "name": "Scaffolding",
-                "path": "/api/v1/scaffolding",
-                "description": "项目脚手架生成 (React/Next.js/Vue/Nuxt)",
+                'name': 'Scaffolding',
+                'path': '/api/v1/scaffolding',
+                'description': '项目脚手架生成 (React/Next.js/Vue/Nuxt)',
             },
         ],
     }
 
 
-@base_app.get("/atoms-plus/health")
+@base_app.get('/atoms-plus/health')
 def atoms_plus_health():
     """健康检查端点"""
-    return {"status": "ok", "service": "atoms-plus"}
+    return {'status': 'ok', 'service': 'atoms-plus'}
 
 
 # ==================== 应用导出 ====================
 
 # 导入 listen.py 中完整配置的 app (包含 CORS middleware + socketio)
 # 这样所有请求都会经过正确的 middleware 链
-from openhands.server.listen import app  # noqa: E402
+from openhands.server.listen import app  # noqa: E402, F401
 
 # ==================== 直接运行 ====================
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import uvicorn
 
-    port = int(os.environ.get("PORT", 3000))
-    host = os.environ.get("HOST", "0.0.0.0")
+    port = int(os.environ.get('PORT', 3000))
+    host = os.environ.get('HOST', '0.0.0.0')
 
-    print(f"🚀 Starting Atoms Plus Server on {host}:{port}")
-    print("📚 API Docs: http://localhost:{port}/docs")
-    print("🏎️ Race Mode: http://localhost:{port}/api/v1/race/models")
+    print(f'🚀 Starting Atoms Plus Server on {host}:{port}')
+    print('📚 API Docs: http://localhost:{port}/docs')
+    print('🏎️ Race Mode: http://localhost:{port}/api/v1/race/models')
 
     uvicorn.run(
-        "atoms_plus.atoms_server:app",
+        'atoms_plus.atoms_server:app',
         host=host,
         port=port,
         reload=True,
     )
-

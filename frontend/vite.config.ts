@@ -81,6 +81,8 @@ export default defineConfig(({ mode }) => {
           target: API_URL,
           changeOrigin: true,
           secure: !INSECURE_SKIP_VERIFY,
+          // Enable WebSocket for Team Mode: /api/v1/team/sessions/{id}/stream
+          ws: true,
         },
         "/ws": {
           target: WS_URL,

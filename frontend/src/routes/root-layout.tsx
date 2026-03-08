@@ -265,9 +265,11 @@ export default function MainApp() {
     <div
       data-testid="root-layout"
       className={cn(
-        // Use min-h-dvh for proper mobile viewport handling (iOS Safari)
-        // dvh = dynamic viewport height, accounts for browser chrome
-        "min-h-dvh lg:min-w-5xl flex flex-col bg-base overflow-hidden",
+        // CRITICAL: Use h-dvh (not min-h-dvh) to fix layout overflow issue.
+        // h-dvh = fixed viewport height, forces children to scroll internally.
+        // min-h-dvh would allow the container to grow infinitely with content.
+        // dvh = dynamic viewport height, accounts for mobile browser chrome (iOS Safari)
+        "h-dvh lg:min-w-5xl flex flex-col bg-base overflow-hidden",
         isMobileDevice() && "overflow-hidden",
       )}
     >

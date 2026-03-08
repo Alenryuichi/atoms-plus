@@ -125,7 +125,12 @@ export const useWebSocket = <T = string>(
 
     // Only attempt connection if we have a valid URL
     if (url && url.trim() !== "") {
+      // eslint-disable-next-line no-console
+      console.log("[useWebSocket] Connecting to:", url);
       connectWebSocket();
+    } else {
+      // eslint-disable-next-line no-console
+      console.log("[useWebSocket] Skipped connection - URL empty or invalid:", url);
     }
 
     return () => {

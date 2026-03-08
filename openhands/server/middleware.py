@@ -81,21 +81,28 @@ class LocalhostCORSMiddleware(CORSMiddleware):
             if b'access-control-request-method' in headers:
                 response_headers = [
                     (b'access-control-allow-origin', origin.encode()),
-                    (b'access-control-allow-methods', b'GET, POST, PUT, DELETE, OPTIONS, PATCH'),
+                    (
+                        b'access-control-allow-methods',
+                        b'GET, POST, PUT, DELETE, OPTIONS, PATCH',
+                    ),
                     (b'access-control-allow-headers', b'*'),
                     (b'access-control-allow-credentials', b'true'),
                     (b'access-control-max-age', b'600'),
                     (b'content-length', b'0'),
                 ]
-                await send({
-                    'type': 'http.response.start',
-                    'status': 200,
-                    'headers': response_headers,
-                })
-                await send({
-                    'type': 'http.response.body',
-                    'body': b'',
-                })
+                await send(
+                    {
+                        'type': 'http.response.start',
+                        'status': 200,
+                        'headers': response_headers,
+                    }
+                )
+                await send(
+                    {
+                        'type': 'http.response.body',
+                        'body': b'',
+                    }
+                )
                 return
 
         # For non-preflight requests, use the parent's logic
