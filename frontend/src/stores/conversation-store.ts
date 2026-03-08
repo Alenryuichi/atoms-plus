@@ -54,6 +54,8 @@ interface ConversationState {
   // Panel width state - shared between TopNavbar and ConversationMain
   panelLeftWidth: number; // Left panel width as percentage (30-80)
   panelIsDragging: boolean; // Whether user is currently dragging the resize handle
+  // Chat panel collapse state - hides chat and fully expands preview
+  isChatPanelCollapsed: boolean;
 }
 
 interface ConversationActions {
@@ -86,6 +88,9 @@ interface ConversationActions {
   setPanelLeftWidth: (width: number) => void;
   setPanelIsDragging: (isDragging: boolean) => void;
   persistPanelWidth: () => void; // Save to localStorage when drag ends
+  // Chat panel collapse actions
+  toggleChatPanelCollapsed: () => void;
+  setChatPanelCollapsed: (collapsed: boolean) => void;
 }
 
 type ConversationStore = ConversationState & ConversationActions;
@@ -189,6 +194,8 @@ export const useConversationStore = create<ConversationStore>()(
       // Panel width state - synced between TopNavbar and ConversationMain
       panelLeftWidth: getInitialPanelWidth(),
       panelIsDragging: false,
+      // Chat panel collapse state
+      isChatPanelCollapsed: false,
 
       // Actions
       setIsRightPanelShown: (isRightPanelShown) =>
@@ -372,6 +379,21 @@ export const useConversationStore = create<ConversationStore>()(
           );
         }
       },
+
+      // Chat panel collapse actions
+      toggleChatPanelCollapsed: () =>
+        set(
+          (state) => ({ isChatPanelCollapsed: !state.isChatPanelCollapsed }),
+          false,
+          "toggleChatPanelCollapsed",
+        ),
+
+      setChatPanelCollapsed: (collapsed) =>
+        set(
+          { isChatPanelCollapsed: collapsed },
+          false,
+          "setChatPanelCollapsed",
+        ),
     }),
     {
       name: "conversation-store",

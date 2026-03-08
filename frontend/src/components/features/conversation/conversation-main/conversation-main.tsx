@@ -18,7 +18,7 @@ function getDesktopTabPanelClass(isRightPanelShown: boolean) {
 
 export function ConversationMain() {
   const isMobile = useBreakpoint();
-  const { isRightPanelShown } = useConversationStore();
+  const { isRightPanelShown, isChatPanelCollapsed } = useConversationStore();
 
   // Note: Auto-switch to Preview view is now handled in PreviewPanel component
   // It switches from "Code" to "Preview" once workspace files and content are loaded
@@ -26,6 +26,10 @@ export function ConversationMain() {
   // Panel width state is now in Zustand store, synchronized with TopNavbar
   const { leftWidth, rightWidth, isDragging, containerRef, handleMouseDown } =
     useResizablePanels();
+
+  // When chat panel is collapsed, preview takes full width
+  const effectiveLeftWidth = isChatPanelCollapsed ? 0 : leftWidth;
+  const effectiveRightWidth = isChatPanelCollapsed ? 100 : rightWidth;
 
   return (
     <div
@@ -51,18 +55,20 @@ export function ConversationMain() {
             : undefined
         }
       >
-        {/* Chat Panel - Left side, no card styling */}
+        {/* Chat Panel - Left side, collapsible */}
         <div
           className={cn(
             "flex flex-col min-h-0 overflow-hidden",
             isMobile
               ? getMobileChatPanelClass(isRightPanelShown)
               : "transition-all duration-300 ease-in-out",
+            // Hide when collapsed (desktop only)
+            !isMobile && isChatPanelCollapsed && "w-0 opacity-0",
           )}
           style={
             !isMobile
               ? {
-                  flexGrow: isRightPanelShown ? leftWidth : 1,
+                  flexGrow: isRightPanelShown ? effectiveLeftWidth : 1,
                   flexShrink: 1,
                   flexBasis: 0,
                   transitionProperty: isDragging ? "none" : "all",
@@ -75,12 +81,12 @@ export function ConversationMain() {
           />
         </div>
 
-        {/* Resize Handle - thin and subtle */}
-        {!isMobile && isRightPanelShown && (
+        {/* Resize Handle - thin and subtle, hidden when chat is collapsed */}
+        {!isMobile && isRightPanelShown && !isChatPanelCollapsed && (
           <ResizeHandle onMouseDown={handleMouseDown} />
         )}
 
-        {/* Tab Content Panel - Right side, no card styling */}
+        {/* Tab Content Panel - Right side, expands fully when chat is collapsed */}
         <div
           className={cn(
             "flex flex-col min-h-0 transition-all duration-300 ease-in-out overflow-hidden",
@@ -96,7 +102,7 @@ export function ConversationMain() {
           style={
             !isMobile
               ? {
-                  flexGrow: isRightPanelShown ? rightWidth : 0,
+                  flexGrow: isRightPanelShown ? effectiveRightWidth : 0,
                   flexShrink: 1,
                   flexBasis: 0,
                   transitionProperty: isDragging ? "opacity, transform" : "all",

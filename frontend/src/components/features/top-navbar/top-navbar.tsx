@@ -8,6 +8,8 @@ import {
   IconChevronDown,
   IconPlus,
   IconMessageCircle,
+  IconChevronsLeft,
+  IconChevronsRight,
 } from "@tabler/icons-react";
 import { useGitUser } from "#/hooks/query/use-git-user";
 import { UserActions } from "../sidebar/user-actions";
@@ -135,12 +137,20 @@ function NavActionsDesktop({
   user,
   logout,
 }: NavActionsDesktopProps) {
-  const { panelLeftWidth, panelIsDragging } = useConversationStore();
+  const {
+    panelLeftWidth,
+    panelIsDragging,
+    isChatPanelCollapsed,
+    toggleChatPanelCollapsed,
+  } = useConversationStore();
+
+  // Effective left width for layout - when collapsed, use minimal width
+  const effectiveLeftWidth = isChatPanelCollapsed ? 0 : panelLeftWidth;
 
   // Chat page: Icon buttons + Preview controls aligned with split panels
   // CRITICAL: Must use EXACTLY the same flex layout as ConversationMain to achieve pixel-perfect alignment
   // ConversationMain uses: gap-2 p-2 pt-0 + flexGrow with panel widths
-  // Layout: [Logo]   [对话] | [Tabs]   [Avatar]
+  // Layout: [Logo]   [<<] [对话] | [Tabs]   [Avatar]
   // The divider "|" aligns with ResizeHandle in ConversationMain
   if (isConversationPage) {
     return (
@@ -153,11 +163,11 @@ function NavActionsDesktop({
           right: "8px",
         }}
       >
-        {/* Left section: Conversation Toggle - aligned to right edge (near divider) */}
+        {/* Left section: Collapse Button + Conversation Toggle - aligned to right edge (near divider) */}
         <div
-          className="flex items-center justify-end h-full"
+          className="flex items-center justify-end h-full gap-1"
           style={{
-            flexGrow: panelLeftWidth,
+            flexGrow: effectiveLeftWidth,
             flexShrink: 1,
             flexBasis: 0,
             transitionProperty: panelIsDragging ? "none" : "all",
@@ -165,6 +175,28 @@ function NavActionsDesktop({
             transitionTimingFunction: "ease-in-out",
           }}
         >
+          {/* Collapse/Expand Chat Panel Button */}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <button
+              type="button"
+              onClick={toggleChatPanelCollapsed}
+              className={cn(
+                "flex items-center justify-center w-8 h-8 rounded-lg",
+                "text-white/40 hover:text-white/90",
+                "transition-all duration-200",
+                isChatPanelCollapsed && "text-white bg-white/10",
+              )}
+              title={isChatPanelCollapsed ? "展开对话面板" : "收起对话面板"}
+            >
+              {isChatPanelCollapsed ? (
+                <IconChevronsRight size={18} stroke={1.5} />
+              ) : (
+                <IconChevronsLeft size={18} stroke={1.5} />
+              )}
+            </button>
+          </motion.div>
+
+          {/* Conversation List Button */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <button
               type="button"
@@ -195,7 +227,7 @@ function NavActionsDesktop({
         <div
           className="flex items-center justify-start h-full"
           style={{
-            flexGrow: 100 - panelLeftWidth,
+            flexGrow: 100 - effectiveLeftWidth,
             flexShrink: 1,
             flexBasis: 0,
             transitionProperty: panelIsDragging ? "none" : "all",
