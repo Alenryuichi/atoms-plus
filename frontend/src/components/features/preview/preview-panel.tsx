@@ -10,6 +10,7 @@ import {
   SandpackLayout,
   SandpackCodeEditor,
   SandpackPreview,
+  SandpackConsole,
 } from "@codesandbox/sandpack-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -95,7 +96,7 @@ function PreviewPanelComponent(
   const { t } = useTranslation();
   const runtimeIsReady = useRuntimeIsReady();
   const { conversationId } = useConversationId();
-  const { previewViewMode: viewMode } = useConversationStore();
+  const { previewViewMode: viewMode, previewSubTab } = useConversationStore();
 
   // Conversation-specific storage key for selected file
   const storageKeySelectedFile = `${STORAGE_KEY_PREFIX_SELECTED_FILE}${conversationId}`;
@@ -242,7 +243,7 @@ function PreviewPanelComponent(
   }
 
   return (
-    <div className="h-full w-full flex flex-col bg-transparent">
+    <div className="h-full w-full flex flex-col bg-transparent relative">
       {/* Sandpack Preview - clean content area without toolbar */}
       <div className="flex-1 overflow-hidden h-full">
         <AnimatePresence mode="wait">
@@ -259,8 +260,8 @@ function PreviewPanelComponent(
             </motion.div>
           ) : (
             <motion.div
-              key={`${selectedFile}-${viewMode}`}
-              className="h-full"
+              key={`${selectedFile}-${viewMode}-${previewSubTab}`}
+              className="h-full flex flex-col"
               variants={contentVariants}
               initial="hidden"
               animate="visible"
@@ -281,6 +282,7 @@ function PreviewPanelComponent(
                     height: "100%",
                     border: "none",
                     borderRadius: 0,
+                    flex: 1,
                   }}
                 >
                   {(viewMode === "split" || viewMode === "editor") && (
@@ -296,14 +298,35 @@ function PreviewPanelComponent(
                     />
                   )}
                   {(viewMode === "split" || viewMode === "preview") && (
-                    <SandpackPreview
-                      style={{
-                        height: "100%",
-                        flex: viewMode === "split" ? 1 : "auto",
-                      }}
-                      showNavigator={false}
-                      showRefreshButton={false}
-                    />
+                    <div className="flex-1 w-full h-full relative flex flex-col">
+                      {previewSubTab === "design" ? (
+                        <SandpackPreview
+                          style={{
+                            height: "100%",
+                            width: "100%",
+                            flex: 1,
+                          }}
+                          showNavigator={false}
+                          showRefreshButton={false}
+                        />
+                      ) : (
+                        <div className="flex-1 w-full h-full bg-[#151515] overflow-auto flex flex-col">
+                          {/* We render SandpackPreview hidden to keep the application running,
+                                while displaying the console on top */}
+                          <div className="hidden">
+                            <SandpackPreview
+                              showNavigator={false}
+                              showRefreshButton={false}
+                            />
+                          </div>
+                          <SandpackConsole
+                            standalone
+                            resetOnPreviewRestart
+                            style={{ flex: 1, height: "100%" }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   )}
                 </SandpackLayout>
               </SandpackProvider>

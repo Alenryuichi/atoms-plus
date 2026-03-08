@@ -14,16 +14,16 @@
   --border-editor-sidebar: #3c3c4a;
   --bg-neutral-muted: #afb8c133;
 
-  /* Atoms Plus: Dark charcoal theme - neutral with amber/gold accent */
-  --atoms-bg-primary: #0f1115;
-  --atoms-bg-secondary: #141619;
-  --atoms-bg-elevated: #1a1d22;
-  --atoms-bg-card: #1e2127;
-  --atoms-border: #2a2e35;
-  --atoms-border-subtle: #23262d;
-  --atoms-text-primary: #e8eaed;
-  --atoms-text-secondary: #9aa0a9;
-  --atoms-text-muted: #6b7280;
+  /* Atoms Plus: Refined dark theme - neutral but deep */
+  --atoms-bg-primary: #0a0b0d;
+  --atoms-bg-secondary: #0e1013;
+  --atoms-bg-elevated: #16181d;
+  --atoms-bg-card: #1c1e24;
+  --atoms-border: rgba(255, 255, 255, 0.08);
+  --atoms-border-subtle: rgba(255, 255, 255, 0.04);
+  --atoms-text-primary: rgba(255, 255, 255, 0.9);
+  --atoms-text-secondary: rgba(255, 255, 255, 0.6);
+  --atoms-text-muted: rgba(255, 255, 255, 0.4);
   /* Single accent color - warm amber/gold (desaturated ~70%) */
   --atoms-accent-primary: #d4a855;
   --atoms-accent-hover: #c99a45;

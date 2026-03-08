@@ -29,30 +29,17 @@ description: Complete guide for deploying Atoms Plus (OpenHands fork) locally. U
 ### 1. 启动后端 (App Server)
 
 ```bash
-# 必需环境变量
-export RUNTIME=local              # 使用 ProcessSandboxService
-export OH_ENABLE_BROWSER=false    # 禁用 Playwright 浏览器（避免启动阻塞）
-export NO_PROXY=localhost,127.0.0.1  # 绕过系统代理
-
-# 可选环境变量
-export PORT=3002                  # 如果 3000 被占用（如 OpenMemory）
+export RUNTIME=local
 export SKIP_DEPENDENCY_CHECK=1
-export OH_DISABLE_MCP=true
-
-# LLM 配置（或在 ~/.openhands/settings.json 中设置）
 export LLM_API_KEY="your-api-key"
 export LLM_BASE_URL="https://coding.dashscope.aliyuncs.com/v1"
 export LLM_MODEL="openai/MiniMax-M2.5"
+export OH_DISABLE_MCP=true
 
 poetry run python -m atoms_plus.atoms_server
+# 或
+poetry run python -m openhands.app_server
 ```
-
-**一行启动命令**:
-```bash
-NO_PROXY=localhost,127.0.0.1 PORT=3000 RUNTIME=local OH_ENABLE_BROWSER=false SKIP_DEPENDENCY_CHECK=1 poetry run python -m atoms_plus.atoms_server
-```
-
-> **重要**: `SKIP_DEPENDENCY_CHECK=1` 是必需的，因为 V0 遗留代码的 `LocalRuntime.setup()` 会在启动时检查浏览器依赖，即使 `OH_ENABLE_BROWSER=false` 也无法阻止。
 
 ### 2. 启动前端
 
@@ -89,14 +76,11 @@ VITE_USE_TLS=false
 | 变量 | 必需 | 默认值 | 说明 |
 |------|------|--------|------|
 | `RUNTIME` | ✅ | - | 设为 `local` 使用 ProcessSandboxService |
-| `OH_ENABLE_BROWSER` | ✅ | `true` | 设为 `false` 禁用 Playwright 浏览器 |
-| `NO_PROXY` | ✅ | - | 设为 `localhost,127.0.0.1` 绕过系统代理 |
-| `SKIP_DEPENDENCY_CHECK` | ✅ | `0` | **必须设为 `1`**，跳过 V0 的浏览器依赖检查 |
-| `PORT` | ❌ | `3000` | 后端端口，如被占用可改为 `3002` |
 | `LLM_API_KEY` | ✅ | - | LLM API 密钥 |
 | `LLM_BASE_URL` | ✅ | - | LLM API 地址 |
 | `LLM_MODEL` | ✅ | - | 模型名称 (需 `openai/` 前缀) |
 | `OH_DISABLE_MCP` | ❌ | `false` | 禁用 MCP 服务器 |
+| `SKIP_DEPENDENCY_CHECK` | ❌ | `false` | 跳过依赖检查 |
 
 ### 用户设置 (`~/.openhands/settings.json`)
 
@@ -111,28 +95,6 @@ VITE_USE_TLS=false
 
 ## 常见问题排查
 
-### 问题 0: 端口 3000 被占用
-
-**原因**: 其他服务（如 OpenMemory、Docker 容器）占用端口
-
-**诊断**:
-```bash
-lsof -i :3000 | head -5
-docker ps --format "{{.Names}} {{.Ports}}" | grep 3000
-```
-
-**解决**:
-```bash
-# 方案 1: 使用其他端口
-PORT=3002 NO_PROXY=localhost,127.0.0.1 RUNTIME=local OH_ENABLE_BROWSER=false poetry run python -m atoms_plus.atoms_server
-
-# 方案 2: 停止冲突的容器
-docker stop openmemory-openmemory-ui-1
-
-# 前端也要更新（如果改了端口）
-echo 'VITE_BACKEND_BASE_URL=localhost:3002' > frontend/.env.local
-```
-
 ### 问题 1: "正在连接..." 卡住
 
 **原因**: 前端未正确配置 `VITE_BACKEND_BASE_URL`
@@ -141,19 +103,6 @@ echo 'VITE_BACKEND_BASE_URL=localhost:3002' > frontend/.env.local
 ```bash
 echo 'VITE_BACKEND_BASE_URL=localhost:3000' > frontend/.env.local
 cd frontend && npm run dev
-```
-
-### 问题 1.5: 后端启动卡住 (无 "Application startup complete")
-
-**原因**: Playwright 浏览器未安装，browsergym 初始化阻塞
-
-**解决**:
-```bash
-# 方案 1: 禁用浏览器（推荐）
-OH_ENABLE_BROWSER=false poetry run python -m atoms_plus.atoms_server
-
-# 方案 2: 安装 Playwright（如果需要浏览器功能）
-poetry run playwright install
 ```
 
 ### 问题 2: "已断开连接" 错误
@@ -209,40 +158,6 @@ curl -s https://coding.dashscope.aliyuncs.com/v1/chat/completions \
 | 3001 | Vite Dev Server | 前端 |
 | 3000 | App Server | FastAPI 后端 |
 | 8000+ | Agent Server | 每个沙盒一个端口 |
-
-## 架构验证
-
-### 检查 V1 进程状态
-
-```bash
-# 检查 Agent Server 进程
-ps aux | grep "openhands.agent_server" | grep -v grep
-
-# 检查动态端口
-lsof -i :8000-8100 | grep python
-
-# 检查沙盒目录
-ls -la /tmp/openhands-sandboxes/
-
-# 检查对话状态
-curl -s http://localhost:3000/api/v1/app-conversations/search?limit=3 | jq '.items[] | {id, sandbox_status}'
-```
-
-### 确认 V1 架构正在使用
-
-如果看到以下特征，说明 V1 正在工作：
-
-| 特征 | 检查方法 | 预期结果 |
-|------|----------|----------|
-| 独立进程 | `ps aux \| grep agent_server` | 多个 `openhands.agent_server` 进程 |
-| 动态端口 | `lsof -i :8000-8100` | 端口 800x 被 Python 占用 |
-| 沙盒目录 | `ls /tmp/openhands-sandboxes/` | 存在 `{sandbox_id}/` 子目录 |
-
-### 架构最佳实践
-
-- **1 会话 = 1 Sandbox**: 保持状态一致性
-- **Team Mode 复用 Sandbox**: 避免创建独立沙盒导致文件同步问题
-- **端口范围**: Agent Server 从 8000 开始动态分配 (base_port + offset)
 
 ## 相关文件
 

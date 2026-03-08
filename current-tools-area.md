@@ -1,0 +1,259 @@
+- generic [ref=e2]:
+  - banner "侧边栏导航" [ref=e3]:
+    - link "Atoms Plus标志" [ref=e8] [cursor=pointer]:
+      - /url: /
+      - img "Atoms Plus" [ref=e9]
+    - navigation [ref=e19]:
+      - generic [ref=e694]:
+        - button "收起对话面板" [ref=e696]:
+          - img [ref=e697]
+        - button "对话" [ref=e701]:
+          - img [ref=e702]
+      - generic [ref=e706]:
+        - generic [ref=e707]:
+          - button [ref=e710] [cursor=pointer]:
+            - img [ref=e711]
+          - button "更改" [ref=e720] [cursor=pointer]:
+            - img [ref=e721]
+            - generic [ref=e724]: 更改
+          - button [ref=e727] [cursor=pointer]:
+            - img [ref=e728]
+          - button [ref=e733] [cursor=pointer]:
+            - img [ref=e734]
+          - button [ref=e738] [cursor=pointer]:
+            - img [ref=e739]
+          - button [ref=e743] [cursor=pointer]:
+            - img [ref=e744]
+          - button [ref=e748] [cursor=pointer]:
+            - img [ref=e749]
+          - button "更多选项" [ref=e754] [cursor=pointer]:
+            - img [ref=e755]
+        - generic [ref=e758] [cursor=pointer]:
+          - button [ref=e759]:
+            - img [ref=e760]
+          - generic:
+            - list:
+              - link "LLM":
+                - /url: /settings
+                - button "LLM":
+                  - generic:
+                    - img
+                  - generic: LLM
+              - link "MCP":
+                - /url: /settings/mcp
+                - button "MCP":
+                  - generic:
+                    - img
+                  - generic: MCP
+              - link "集成":
+                - /url: /settings/integrations
+                - button "集成":
+                  - generic:
+                    - img
+                  - generic: 集成
+              - link "应用程序":
+                - /url: /settings/app
+                - button "应用程序":
+                  - generic:
+                    - img
+                  - generic: 应用程序
+              - link "机密":
+                - /url: /settings/secrets
+                - button "机密":
+                  - generic:
+                    - img
+                  - generic: 机密
+              - link "文档":
+                - /url: https://docs.openhands.dev
+                - button "文档":
+                  - img
+                  - generic: 文档
+              - button "退出登录":
+                - img
+                - generic: 退出登录
+  - main [ref=e43]:
+    - generic [ref=e770]:
+      - generic [ref=e774]:
+        - generic [ref=e775]:
+          - article [ref=e776]:
+            - paragraph [ref=e781]: Test collapse feature
+          - article [ref=e782]:
+            - generic [ref=e783]:
+              - generic [ref=e784]:
+                - generic [ref=e786]: A
+                - generic [ref=e787]:
+                  - generic [ref=e788]: Alex
+                  - generic [ref=e789]: "|"
+                  - generic [ref=e790]: Engineer
+              - generic [ref=e791]:
+                - paragraph [ref=e794]: I'd be happy to help test a collapse feature. Let me first explore the current working directory to understand what project and collapse feature we're working with.
+                - generic [ref=e795]:
+                  - button [ref=e796]:
+                    - img [ref=e797]
+                  - button [ref=e800]:
+                    - img [ref=e801]
+                  - button [ref=e804]:
+                    - img [ref=e805]
+          - button "运行 pwd && ls -la" [ref=e811] [cursor=pointer]:
+            - generic [ref=e812]:
+              - img [ref=e814]
+              - generic [ref=e816]:
+                - text: 运行
+                - strong [ref=e817]: pwd && ls -la
+            - img [ref=e819]
+          - button "运行 ls -la /tmp/openhands-sandboxes/4N79hVkPW5OPoN0ktWgHMr && cat /tmp/openhands-san..." [ref=e823] [cursor=pointer]:
+            - generic [ref=e824]:
+              - img [ref=e826]
+              - generic [ref=e828]:
+                - text: 运行
+                - strong [ref=e829]: ls -la /tmp/openhands-sandboxes/4N79hVkPW5OPoN0ktWgHMr && cat /tmp/openhands-san...
+            - img [ref=e831]
+          - button "运行 git --no-pager log --oneline -20" [ref=e835] [cursor=pointer]:
+            - generic [ref=e836]:
+              - img [ref=e838]
+              - generic [ref=e840]:
+                - text: 运行
+                - strong [ref=e841]: git --no-pager log --oneline -20
+            - img [ref=e843]
+          - article [ref=e845]:
+            - generic [ref=e846]:
+              - generic [ref=e847]:
+                - generic [ref=e849]: A
+                - generic [ref=e850]:
+                  - generic [ref=e851]: Alex
+                  - generic [ref=e852]: "|"
+                  - generic [ref=e853]: Engineer
+              - generic [ref=e854]:
+                - generic [ref=e856]:
+                  - paragraph [ref=e857]: The current working directory appears to be mostly empty (just an empty git repository). I don't see any project files or code related to a "collapse feature."
+                  - paragraph [ref=e858]: "Could you please provide more context about:"
+                  - list [ref=e859]:
+                    - listitem [ref=e860]:
+                      - paragraph [ref=e861]:
+                        - strong [ref=e862]: What collapse feature are you referring to?
+                        - text: "Is it:"
+                      - list [ref=e863]:
+                        - listitem [ref=e864]: A UI collapse/expand feature in a web application?
+                        - listitem [ref=e865]: A collapsible component in a specific framework (React, Vue, etc.)?
+                        - listitem [ref=e866]: A code folding feature in an editor?
+                        - listitem [ref=e867]: A collapse functionality in a specific file or codebase?
+                    - listitem [ref=e868]:
+                      - paragraph [ref=e869]:
+                        - strong [ref=e870]: Is there a specific repository or project
+                        - text: where this collapse feature exists that I should be looking at?
+                    - listitem [ref=e871]:
+                      - paragraph [ref=e872]:
+                        - strong [ref=e873]: Are there any test files or documentation
+                        - text: related to this feature that I should examine?
+                  - paragraph [ref=e874]: Please share more details so I can properly test the collapse feature for you.
+                - generic [ref=e875]:
+                  - button [ref=e876]:
+                    - img [ref=e877]
+                  - button [ref=e880]:
+                    - img [ref=e881]
+                  - button [ref=e884]:
+                    - img [ref=e885]
+        - generic [ref=e889]:
+          - generic [ref=e890]:
+            - button "添加深色/浅色主题切换" [ref=e891] [cursor=pointer]
+            - button "添加文章详情页面" [ref=e892] [cursor=pointer]
+            - button "添加滚动入场动画" [ref=e893] [cursor=pointer]
+          - generic [ref=e896]:
+            - img [ref=e898]
+            - generic [ref=e901]:
+              - generic [ref=e902]: Bob
+              - generic [ref=e903]: 响应中
+          - generic [ref=e909]:
+            - generic [ref=e911]:
+              - generic [ref=e912]:
+                - button [ref=e913] [cursor=pointer]:
+                  - img [ref=e914]
+                - generic [ref=e918]: 你想要构建什么？
+              - button [ref=e919] [cursor=pointer]:
+                - img [ref=e920]
+            - generic [ref=e924]:
+              - generic [ref=e926]:
+                - generic [ref=e927]:
+                  - button "工具" [ref=e928] [cursor=pointer]:
+                    - img [ref=e929]
+                    - generic [ref=e931]: 工具
+                    - img [ref=e932]
+                  - generic [ref=e992]:
+                    - heading "代理工具和元数据" [level=2] [ref=e995]
+                    - tablist [ref=e997]:
+                      - tab "系统消息" [ref=e998]
+                      - tab "可用工具" [active] [selected] [ref=e999]
+                    - generic [ref=e1003]:
+                      - button "terminal" [ref=e1005]:
+                        - generic [ref=e1008]: terminal
+                        - img [ref=e1010]
+                      - button "file_editor" [ref=e1013]:
+                        - generic [ref=e1016]: file_editor
+                        - img [ref=e1018]
+                      - button "task_tracker" [ref=e1021]:
+                        - generic [ref=e1024]: task_tracker
+                        - img [ref=e1026]
+                      - button "browser_navigate" [ref=e1029]:
+                        - generic [ref=e1032]: browser_navigate
+                        - img [ref=e1034]
+                      - button "browser_click" [ref=e1037]:
+                        - generic [ref=e1040]: browser_click
+                        - img [ref=e1042]
+                      - button "browser_get_state" [ref=e1045]:
+                        - generic [ref=e1048]: browser_get_state
+                        - img [ref=e1050]
+                      - button "browser_get_content" [ref=e1053]:
+                        - generic [ref=e1056]: browser_get_content
+                        - img [ref=e1058]
+                      - button "browser_type" [ref=e1061]:
+                        - generic [ref=e1064]: browser_type
+                        - img [ref=e1066]
+                      - button "browser_scroll" [ref=e1069]:
+                        - generic [ref=e1072]: browser_scroll
+                        - img [ref=e1074]
+                      - button "browser_go_back" [ref=e1077]:
+                        - generic [ref=e1080]: browser_go_back
+                        - img [ref=e1082]
+                      - button "browser_list_tabs" [ref=e1085]:
+                        - generic [ref=e1088]: browser_list_tabs
+                        - img [ref=e1090]
+                      - button "browser_switch_tab" [ref=e1093]:
+                        - generic [ref=e1096]: browser_switch_tab
+                        - img [ref=e1098]
+                      - button "browser_close_tab" [ref=e1101]:
+                        - generic [ref=e1104]: browser_close_tab
+                        - img [ref=e1106]
+                      - button "browser_get_storage" [ref=e1109]:
+                        - generic [ref=e1112]: browser_get_storage
+                        - img [ref=e1114]
+                      - button "browser_set_storage" [ref=e1117]:
+                        - generic [ref=e1120]: browser_set_storage
+                        - img [ref=e1122]
+                      - button "browser_start_recording" [ref=e1125]:
+                        - generic [ref=e1128]: browser_start_recording
+                        - img [ref=e1130]
+                      - button "browser_stop_recording" [ref=e1133]:
+                        - generic [ref=e1136]: browser_stop_recording
+                        - img [ref=e1138]
+                      - button "finish" [ref=e1141]:
+                        - generic [ref=e1144]: finish
+                        - img [ref=e1146]
+                      - button "think" [ref=e1149]:
+                        - generic [ref=e1152]: think
+                        - img [ref=e1154]
+                - button "代码" [ref=e935] [cursor=pointer]:
+                  - generic [ref=e936]:
+                    - img [ref=e937]
+                    - generic [ref=e939]: 代码
+                  - img [ref=e940]
+              - generic [ref=e942]:
+                - generic "等待任务中。" [ref=e943]
+                - img [ref=e945]
+      - main [ref=e955]:
+        - generic [ref=e956]:
+          - generic [ref=e958]:
+            - img [ref=e959]
+            - generic [ref=e961]: Agent 尚未进行任何更改
+          - generic [ref=e964]:
+            - heading "专业提示:" [level=4] [ref=e965]
+            - paragraph [ref=e966]: 每个OpenHands对话都配有VS Code实例，您可以在其中与开发环境交互。

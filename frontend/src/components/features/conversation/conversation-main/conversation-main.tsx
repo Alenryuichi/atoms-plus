@@ -18,7 +18,7 @@ function getDesktopTabPanelClass(isRightPanelShown: boolean) {
 
 export function ConversationMain() {
   const isMobile = useBreakpoint();
-  const { isRightPanelShown } = useConversationStore();
+  const { isRightPanelShown, isChatPanelCollapsed } = useConversationStore();
 
   // Note: Auto-switch to Preview view is now handled in PreviewPanel component
   // It switches from "Code" to "Preview" once workspace files and content are loaded
@@ -26,6 +26,10 @@ export function ConversationMain() {
   // Panel width state is now in Zustand store, synchronized with TopNavbar
   const { leftWidth, rightWidth, isDragging, containerRef, handleMouseDown } =
     useResizablePanels();
+
+  // When chat panel is collapsed, preview takes full width
+  const effectiveLeftWidth = isChatPanelCollapsed ? 0 : leftWidth;
+  const effectiveRightWidth = isChatPanelCollapsed ? 100 : rightWidth;
 
   return (
     <div
@@ -41,9 +45,8 @@ export function ConversationMain() {
       <div
         ref={containerRef}
         className={cn(
-          // Atoms Plus: Add gap between panels for visual separation
-          // Key: min-h-0 + overflow-hidden prevents children from expanding beyond container
-          "flex flex-1 min-h-0 overflow-hidden gap-3 p-3",
+          // Atoms Plus: Direct layout without floating cards - panels sit directly on container
+          "flex flex-1 min-h-0 overflow-hidden gap-2",
           isMobile ? "flex-col" : "transition-all duration-300 ease-in-out",
         )}
         style={
@@ -52,28 +55,20 @@ export function ConversationMain() {
             : undefined
         }
       >
-        {/* Chat Panel - Left side glass card */}
-        {/* CRITICAL: Do NOT use flex-1 class here, as it overrides flexGrow!
-            We need dynamic flexGrow values to match TopNavbar's proportional sizing */}
+        {/* Chat Panel - Left side, collapsible */}
         <div
           className={cn(
-            // Atoms Plus: Key fix - min-h-0 for proper height constraint
-            // Note: Removed flex-1 to allow dynamic flexGrow from inline style
             "flex flex-col min-h-0 overflow-hidden",
-            // Atoms Plus: Glass card effect with rounded corners
-            "bg-black/40 backdrop-blur-xl rounded-2xl",
-            "border border-white/10",
-            "shadow-2xl shadow-black/30",
             isMobile
               ? getMobileChatPanelClass(isRightPanelShown)
               : "transition-all duration-300 ease-in-out",
+            // Hide when collapsed (desktop only)
+            !isMobile && isChatPanelCollapsed && "w-0 opacity-0",
           )}
           style={
             !isMobile
               ? {
-                  // Use flexGrow with flexBasis: 0 to distribute space proportionally
-                  // This matches TopNavbar's layout for perfect alignment
-                  flexGrow: isRightPanelShown ? leftWidth : 1,
+                  flexGrow: isRightPanelShown ? effectiveLeftWidth : 1,
                   flexShrink: 1,
                   flexBasis: 0,
                   transitionProperty: isDragging ? "none" : "all",
@@ -86,23 +81,15 @@ export function ConversationMain() {
           />
         </div>
 
-        {/* Resize Handle - only shown on desktop when right panel is visible */}
-        {!isMobile && isRightPanelShown && (
+        {/* Resize Handle - thin and subtle, hidden when chat is collapsed */}
+        {!isMobile && isRightPanelShown && !isChatPanelCollapsed && (
           <ResizeHandle onMouseDown={handleMouseDown} />
         )}
 
-        {/* Tab Content Panel - Right side glass card */}
-        {/* CRITICAL: Do NOT use flex-1 class here, as it overrides flexGrow!
-            We need dynamic flexGrow values to match TopNavbar's proportional sizing */}
+        {/* Tab Content Panel - Right side, expands fully when chat is collapsed */}
         <div
           className={cn(
-            // Atoms Plus: Key fix - min-h-0 for proper height constraint
-            // Note: Removed flex-1 to allow dynamic flexGrow from inline style
             "flex flex-col min-h-0 transition-all duration-300 ease-in-out overflow-hidden",
-            // Atoms Plus: Glass card effect with rounded corners
-            "bg-black/40 backdrop-blur-xl rounded-2xl",
-            "border border-white/10",
-            "shadow-2xl shadow-black/30",
             isMobile
               ? cn(
                   "absolute bottom-4 left-3 right-3 top-160",
@@ -115,9 +102,7 @@ export function ConversationMain() {
           style={
             !isMobile
               ? {
-                  // Use flexGrow with flexBasis: 0 to distribute space proportionally
-                  // This matches TopNavbar's layout for perfect alignment
-                  flexGrow: isRightPanelShown ? rightWidth : 0,
+                  flexGrow: isRightPanelShown ? effectiveRightWidth : 0,
                   flexShrink: 1,
                   flexBasis: 0,
                   transitionProperty: isDragging ? "opacity, transform" : "all",
@@ -125,13 +110,7 @@ export function ConversationMain() {
               : undefined
           }
         >
-          <div
-            className={cn(
-              isMobile
-                ? "h-full flex flex-col gap-3 pb-2 md:pb-0 pt-2 min-h-0"
-                : "flex flex-col flex-1 gap-3 min-w-max h-full min-h-0",
-            )}
-          >
+          <div className="flex flex-col flex-1 min-h-0 h-full">
             <ConversationTabContent />
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { ModalBackdrop } from "#/components/shared/modals/modal-backdrop";
 import { ModalBody } from "#/components/shared/modals/modal-body";
@@ -41,7 +42,8 @@ export function SkillsModal({ onClose }: SkillsModalProps) {
     curAgentState,
   );
 
-  return (
+  // Use portal to render modal at document body level to avoid CSS stacking context issues
+  return createPortal(
     <ModalBackdrop onClose={onClose}>
       <ModalBody
         width="medium"
@@ -96,6 +98,7 @@ export function SkillsModal({ onClose }: SkillsModalProps) {
           )}
         </div>
       </ModalBody>
-    </ModalBackdrop>
+    </ModalBackdrop>,
+    document.body,
   );
 }

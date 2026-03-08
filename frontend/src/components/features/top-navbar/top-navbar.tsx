@@ -8,7 +8,8 @@ import {
   IconChevronDown,
   IconPlus,
   IconMessageCircle,
-  IconRefresh,
+  IconChevronsLeft,
+  IconChevronsRight,
 } from "@tabler/icons-react";
 import { useGitUser } from "#/hooks/query/use-git-user";
 import { UserActions } from "../sidebar/user-actions";
@@ -29,7 +30,7 @@ import { cn } from "#/lib/utils";
 import { Button } from "#/components/ui/button";
 import { LanguageSwitcher } from "#/components/shared/language-switcher";
 import { useConversationStore } from "#/stores/conversation-store";
-import { getPreviewPanelRef } from "#/routes/preview-tab";
+import { ConversationTabs } from "../conversation/conversation-tabs/conversation-tabs";
 
 // Resources dropdown items
 const RESOURCES_ITEMS = [
@@ -122,6 +123,8 @@ interface NavActionsDesktopProps {
   conversationPanelIsOpen: boolean;
   setConversationPanelIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   t: ReturnType<typeof useTranslation>["t"];
+  user: ReturnType<typeof useGitUser>;
+  logout: () => void;
 }
 
 function NavActionsDesktop({
@@ -131,45 +134,40 @@ function NavActionsDesktop({
   conversationPanelIsOpen,
   setConversationPanelIsOpen,
   t,
+  user,
+  logout,
 }: NavActionsDesktopProps) {
   const {
-    previewViewMode,
-    setPreviewViewMode,
     panelLeftWidth,
     panelIsDragging,
+    isChatPanelCollapsed,
+    toggleChatPanelCollapsed,
   } = useConversationStore();
 
-  const handlePreviewRefresh = () => {
-    const previewRef = getPreviewPanelRef();
-    if (previewRef) {
-      previewRef.refresh();
-    }
-  };
+  // Effective left width for layout - when collapsed, use minimal width
+  const effectiveLeftWidth = isChatPanelCollapsed ? 0 : panelLeftWidth;
 
   // Chat page: Icon buttons + Preview controls aligned with split panels
   // CRITICAL: Must use EXACTLY the same flex layout as ConversationMain to achieve pixel-perfect alignment
-  // ConversationMain uses: width% + flexGrow:1 + flexShrink:1
+  // ConversationMain uses: gap-2 p-2 pt-0 + flexGrow with panel widths
+  // Layout: [Logo]   [<<] [对话] | [Tabs]   [Avatar]
+  // The divider "|" aligns with ResizeHandle in ConversationMain
   if (isConversationPage) {
     return (
       <nav
-        className="absolute hidden md:flex items-center gap-3 z-[5]"
+        className="absolute hidden md:flex items-center gap-2 z-[5]"
         style={{
-          // Match ConversationMain's p-3 for vertical centering
-          top: "12px",
-          bottom: "12px",
-          // Match ConversationMain's p-3 for horizontal padding
-          left: "12px",
-          right: "12px",
+          top: "8px",
+          bottom: "8px",
+          left: "8px",
+          right: "8px",
         }}
       >
-        {/* Left half: Chat controls - EXACT same flex properties as Chat panel below */}
-        {/* KEY: ConversationMain uses flex-1 (flex: 1 1 0%) which means flex-basis: 0 */}
-        {/* We must use flexBasis: 0 + flexGrow ratio to match the exact same space distribution */}
+        {/* Left section: Collapse Button + Conversation Toggle - aligned to right edge (near divider) */}
         <div
-          className="flex items-center justify-end gap-2 h-full"
+          className="flex items-center justify-end h-full gap-1"
           style={{
-            // Match ConversationMain's flex-1 behavior: basis 0, grow proportionally
-            flexGrow: panelLeftWidth,
+            flexGrow: effectiveLeftWidth,
             flexShrink: 1,
             flexBasis: 0,
             transitionProperty: panelIsDragging ? "none" : "all",
@@ -177,27 +175,28 @@ function NavActionsDesktop({
             transitionTimingFunction: "ease-in-out",
           }}
         >
-          {/* New Project - Icon only */}
+          {/* Collapse/Expand Chat Panel Button */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <NavLink
-              to="/"
+            <button
+              type="button"
+              onClick={toggleChatPanelCollapsed}
               className={cn(
-                "flex items-center justify-center w-10 h-10 rounded-xl",
-                "bg-gradient-to-br from-amber-500 to-amber-600",
-                "text-black",
-                "shadow-lg shadow-amber-500/25",
+                "flex items-center justify-center w-8 h-8 rounded-lg",
+                "text-white/40 hover:text-white/90",
                 "transition-all duration-200",
-                "hover:shadow-amber-500/40 hover:from-amber-400 hover:to-amber-500",
-                !isEmailVerified && "opacity-50 pointer-events-none",
+                isChatPanelCollapsed && "text-white bg-white/10",
               )}
-              onClick={(e) => !isEmailVerified && e.preventDefault()}
-              title={t(I18nKey.CONVERSATION$START_NEW)}
+              title={isChatPanelCollapsed ? "展开对话面板" : "收起对话面板"}
             >
-              <IconPlus size={20} stroke={2.5} />
-            </NavLink>
+              {isChatPanelCollapsed ? (
+                <IconChevronsRight size={18} stroke={1.5} />
+              ) : (
+                <IconChevronsLeft size={18} stroke={1.5} />
+              )}
+            </button>
           </motion.div>
 
-          {/* Conversations - Icon only */}
+          {/* Conversation List Button */}
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <button
               type="button"
@@ -206,34 +205,29 @@ function NavActionsDesktop({
               }
               disabled={!isEmailVerified}
               className={cn(
-                "flex items-center justify-center w-10 h-10 rounded-xl",
-                "bg-black/40 backdrop-blur-sm",
-                "text-neutral-400 hover:text-white",
-                "border border-white/10 hover:border-amber-500/30",
+                "flex items-center justify-center w-8 h-8 rounded-lg",
+                "text-white/40 hover:text-white/90",
                 "transition-all duration-200",
-                conversationPanelIsOpen &&
-                  "bg-amber-500/20 text-amber-400 border-amber-500/30",
+                conversationPanelIsOpen && "text-white bg-white/10",
                 !isEmailVerified && "opacity-50 cursor-not-allowed",
               )}
               title={t(I18nKey.SIDEBAR$CONVERSATIONS)}
             >
-              <IconMessageCircle size={20} stroke={1.5} />
+              <IconMessageCircle size={18} stroke={1.5} />
             </button>
           </motion.div>
         </div>
 
-        {/* Center Divider - matches ResizeHandle width (w-2 = 8px) in ConversationMain */}
-        <div className="w-2 flex-shrink-0 flex items-center justify-center">
-          <div className="h-6 w-px bg-white/20" />
+        {/* Center Divider - matches ResizeHandle width (8px gap) */}
+        <div className="flex-shrink-0 w-2 flex items-center justify-center">
+          <div className="h-6 w-px bg-white/10" />
         </div>
 
-        {/* Right half: Preview controls - EXACT same flex properties as Preview panel below */}
-        {/* KEY: ConversationMain uses flex-1 (flex: 1 1 0%) which means flex-basis: 0 */}
+        {/* Right section: Tab Switcher + User Avatar - Tabs aligned to left (near divider), Avatar on far right */}
         <div
-          className="flex items-center justify-start gap-1.5 h-full"
+          className="flex items-center justify-start h-full"
           style={{
-            // Match ConversationMain's flex-1 behavior: basis 0, grow proportionally
-            flexGrow: 100 - panelLeftWidth,
+            flexGrow: 100 - effectiveLeftWidth,
             flexShrink: 1,
             flexBasis: 0,
             transitionProperty: panelIsDragging ? "none" : "all",
@@ -241,48 +235,30 @@ function NavActionsDesktop({
             transitionTimingFunction: "ease-in-out",
           }}
         >
-          {/* View Mode Toggle */}
-          <div className="flex bg-black/40 backdrop-blur-sm rounded-xl p-1 border border-white/10">
-            {(["split", "editor", "preview"] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setPreviewViewMode(mode)}
-                className={cn(
-                  "px-3 py-1.5 text-xs rounded-lg transition-all font-medium",
-                  previewViewMode === mode
-                    ? "bg-gradient-to-br from-amber-500 to-amber-600 text-black shadow-sm"
-                    : "text-neutral-400 hover:text-white hover:bg-white/5",
-                )}
-              >
-                {
-                  {
-                    split: t(I18nKey.COMMON$SPLIT),
-                    editor: t(I18nKey.COMMON$CODE),
-                    preview: t(I18nKey.COMMON$PREVIEW),
-                  }[mode]
-                }
-              </button>
-            ))}
-          </div>
+          {/* Tab switcher: Preview, Changes, Terminal, etc. - aligned to left (near divider) */}
+          <ConversationTabs />
 
-          {/* Refresh Button */}
-          <motion.button
-            type="button"
-            onClick={handlePreviewRefresh}
-            whileHover={{ scale: 1.05, rotate: 15 }}
+          {/* User Avatar on the far right - ml-auto pushes it to the end */}
+          <motion.div
+            className="ml-auto"
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className={cn(
-              "flex items-center justify-center w-9 h-9 rounded-xl",
-              "bg-black/40 backdrop-blur-sm",
-              "text-neutral-400 hover:text-amber-400",
-              "border border-white/10 hover:border-amber-500/30",
-              "transition-all duration-200",
-            )}
-            title={t(I18nKey.BUTTON$REFRESH)}
           >
-            <IconRefresh size={16} stroke={1.5} />
-          </motion.button>
+            <UserActions
+              user={
+                user.data
+                  ? {
+                      avatar_url: user.data.avatar_url,
+                      email: user.data.email,
+                      name: user.data.name,
+                    }
+                  : undefined
+              }
+              onLogout={logout}
+              isLoading={user.isFetching}
+              className="!p-0"
+            />
+          </motion.div>
         </div>
       </nav>
     );
@@ -651,6 +627,9 @@ export function TopNavbar() {
   // Determine if we're on a conversation page (hide Pricing/Resources)
   const isConversationPage = pathname.startsWith("/conversations/");
 
+  // Get chat panel collapsed state for hiding logo when collapsed
+  const { isChatPanelCollapsed } = useConversationStore();
+
   React.useEffect(() => {
     if (pathname === "/settings") {
       setSettingsModalIsOpen(false);
@@ -783,8 +762,14 @@ export function TopNavbar() {
         {/* Background layer */}
         <div className="absolute inset-0 bg-[#0a0a0b]/95 backdrop-blur-xl border-b border-neutral-800/50" />
 
-        {/* Left: Logo - absolutely positioned */}
-        <div className="absolute left-4 md:left-8 lg:left-12 top-1/2 -translate-y-1/2 z-10">
+        {/* Left: Logo - absolutely positioned, hidden when chat panel is collapsed on conversation page */}
+        <div
+          className={cn(
+            "absolute left-4 md:left-8 lg:left-12 top-1/2 -translate-y-1/2 z-10",
+            "transition-opacity duration-300",
+            isConversationPage && isChatPanelCollapsed && "opacity-0 pointer-events-none",
+          )}
+        >
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <OpenHandsLogoButton />
           </motion.div>
@@ -798,10 +783,17 @@ export function TopNavbar() {
           conversationPanelIsOpen={conversationPanelIsOpen}
           setConversationPanelIsOpen={setConversationPanelIsOpen}
           t={t}
+          user={user}
+          logout={logout}
         />
 
-        {/* Right: User Actions - absolutely positioned */}
-        <div className="absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 z-10 hidden md:flex items-center gap-3">
+        {/* Right: User Actions - absolutely positioned (hidden on conversation pages, handled by NavActionsDesktop) */}
+        <div
+          className={cn(
+            "absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 z-10 items-center gap-3",
+            isConversationPage ? "hidden" : "hidden md:flex",
+          )}
+        >
           {/* Conversations Icon Button (Homepage only) - pure icon style */}
           {isHomePage && (
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
