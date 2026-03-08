@@ -3,7 +3,6 @@ import { usePostHog } from "posthog-js/react";
 import { useParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { convertImageToBase64 } from "#/utils/convert-image-to-base-64";
-import { TrajectoryActions } from "../trajectory/trajectory-actions";
 import { createChatMessage } from "#/services/chat-service";
 import { InteractiveChatBox } from "./interactive-chat-box";
 import { AgentState } from "#/types/agent-state";
@@ -49,6 +48,13 @@ function getEntryPoint(
   return "direct";
 }
 
+// Atoms Plus: Mock suggestions for the UI prototype
+const SUGGESTIONS = [
+  "添加深色/浅色主题切换",
+  "添加文章详情页面",
+  "添加滚动入场动画",
+];
+
 export function ChatInterface() {
   const posthog = usePostHog();
   const { setMessageToSend } = useConversationStore();
@@ -90,15 +96,12 @@ export function ChatInterface() {
     curAgentState === AgentState.LOADING;
 
   // Global keyboard shortcut for Build button (Cmd+Enter / Ctrl+Enter)
-  // This is placed here instead of PlanPreview to avoid duplicate listeners
-  // when multiple PlanPreview components exist in the chat
   React.useEffect(() => {
     if (isAgentRunning) {
       return undefined;
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux)
       if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
         event.preventDefault();
         event.stopPropagation();
@@ -126,16 +129,10 @@ export function ChatInterface() {
 
   const isV1Conversation = conversation?.conversation_version === "V1";
 
-  // Show V1 messages immediately if events exist in store (e.g., remount),
-  // or once loading completes. This replaces the old transition-observation
-  // pattern (useState + useEffect watching loading→loaded) which always showed
-  // skeleton on remount because local state initialized to false.
   const showV1Messages =
     v1FullEvents.length > 0 || !conversationWebSocket?.isLoadingHistory;
 
   const isReturningToConversation = !!params.conversationId;
-  // Only show loading skeleton when genuinely loading AND no events in store yet.
-  // If events exist (e.g., remount after data was already fetched), skip skeleton.
   const isHistoryLoading =
     (isLoadingMessages && !isV1Conversation && v0Events.length === 0) ||
     (isV1Conversation && !showV1Messages);
@@ -146,7 +143,6 @@ export function ChatInterface() {
     originalImages: File[],
     originalFiles: File[],
   ) => {
-    // Create mutable copies of the arrays
     const images = [...originalImages];
     const files = [...originalFiles];
     if (totalEvents === 0) {
@@ -165,13 +161,12 @@ export function ChatInterface() {
       });
     }
 
-    // Validate file sizes before any processing
     const allFiles = [...images, ...files];
     const validation = validateFiles(allFiles);
 
     if (!validation.isValid) {
       displayErrorToast(`Error: ${validation.errorMessage}`);
-      return; // Stop processing if validation fails
+      return;
     }
 
     const promises = images.map((image) => convertImageToBase64(image));
@@ -202,14 +197,10 @@ export function ChatInterface() {
     setFeedbackPolarity(polarity);
   };
 
-  // Auto-scroll to bottom when new messages arrive
   React.useEffect(() => {
     if (autoScroll) {
       scrollDomToBottom();
     }
-    // Note: We intentionally exclude autoScroll from deps because we only want
-    // to scroll when message content changes, not when autoScroll state changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     v1UiEvents.length,
     v0Events.length,
@@ -217,7 +208,6 @@ export function ChatInterface() {
     scrollDomToBottom,
   ]);
 
-  // Create a ScrollProvider with the scroll hook values
   const scrollProviderValue = {
     scrollRef,
     autoScroll,
@@ -228,7 +218,6 @@ export function ChatInterface() {
     onChatBodyScroll,
   };
 
-  // Get server status indicator props
   const isStartingStatus =
     curAgentState === AgentState.LOADING || curAgentState === AgentState.INIT;
   const isStopStatus = curAgentState === AgentState.STOPPED;
@@ -255,23 +244,18 @@ export function ChatInterface() {
 
   return (
     <ScrollProvider value={scrollProviderValue}>
-      {/* Atoms Plus: Transparent chat interface - parent card handles background */}
-      <div className="h-full flex flex-col relative bg-transparent min-h-0">
-        {/* Atoms Plus: Message area - flex-grow to fill space */}
+      {/* Atoms Plus: Airy transparent chat interface */}
+      <div className="h-full flex flex-col relative bg-transparent min-h-0 overflow-hidden">
+        {/* Atoms Plus: Message area with refined scrollbar and padding */}
         <div
           ref={scrollRef}
           onScroll={(e) => onChatBodyScroll(e.currentTarget)}
-          className="atoms-chat-scroll flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 pt-4 gap-4"
-          style={{
-            scrollbarWidth: "thin",
-            scrollbarColor: "rgba(212,168,85,0.3) transparent",
-          }}
+          className="atoms-chat-scroll flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 pt-6 pb-2 gap-0"
         >
           {isChatLoading && isReturningToConversation && (
             <ChatMessagesSkeleton />
           )}
 
-          {/* Atoms Plus: Show RuntimeBootstrapProgress during task startup (before messages arrive) */}
           {isTask &&
             !userEventsExist &&
             taskStatus !== "READY" &&
@@ -295,43 +279,43 @@ export function ChatInterface() {
           {showV1Messages && v1UserEventsExist && (
             <V1Messages messages={v1UiEvents} allEvents={v1FullEvents} />
           )}
+
+          {/* Typing indicator - placed inside message area for better flow */}
+          {curAgentState === AgentState.RUNNING && (
+            <div className="mb-8 pl-10">
+              <TypingIndicator />
+            </div>
+          )}
         </div>
 
-        {/* Atoms Plus: Bottom control area - transparent background */}
-        <div className="flex flex-col gap-2 px-3 pb-3 pt-2 bg-transparent">
-          {/* Atoms Plus: Unified status bar - Role + Status aligned */}
-          <div className="flex items-center justify-between relative">
-            {/* Left: Role + Status indicators (same height h-8) */}
-            <div className="flex items-center gap-2">
-              {/* Auto Role Indicator - Shows current responding role */}
-              <AutoRoleIndicator showDetails={false} />
+        {/* Atoms Plus: Bottom control area */}
+        <div className="flex flex-col gap-3 px-4 pb-4 pt-2 bg-transparent">
+          {/* Suggestion Chips - matching reference */}
+          {!isAgentRunning && totalEvents > 0 && (
+            <div className="flex flex-wrap gap-2 px-1">
+              {SUGGESTIONS.map((suggestion, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSendMessage(suggestion, [], [])}
+                  className="px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.03] text-[11px] text-white/60 hover:text-white/90 hover:bg-white/[0.08] hover:border-white/20 transition-all cursor-pointer"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          )}
 
-              {/* Status Indicator - Shows agent state */}
+          {/* Status Bar */}
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              <AutoRoleIndicator showDetails={false} />
               {isStartingStatus && (
                 <ChatStatusIndicator
                   statusColor={serverStatusColor}
                   status={serverStatusText}
                 />
               )}
-
               <ConfirmationModeEnabled />
-
-              {totalEvents > 0 && !isV1Conversation && (
-                <TrajectoryActions
-                  onPositiveFeedback={() =>
-                    onClickShareFeedbackActionButton("positive")
-                  }
-                  onNegativeFeedback={() =>
-                    onClickShareFeedbackActionButton("negative")
-                  }
-                  isSaasMode={config?.app_mode === "saas"}
-                />
-              )}
-            </div>
-
-            {/* Center: Typing indicator */}
-            <div className="absolute left-1/2 transform -translate-x-1/2 bottom-0">
-              {curAgentState === AgentState.RUNNING && <TypingIndicator />}
             </div>
 
             {/* Right: Scroll to bottom */}

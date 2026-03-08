@@ -1,5 +1,4 @@
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
-import { Badge } from "#/components/ui/badge";
 import { cn } from "#/lib/utils";
 
 interface AgentAvatarProps {
@@ -37,7 +36,7 @@ export function AgentAvatar({
   name = "Agent",
   role = "Coder",
   imageUrl,
-  size = "md",
+  size = "sm",
   showBadge = true,
   className,
 }: AgentAvatarProps) {
@@ -49,38 +48,31 @@ export function AgentAvatar({
     .slice(0, 2);
 
   return (
-    <div className={cn("flex items-center gap-3", className)}>
-      {/* Atoms Plus: Gradient avatar with subtle ring */}
+    <div className={cn("flex items-center gap-2", className)}>
+      {/* Atoms Plus: Circular avatar with subtle border */}
       <Avatar
-        className={cn(
-          sizeClasses[size],
-          "ring-2 ring-[var(--atoms-border)] ring-offset-2 ring-offset-[var(--atoms-bg-secondary)]",
-        )}
+        className={cn(sizeClasses[size], "border border-white/10 ring-0")}
       >
         {imageUrl && <AvatarImage src={imageUrl} alt={name} />}
         <AvatarFallback
           className={cn(
-            roleGradients[role],
-            "text-white font-semibold text-sm",
+            roleGradients[role] || "bg-slate-700",
+            "text-white font-medium text-[10px]",
           )}
         >
           {initials}
         </AvatarFallback>
       </Avatar>
-      <div className="flex flex-col gap-1">
-        <span className="text-sm font-semibold text-[var(--atoms-text-primary)]">
-          {name}
-        </span>
+
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs font-medium text-white/90">{name}</span>
         {showBadge && (
-          <Badge
-            variant="secondary"
-            className={cn(
-              "text-xs px-2 py-0.5 font-medium w-fit rounded-full",
-              roleColors[role],
-            )}
-          >
-            {role}
-          </Badge>
+          <>
+            <span className="text-[10px] text-white/30">|</span>
+            <span className="text-[10px] font-medium text-white/50">
+              {role}
+            </span>
+          </>
         )}
       </div>
     </div>
