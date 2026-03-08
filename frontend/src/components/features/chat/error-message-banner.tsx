@@ -1,7 +1,7 @@
 import React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { X } from "lucide-react";
+import { IconX } from "@tabler/icons-react";
 import { I18nKey } from "#/i18n/declaration";
 import { cn } from "#/utils/utils";
 
@@ -80,7 +80,7 @@ export function ErrorMessageBanner({
           aria-label={t(I18nKey.BUTTON$CLOSE)}
           data-testid="error-message-banner-dismiss"
         >
-          <X className="h-4 w-4" />
+          <IconX size={16} stroke={1.5} />
         </button>
       )}
     </div>

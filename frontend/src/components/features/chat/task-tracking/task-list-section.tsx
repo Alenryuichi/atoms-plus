@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { ListTodo } from "lucide-react";
+import { IconListCheck } from "@tabler/icons-react";
 import { TaskItem } from "./task-item";
 import { I18nKey } from "#/i18n/declaration";
 import { Card, CardContent, CardHeader } from "#/components/ui/card";
@@ -28,7 +28,7 @@ export function TaskListSection({ taskList, className }: TaskListSectionProps) {
       {/* Header */}
       <CardHeader className="p-3 pb-2 border-b border-border/50">
         <div className="flex items-center gap-2">
-          <ListTodo className="h-4 w-4 text-primary" />
+          <IconListCheck size={16} stroke={1.5} className="text-primary" />
           <span className="text-sm font-semibold text-foreground">
             {t(I18nKey.COMMON$TASKS)}
           </span>

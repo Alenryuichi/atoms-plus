@@ -13,7 +13,7 @@ import {
 } from "@codesandbox/sandpack-react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import { FileCode } from "lucide-react";
+import { IconFileCode } from "@tabler/icons-react";
 import { I18nKey } from "#/i18n/declaration";
 import { useWorkspaceFiles } from "#/hooks/query/use-workspace-files";
 import { useWorkspaceFileContent } from "#/hooks/query/use-workspace-file-content";
@@ -231,7 +231,11 @@ function PreviewPanelComponent(
   if (!isLoadingFiles && (!files || files.length === 0)) {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center bg-transparent text-neutral-500 p-4">
-        <FileCode className="w-12 h-12 mb-4 opacity-40 text-amber-500/50" />
+        <IconFileCode
+          size={48}
+          stroke={1.5}
+          className="mb-4 opacity-40 text-amber-500/50"
+        />
         <p className="text-center">{t(I18nKey.PREVIEW$NO_FILES)}</p>
       </div>
     );

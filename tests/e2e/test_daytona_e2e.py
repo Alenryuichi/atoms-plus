@@ -12,7 +12,6 @@ Environment Variables Required:
 Note: Requires Python 3.10+ for daytona-sdk compatibility.
 """
 
-import json
 import os
 import sys
 import time
@@ -23,7 +22,7 @@ import httpx
 SDK_AVAILABLE = sys.version_info >= (3, 10)
 if SDK_AVAILABLE:
     try:
-        from daytona_sdk import Daytona, DaytonaConfig, CreateSandboxFromImageParams
+        from daytona_sdk import CreateSandboxFromImageParams, Daytona, DaytonaConfig
 
         print('✅ daytona-sdk available')
     except ImportError:
@@ -32,7 +31,8 @@ if SDK_AVAILABLE:
 
 # Daytona API Configuration
 DAYTONA_API_KEY = os.environ.get(
-    'DAYTONA_API_KEY', 'dtn_c0b9382d8719875367133d864e6bde908ce1c104780a4b7047c1a43df3a1a9ac'
+    'DAYTONA_API_KEY',
+    'dtn_c0b9382d8719875367133d864e6bde908ce1c104780a4b7047c1a43df3a1a9ac',
 )
 DAYTONA_API_URL = os.environ.get('DAYTONA_API_URL', 'https://app.daytona.io/api')
 DAYTONA_TARGET = os.environ.get('DAYTONA_TARGET', 'eu')
@@ -44,7 +44,10 @@ def test_daytona_api_connection():
     print('🔗 Test 1: Daytona API Connection')
     print('=' * 60)
 
-    headers = {'Authorization': f'Bearer {DAYTONA_API_KEY}', 'Content-Type': 'application/json'}
+    headers = {
+        'Authorization': f'Bearer {DAYTONA_API_KEY}',
+        'Content-Type': 'application/json',
+    }
 
     # Test API health/info endpoint
     response = httpx.get(f'{DAYTONA_API_URL}/health', headers=headers, timeout=30)
@@ -56,7 +59,9 @@ def test_daytona_api_connection():
     else:
         print(f'Response: {response.text}')
         # Try alternate endpoints
-        response = httpx.get(f'{DAYTONA_API_URL}/v1/sandboxes', headers=headers, timeout=30)
+        response = httpx.get(
+            f'{DAYTONA_API_URL}/v1/sandboxes', headers=headers, timeout=30
+        )
         print(f'Sandboxes endpoint: {response.status_code}')
         return response.status_code in (200, 401)
 
@@ -67,7 +72,10 @@ def test_list_sandboxes():
     print('📋 Test 2: List Sandboxes')
     print('=' * 60)
 
-    headers = {'Authorization': f'Bearer {DAYTONA_API_KEY}', 'Content-Type': 'application/json'}
+    headers = {
+        'Authorization': f'Bearer {DAYTONA_API_KEY}',
+        'Content-Type': 'application/json',
+    }
 
     response = httpx.get(f'{DAYTONA_API_URL}/sandbox', headers=headers, timeout=30)
 
@@ -89,7 +97,10 @@ def test_create_sandbox():
     print('📦 Test 3: Create Sandbox')
     print('=' * 60)
 
-    headers = {'Authorization': f'Bearer {DAYTONA_API_KEY}', 'Content-Type': 'application/json'}
+    headers = {
+        'Authorization': f'Bearer {DAYTONA_API_KEY}',
+        'Content-Type': 'application/json',
+    }
 
     # Create sandbox request
     create_payload = {'target': DAYTONA_TARGET, 'labels': {'test': 'atoms-plus-e2e'}}
@@ -115,10 +126,15 @@ def test_sandbox_operations(sandbox_id: str):
     print(f'🔧 Test 4: Sandbox Operations (ID: {sandbox_id})')
     print('=' * 60)
 
-    headers = {'Authorization': f'Bearer {DAYTONA_API_KEY}', 'Content-Type': 'application/json'}
+    headers = {
+        'Authorization': f'Bearer {DAYTONA_API_KEY}',
+        'Content-Type': 'application/json',
+    }
 
     # Get sandbox info
-    response = httpx.get(f'{DAYTONA_API_URL}/sandbox/{sandbox_id}', headers=headers, timeout=30)
+    response = httpx.get(
+        f'{DAYTONA_API_URL}/sandbox/{sandbox_id}', headers=headers, timeout=30
+    )
 
     if response.status_code == 200:
         data = response.json()
@@ -137,11 +153,16 @@ def test_sandbox_operations(sandbox_id: str):
 
 def wait_for_sandbox_state(sandbox_id: str, target_state: str, max_wait: int = 60):
     """Wait for sandbox to reach target state."""
-    headers = {'Authorization': f'Bearer {DAYTONA_API_KEY}', 'Content-Type': 'application/json'}
+    headers = {
+        'Authorization': f'Bearer {DAYTONA_API_KEY}',
+        'Content-Type': 'application/json',
+    }
     start_time = time.time()
 
     while time.time() - start_time < max_wait:
-        response = httpx.get(f'{DAYTONA_API_URL}/sandbox/{sandbox_id}', headers=headers, timeout=30)
+        response = httpx.get(
+            f'{DAYTONA_API_URL}/sandbox/{sandbox_id}', headers=headers, timeout=30
+        )
         if response.status_code == 200:
             data = response.json()
             current_state = data.get('state', 'unknown')
@@ -159,7 +180,10 @@ def test_pause_resume(sandbox_id: str):
     print(f'⏸️ Test: Pause & Resume (ID: {sandbox_id})')
     print('=' * 60)
 
-    headers = {'Authorization': f'Bearer {DAYTONA_API_KEY}', 'Content-Type': 'application/json'}
+    headers = {
+        'Authorization': f'Bearer {DAYTONA_API_KEY}',
+        'Content-Type': 'application/json',
+    }
 
     # Pause sandbox
     print('Pausing sandbox...')
@@ -204,10 +228,15 @@ def test_toolbox_proxy(sandbox_id: str):
     print(f'💻 Test 6: Toolbox Proxy (ID: {sandbox_id})')
     print('=' * 60)
 
-    headers = {'Authorization': f'Bearer {DAYTONA_API_KEY}', 'Content-Type': 'application/json'}
+    headers = {
+        'Authorization': f'Bearer {DAYTONA_API_KEY}',
+        'Content-Type': 'application/json',
+    }
 
     # Get sandbox info to find toolbox URL
-    response = httpx.get(f'{DAYTONA_API_URL}/sandbox/{sandbox_id}', headers=headers, timeout=30)
+    response = httpx.get(
+        f'{DAYTONA_API_URL}/sandbox/{sandbox_id}', headers=headers, timeout=30
+    )
 
     if response.status_code != 200:
         print(f'❌ Failed to get sandbox info: {response.status_code}')
@@ -240,7 +269,10 @@ def test_delete_sandbox(sandbox_id: str):
     print(f'🗑️ Test: Delete Sandbox (ID: {sandbox_id})')
     print('=' * 60)
 
-    headers = {'Authorization': f'Bearer {DAYTONA_API_KEY}', 'Content-Type': 'application/json'}
+    headers = {
+        'Authorization': f'Bearer {DAYTONA_API_KEY}',
+        'Content-Type': 'application/json',
+    }
 
     # Retry deletion with backoff for state transitions
     max_retries = 5
@@ -252,7 +284,10 @@ def test_delete_sandbox(sandbox_id: str):
         if response.status_code in (200, 204):
             print('✅ Sandbox deleted')
             return True
-        elif response.status_code == 400 and 'state change in progress' in response.text.lower():
+        elif (
+            response.status_code == 400
+            and 'state change in progress' in response.text.lower()
+        ):
             print(f'   Attempt {attempt + 1}: State change in progress, waiting 10s...')
             time.sleep(10)
         else:
@@ -356,7 +391,9 @@ def run_sdk_tests():
 
     # Initialize SDK client
     print('\n📦 Initializing Daytona SDK...')
-    config = DaytonaConfig(api_key=DAYTONA_API_KEY, api_url=DAYTONA_API_URL, target=DAYTONA_TARGET)
+    config = DaytonaConfig(
+        api_key=DAYTONA_API_KEY, api_url=DAYTONA_API_URL, target=DAYTONA_TARGET
+    )
     daytona = Daytona(config)
 
     sandbox = None
@@ -365,7 +402,9 @@ def run_sdk_tests():
         print('\n' + '-' * 40)
         print('SDK Test 1: Create Sandbox')
         print('-' * 40)
-        params = CreateSandboxFromImageParams(image='daytonaio/sandbox:latest', labels={'test': 'atoms-plus-sdk'})
+        params = CreateSandboxFromImageParams(
+            image='daytonaio/sandbox:latest', labels={'test': 'atoms-plus-sdk'}
+        )
         sandbox = daytona.create(params)
         print(f'✅ Sandbox created: {sandbox.id}')
         results['passed'] += 1
@@ -375,8 +414,12 @@ def run_sdk_tests():
         print('SDK Test 2: Execute Command')
         print('-' * 40)
         try:
-            result = sandbox.process.exec('echo "Hello from Daytona SDK" && pwd && whoami', timeout=30)
-            print(f'✅ Command output:\n{result[:200] if isinstance(result, str) else result}')
+            result = sandbox.process.exec(
+                'echo "Hello from Daytona SDK" && pwd && whoami', timeout=30
+            )
+            print(
+                f'✅ Command output:\n{result[:200] if isinstance(result, str) else result}'
+            )
             results['passed'] += 1
         except Exception as e:
             print(f'❌ Command execution failed: {e}')
@@ -394,12 +437,14 @@ def run_sdk_tests():
                 'cd ~/test-project && git init && git config user.email "test@test.com" && git config user.name "Test"',
                 timeout=10,
             )
-            sandbox.process.exec('cd ~/test-project && echo "test" > test.txt && git add .', timeout=10)
+            sandbox.process.exec(
+                'cd ~/test-project && echo "test" > test.txt && git add .', timeout=10
+            )
             result = sandbox.process.exec('cd ~/test-project && git status', timeout=10)
             # Check for success (exit_code=0 in result)
             result_str = str(result)
             if 'exit_code=0' in result_str or 'Changes to be committed' in result_str:
-                print(f'✅ Git operations successful')
+                print('✅ Git operations successful')
                 results['passed'] += 1
             else:
                 print(f'⚠️ Git status output: {result_str[:300]}')
@@ -440,7 +485,7 @@ def run_sdk_tests():
             sandbox.process.exec('echo "test content" > /tmp/test-file.txt', timeout=10)
             content = sandbox.process.exec('cat /tmp/test-file.txt', timeout=10)
             if 'test content' in str(content):
-                print(f'✅ File read/write working')
+                print('✅ File read/write working')
                 results['passed'] += 1
             else:
                 print(f'⚠️ Unexpected content: {content}')
@@ -454,7 +499,9 @@ def run_sdk_tests():
         print('SDK Test 6: Python Environment')
         print('-' * 40)
         try:
-            result = sandbox.process.exec('python3 --version && pip3 --version', timeout=15)
+            result = sandbox.process.exec(
+                'python3 --version && pip3 --version', timeout=15
+            )
             result_str = str(result)
             if 'Python' in result_str:
                 print(f'✅ Python available: {result_str[:100]}')
@@ -472,13 +519,25 @@ def run_sdk_tests():
         print('-' * 40)
         try:
             # Create a git repo with uncommitted changes
-            sandbox.process.exec('mkdir -p ~/workspace && cd ~/workspace && git init', timeout=10)
-            sandbox.process.exec('cd ~/workspace && git config user.email "test@test.com" && git config user.name "Test"', timeout=10)
-            sandbox.process.exec('cd ~/workspace && echo "initial" > file.txt && git add . && git commit -m "init"', timeout=15)
-            sandbox.process.exec('cd ~/workspace && echo "modified" > file.txt', timeout=10)
+            sandbox.process.exec(
+                'mkdir -p ~/workspace && cd ~/workspace && git init', timeout=10
+            )
+            sandbox.process.exec(
+                'cd ~/workspace && git config user.email "test@test.com" && git config user.name "Test"',
+                timeout=10,
+            )
+            sandbox.process.exec(
+                'cd ~/workspace && echo "initial" > file.txt && git add . && git commit -m "init"',
+                timeout=15,
+            )
+            sandbox.process.exec(
+                'cd ~/workspace && echo "modified" > file.txt', timeout=10
+            )
 
             # Simulate what the Git API would return
-            result = sandbox.process.exec('cd ~/workspace && git status --porcelain', timeout=10)
+            result = sandbox.process.exec(
+                'cd ~/workspace && git status --porcelain', timeout=10
+            )
             result_str = str(result)
             if 'file.txt' in result_str or 'M ' in result_str:
                 print('✅ Git changes detected (simulates /api/git/changes/.)')
@@ -526,4 +585,3 @@ if __name__ == '__main__':
 
     # Overall success
     exit(0 if (rest_success and sdk_success) else 1)
-

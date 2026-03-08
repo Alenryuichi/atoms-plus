@@ -32,7 +32,7 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   git_user_name: "openhands",
   git_user_email: "openhands@all-hands.dev",
-  v1_enabled: false,
+  v1_enabled: true, // V1 API is the default - matches backend Settings.v1_enabled default
 };
 
 /**

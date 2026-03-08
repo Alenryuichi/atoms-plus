@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Circle, CheckCircle2, Loader2 } from "lucide-react";
+import { IconCircle, IconCircleCheck, IconLoader2 } from "@tabler/icons-react";
 import { I18nKey } from "#/i18n/declaration";
 import { cn } from "#/lib/utils";
 import { Checkbox } from "#/components/ui/checkbox";
@@ -20,13 +20,33 @@ export function TaskItem({ task }: TaskItemProps) {
   const statusIcon = useMemo(() => {
     switch (task.status) {
       case "todo":
-        return <Circle className="h-4 w-4 text-muted-foreground" />;
+        return (
+          <IconCircle
+            size={16}
+            stroke={1.5}
+            className="text-muted-foreground"
+          />
+        );
       case "in_progress":
-        return <Loader2 className="h-4 w-4 text-primary animate-spin" />;
+        return (
+          <IconLoader2
+            size={16}
+            stroke={1.5}
+            className="text-primary animate-spin"
+          />
+        );
       case "done":
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+        return (
+          <IconCircleCheck size={16} stroke={1.5} className="text-green-500" />
+        );
       default:
-        return <Circle className="h-4 w-4 text-muted-foreground" />;
+        return (
+          <IconCircle
+            size={16}
+            stroke={1.5}
+            className="text-muted-foreground"
+          />
+        );
     }
   }, [task.status]);
 

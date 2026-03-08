@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useCreateConversation } from "#/hooks/mutation/use-create-conversation";
@@ -12,6 +12,8 @@ import { CountUp } from "#/components/ui/count-up";
 import { DarkVeil } from "#/components/ui/dark-veil";
 import { ScaffoldBentoGrid } from "#/components/features/scaffolding";
 import { I18nKey } from "#/i18n/declaration";
+import { useTeamModeStore } from "#/stores/team-mode-store";
+import { useInitialQueryStore } from "#/stores/initial-query-store";
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
@@ -121,6 +123,11 @@ export default function AtomsHome() {
   const [isTyping, setIsTyping] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const createConversation = useCreateConversation();
+  // Team Mode: Access store to check if enabled
+  const isTeamModeEnabled = useTeamModeStore((state) => state.isEnabled);
+  const setInitialPrompt = useInitialQueryStore(
+    (state) => state.setInitialPrompt,
+  );
 
   // Refs for GSAP animations
   const containerRef = useRef<HTMLDivElement>(null);
@@ -288,11 +295,24 @@ export default function AtomsHome() {
 
     setIsCreating(true);
     try {
-      const result = await createConversation.mutateAsync({
-        query: query.trim(),
-      });
-      const conversationId = result.conversation_id;
-      navigate(`/conversations/${conversationId}`);
+      // Team Mode: When enabled, create conversation WITHOUT the initial query
+      // Store the query in initialQueryStore so chat-interface can handle it
+      // This ensures the first message goes through Team Mode API
+      if (isTeamModeEnabled) {
+        setInitialPrompt(query.trim());
+        const result = await createConversation.mutateAsync({
+          // Don't pass query - let chat-interface handle it via Team Mode
+        });
+        const conversationId = result.conversation_id;
+        navigate(`/conversations/${conversationId}`);
+      } else {
+        // Normal flow: create conversation WITH initial query
+        const result = await createConversation.mutateAsync({
+          query: query.trim(),
+        });
+        const conversationId = result.conversation_id;
+        navigate(`/conversations/${conversationId}`);
+      }
     } catch {
       setIsCreating(false);
     }
@@ -468,45 +488,43 @@ export default function AtomsHome() {
             className="grid grid-cols-1 md:grid-cols-3 gap-4"
             role="tabpanel"
           >
-            <AnimatePresence mode="wait">
-              {TEMPLATES.map((template) => (
-                <motion.button
-                  type="button"
-                  key={template.id}
-                  onClick={() => handleTemplateClick(template)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handleTemplateClick(template);
-                    }
-                  }}
-                  disabled={isCreating}
-                  className="scroll-reveal-card group relative overflow-hidden rounded-2xl bg-neutral-900/50 border border-neutral-700/30 hover:border-amber-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-neutral-900 will-change-transform"
-                  variants={cardVariants}
-                  whileHover="hover"
-                  whileTap="tap"
-                >
-                  {/* Card Background Gradient */}
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${template.gradient} opacity-50 group-hover:opacity-70 transition-opacity duration-300`}
-                  />
+            {TEMPLATES.map((template) => (
+              <motion.button
+                type="button"
+                key={template.id}
+                onClick={() => handleTemplateClick(template)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleTemplateClick(template);
+                  }
+                }}
+                disabled={isCreating}
+                className="scroll-reveal-card group relative overflow-hidden rounded-2xl bg-neutral-900/50 border border-neutral-700/30 hover:border-amber-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-neutral-900 will-change-transform"
+                variants={cardVariants}
+                whileHover="hover"
+                whileTap="tap"
+              >
+                {/* Card Background Gradient */}
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br ${template.gradient} opacity-50 group-hover:opacity-70 transition-opacity duration-300`}
+                />
 
-                  {/* Card Content */}
-                  <div className="relative p-6 h-48 flex flex-col justify-between">
-                    <div className="flex justify-end">
-                      <span className="px-3 py-1 text-xs font-medium bg-neutral-800/80 text-neutral-300 rounded-full backdrop-blur-sm">
-                        {t(I18nKey.ATOMS$REMIX_SESSION)}
-                      </span>
-                    </div>
-                    <div className="text-left">
-                      <h3 className="text-lg font-semibold text-white group-hover:text-amber-300 transition-colors">
-                        {t(template.titleKey)}
-                      </h3>
-                    </div>
+                {/* Card Content */}
+                <div className="relative p-6 h-48 flex flex-col justify-between">
+                  <div className="flex justify-end">
+                    <span className="px-3 py-1 text-xs font-medium bg-neutral-800/80 text-neutral-300 rounded-full backdrop-blur-sm">
+                      {t(I18nKey.ATOMS$REMIX_SESSION)}
+                    </span>
                   </div>
-                </motion.button>
-              ))}
-            </AnimatePresence>
+                  <div className="text-left">
+                    <h3 className="text-lg font-semibold text-white group-hover:text-amber-300 transition-colors">
+                      {t(template.titleKey)}
+                    </h3>
+                  </div>
+                </div>
+              </motion.button>
+            ))}
           </div>
         </div>
 

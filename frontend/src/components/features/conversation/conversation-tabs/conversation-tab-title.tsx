@@ -1,4 +1,4 @@
-import { RefreshCw } from "lucide-react";
+import { IconRefresh } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useUnifiedGetGitChanges } from "#/hooks/query/use-unified-get-git-changes";
 import {
@@ -74,7 +74,7 @@ export function ConversationTabTitle({
             className="flex items-center justify-center p-1.5 rounded-lg hover:bg-black/30 hover:text-amber-500 transition-all cursor-pointer"
             onClick={handleRefresh}
           >
-            <RefreshCw className="h-3.5 w-3.5 text-neutral-400" />
+            <IconRefresh size={14} stroke={1.5} className="text-neutral-400" />
           </button>
         )}
       </div>

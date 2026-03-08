@@ -313,9 +313,10 @@ async def proxy_websocket(websocket: WebSocket, port: int, conversation_id: str)
     try:
         async with httpx.AsyncClient():
             # Use websockets library for WebSocket proxying
+            # Explicitly disable proxy to avoid SOCKS proxy issues on localhost
             import websockets
 
-            async with websockets.connect(target_url) as target_ws:
+            async with websockets.connect(target_url, proxy=None) as target_ws:
                 # Create tasks for bidirectional forwarding
                 async def forward_client_to_server():
                     try:

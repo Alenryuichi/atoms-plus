@@ -1,4 +1,4 @@
-import { LoaderCircle } from "lucide-react";
+import { IconLoader2 } from "@tabler/icons-react";
 import FileIcon from "#/icons/file.svg?react";
 import { RemoveFileButton } from "./remove-file-button";
 import { cn, getFileExtension } from "#/utils/utils";
@@ -39,7 +39,12 @@ export function UploadedFile({
       </div>
       {isLoading && (
         <div className="flex items-center justify-center">
-          <LoaderCircle className="animate-spin w-5 h-5" color="white" />
+          <IconLoader2
+            size={20}
+            stroke={1.5}
+            className="animate-spin"
+            color="white"
+          />
         </div>
       )}
     </div>

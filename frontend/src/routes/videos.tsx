@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { Play, Clock, Loader2 } from "lucide-react";
+import { IconPlayerPlay, IconClock, IconLoader2 } from "@tabler/icons-react";
 import { I18nKey } from "#/i18n/declaration";
 import { cn } from "#/lib/utils";
 import { useVideos } from "#/hooks/query/use-videos";
@@ -56,11 +56,10 @@ function VideoCard({
             large ? "w-20 h-20" : "w-14 h-14",
           )}
         >
-          <Play
-            className={cn(
-              "text-white fill-white",
-              large ? "h-8 w-8" : "h-6 w-6",
-            )}
+          <IconPlayerPlay
+            size={large ? 32 : 24}
+            stroke={1.5}
+            className="text-white fill-white"
           />
         </div>
       </div>
@@ -76,7 +75,7 @@ function VideoCard({
           {t(video.titleKey)}
         </h3>
         <div className="flex items-center gap-1 text-neutral-400">
-          <Clock className="h-3 w-3" />
+          <IconClock size={12} stroke={1.5} />
           <span className="text-xs">{video.duration}</span>
         </div>
       </div>
@@ -99,7 +98,11 @@ export default function VideosPage() {
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-base">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+        <IconLoader2
+          size={32}
+          stroke={1.5}
+          className="animate-spin text-indigo-500"
+        />
       </div>
     );
   }

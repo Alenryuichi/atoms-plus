@@ -33,10 +33,6 @@ export const TIPS: Tip[] = [
     link: "https://docs.all-hands.dev/usage/cloud/github-installation#working-on-github-issues-and-pull-requests-using-openhands",
   },
   {
-    key: I18nKey.TIPS$BLOG_SIGNUP,
-    link: "https://www.all-hands.dev/blog",
-  },
-  {
     key: I18nKey.TIPS$API_USAGE,
     link: "https://docs.all-hands.dev/api-reference/health-check",
   },

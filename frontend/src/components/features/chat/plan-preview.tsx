@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowUpRight, FileText } from "lucide-react";
+import { IconArrowUpRight, IconFileText } from "@tabler/icons-react";
 import { I18nKey } from "#/i18n/declaration";
 import { MarkdownRenderer } from "#/components/features/markdown/markdown-renderer";
 import { useHandleBuildPlanClick } from "#/hooks/use-handle-build-plan-click";
@@ -75,7 +75,7 @@ export function PlanPreview({
       {/* Header */}
       <CardHeader className="p-3 pb-2 border-b border-border/50">
         <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-primary" />
+          <IconFileText size={16} stroke={1.5} className="text-primary" />
           <span className="text-sm font-semibold text-foreground">
             {t(I18nKey.COMMON$PLAN_MD)}
           </span>
@@ -87,7 +87,7 @@ export function PlanPreview({
             data-testid="plan-preview-view-button"
           >
             <span>{t(I18nKey.COMMON$VIEW)}</span>
-            <ArrowUpRight className="h-4 w-4" />
+            <IconArrowUpRight size={16} stroke={1.5} />
           </button>
         </div>
       </CardHeader>

@@ -272,20 +272,20 @@
     "uk": "Хост Forgejo (домен)"
   },
   "MICROAGENT$ADDING_CONTEXT": {
-    "en": "OpenHands is adding this new context to your respository. We'll let you know when the pull request is ready.",
-    "ja": "OpenHandsはこの新しいコンテキストをあなたのリポジトリに追加しています。プルリクエストの準備ができたらお知らせします。",
-    "zh-CN": "OpenHands正在将此新上下文添加到您的存储库中。拉取请求准备好后，我们会通知您。",
-    "zh-TW": "OpenHands正在將此新上下文添加到您的存儲庫中。拉取請求準備好後，我們會通知您。",
-    "ko-KR": "OpenHands가 이 새로운 컨텍스트를 저장소에 추가하고 있습니다. 풀 리퀘스트가 준비되면 알려드리겠습니다.",
-    "no": "OpenHands legger til denne nye konteksten i ditt repository. Vi gir deg beskjed når pull-forespørselen er klar.",
-    "it": "OpenHands sta aggiungendo questo nuovo contesto al tuo repository. Ti faremo sapere quando la pull request sarà pronta.",
-    "pt": "OpenHands está adicionando este novo contexto ao seu repositório. Avisaremos quando o pull request estiver pronto.",
-    "es": "OpenHands está añadiendo este nuevo contexto a tu repositorio. Te avisaremos cuando la solicitud de extracción esté lista.",
-    "ar": "يقوم OpenHands بإضافة هذا السياق الجديد إلى مستودعك. سنعلمك عندما يكون طلب السحب جاهزًا.",
-    "fr": "OpenHands ajoute ce nouveau contexte à votre dépôt. Nous vous informerons lorsque la pull request sera prête.",
-    "tr": "OpenHands bu yeni bağlamı deponuza ekliyor. Çekme isteği hazır olduğunda size haber vereceğiz.",
-    "de": "OpenHands fügt diesen neuen Kontext zu Ihrem Repository hinzu. Wir informieren Sie, wenn der Pull Request bereit ist.",
-    "uk": "OpenHands додає цей новий контекст до вашого репозиторію. Ми повідомимо вас, коли запит на витягування буде готовий."
+    "en": "Agent is adding this new context to your respository. We'll let you know when the pull request is ready.",
+    "ja": "エージェントはこの新しいコンテキストをあなたのリポジトリに追加しています。プルリクエストの準備ができたらお知らせします。",
+    "zh-CN": "Agent 正在将此新上下文添加到您的存储库中。拉取请求准备好后，我们会通知您。",
+    "zh-TW": "Agent 正在將此新上下文添加到您的存儲庫中。拉取請求準備好後，我們會通知您。",
+    "ko-KR": "에이전트가 이 새로운 컨텍스트를 저장소에 추가하고 있습니다. 풀 리퀘스트가 준비되면 알려드리겠습니다.",
+    "no": "Agenten legger til denne nye konteksten i ditt repository. Vi gir deg beskjed når pull-forespørselen er klar.",
+    "it": "L'agente sta aggiungendo questo nuovo contesto al tuo repository. Ti faremo sapere quando la pull request sarà pronta.",
+    "pt": "O agente está adicionando este novo contexto ao seu repositório. Avisaremos quando o pull request estiver pronto.",
+    "es": "El agente está añadiendo este nuevo contexto a tu repositorio. Te avisaremos cuando la solicitud de extracción esté lista.",
+    "ar": "يقوم الوكيل بإضافة هذا السياق الجديد إلى مستودعك. سنعلمك عندما يكون طلب السحب جاهزًا.",
+    "fr": "L'agent ajoute ce nouveau contexte à votre dépôt. Nous vous informerons lorsque la pull request sera prête.",
+    "tr": "Ajan bu yeni bağlamı deponuza ekliyor. Çekme isteği hazır olduğunda size haber vereceğiz.",
+    "de": "Der Agent fügt diesen neuen Kontext zu Ihrem Repository hinzu. Wir informieren Sie, wenn der Pull Request bereit ist.",
+    "uk": "Агент додає цей новий контекст до вашого репозиторію. Ми повідомимо вас, коли запит на витягування буде готовий."
   },
   "MICROAGENT$VIEW_CONVERSATION": {
     "en": "View Conversation",
@@ -544,20 +544,20 @@
     "uk": "Прочитайте це"
   },
   "AUTH$LOGGING_BACK_IN": {
-    "en": "Logging back into OpenHands...",
-    "ja": "OpenHandsに再ログインしています...",
-    "zh-CN": "正在重新登录OpenHands...",
-    "zh-TW": "正在重新登錄OpenHands...",
-    "ko-KR": "OpenHands에 다시 로그인 중...",
-    "no": "Logger inn igjen på OpenHands...",
-    "it": "Accesso nuovamente a OpenHands...",
-    "pt": "Entrando novamente no OpenHands...",
-    "es": "Iniciando sesión de nuevo en OpenHands...",
-    "ar": "جاري إعادة تسجيل الدخول إلى OpenHands...",
-    "fr": "Reconnexion à OpenHands...",
-    "tr": "OpenHands'e yeniden giriş yapılıyor...",
-    "de": "Erneute Anmeldung bei OpenHands...",
-    "uk": "Повторний вхід до OpenHands..."
+    "en": "Logging back into Atoms Plus...",
+    "ja": "Atoms Plusに再ログインしています...",
+    "zh-CN": "正在重新登录 Atoms Plus...",
+    "zh-TW": "正在重新登錄 Atoms Plus...",
+    "ko-KR": "Atoms Plus에 다시 로그인 중...",
+    "no": "Logger inn igjen på Atoms Plus...",
+    "it": "Accesso nuovamente a Atoms Plus...",
+    "pt": "Entrando novamente no Atoms Plus...",
+    "es": "Iniciando sesión de nuevo en Atoms Plus...",
+    "ar": "جاري إعادة تسجيل الدخول إلى Atoms Plus...",
+    "fr": "Reconnexion à Atoms Plus...",
+    "tr": "Atoms Plus'a yeniden giriş yapılıyor...",
+    "de": "Erneute Anmeldung bei Atoms Plus...",
+    "uk": "Повторний вхід до Atoms Plus..."
   },
   "SECURITY$LOW_RISK": {
     "en": "Risk: Low",
@@ -1392,20 +1392,20 @@
     "uk": "Почнімо будувати!"
   },
   "HOME$OPENHANDS_DESCRIPTION": {
-    "en": "OpenHands makes it easy to build and maintain software using AI-driven development.",
-    "ja": "OpenHandsはAI駆動の開発を使用してソフトウェアの開発と維持を容易にします。",
-    "zh-CN": "OpenHands使用AI驱动的开发方式，轻松构建和维护软件。",
-    "zh-TW": "OpenHands使用AI驅動的開發方式，輕鬆構建和維護軟件。",
-    "ko-KR": "OpenHands는 AI 기반 개발을 사용하여 소프트웨어를 쉽게 구축하고 유지할 수 있게 합니다.",
-    "no": "OpenHands gjør det enkelt å bygge og vedlikeholde programvare ved hjelp av AI-drevet utvikling.",
-    "it": "OpenHands rende facile costruire e mantenere software utilizzando lo sviluppo guidato dall'IA.",
-    "pt": "OpenHands facilita a construção e manutenção de software usando desenvolvimento orientado por IA.",
-    "es": "OpenHands facilita la construcción y el mantenimiento de software utilizando desarrollo impulsado por IA.",
-    "ar": "يجعل OpenHands من السهل بناء وصيانة البرمجيات باستخدام التطوير المدعوم بالذكاء الاصطناعي.",
-    "fr": "OpenHands facilite la création et la maintenance de logiciels grâce au développement piloté par l'IA.",
-    "tr": "OpenHands, yapay zeka destekli geliştirme kullanarak yazılım oluşturmayı ve sürdürmeyi kolaylaştırır.",
-    "de": "OpenHands macht es einfach, Software mit KI-gesteuerter Entwicklung zu erstellen und zu warten.",
-    "uk": "OpenHands спрощує створення та підтримку програмного забезпечення за допомогою розробки на основі штучного інтелекту."
+    "en": "Atoms Plus makes it easy to build and maintain software using AI-driven development.",
+    "ja": "Atoms PlusはAI駆動の開発を使用してソフトウェアの開発と維持を容易にします。",
+    "zh-CN": "Atoms Plus 使用 AI 驱动的开发方式，轻松构建和维护软件。",
+    "zh-TW": "Atoms Plus 使用 AI 驅動的開發方式，輕鬆構建和維護軟件。",
+    "ko-KR": "Atoms Plus는 AI 기반 개발을 사용하여 소프트웨어를 쉽게 구축하고 유지할 수 있게 합니다.",
+    "no": "Atoms Plus gjør det enkelt å bygge og vedlikeholde programvare ved hjelp av AI-drevet utvikling.",
+    "it": "Atoms Plus rende facile costruire e mantenere software utilizzando lo sviluppo guidato dall'IA.",
+    "pt": "Atoms Plus facilita a construção e manutenção de software usando desenvolvimento orientado por IA.",
+    "es": "Atoms Plus facilita la construcción y el mantenimiento de software utilizando desarrollo impulsado por IA.",
+    "ar": "يجعل Atoms Plus من السهل بناء وصيانة البرمجيات باستخدام التطوير المدعوم بالذكاء الاصطناعي.",
+    "fr": "Atoms Plus facilite la création et la maintenance de logiciels grâce au développement piloté par l'IA.",
+    "tr": "Atoms Plus, yapay zeka destekli geliştirme kullanarak yazılım oluşturmayı ve sürdürmeyi kolaylaştırır.",
+    "de": "Atoms Plus macht es einfach, Software mit KI-gesteuerter Entwicklung zu erstellen und zu warten.",
+    "uk": "Atoms Plus спрощує створення та підтримку програмного забезпечення за допомогою розробки на основі штучного інтелекту."
   },
   "HOME$NOT_SURE_HOW_TO_START": {
     "en": "Not sure how to start?",
@@ -2256,20 +2256,20 @@
     "uk": "Браузер"
   },
   "BROWSER$EMPTY_MESSAGE": {
-    "en": "If you tell OpenHands to start a web server, the app will appear here.",
-    "ja": "OpenHandsにWebサーバーの起動を指示すると、ここにアプリが表示されます。",
-    "zh-CN": "如果您告诉OpenHands启动Web服务器，应用将在此处显示。",
-    "zh-TW": "如果您要求 OpenHands 啟動網頁伺服器，應用程式將會顯示在此處。",
-    "ko-KR": "OpenHands에게 웹 서버를 시작하도록 지시하면 여기에 앱이 표시됩니다.",
-    "no": "Hvis du ber OpenHands om å starte en webserver, vil appen vises her.",
-    "it": "Se chiedi a OpenHands di avviare un server web, l'app apparirà qui.",
-    "pt": "Se você disser ao OpenHands para iniciar um servidor web, o aplicativo aparecerá aqui.",
-    "es": "Si le dices a OpenHands que inicie un servidor web, la aplicación aparecerá aquí.",
-    "ar": "إذا طلبت من OpenHands بدء خادم ويب، سيظهر التطبيق هنا.",
-    "fr": "Si vous demandez à OpenHands de démarrer un serveur web, l'application apparaîtra ici.",
-    "tr": "OpenHands'e bir web sunucusu başlatmasını söylerseniz, uygulama burada görünecektir.",
-    "de": "Wenn Sie OpenHands anweisen, einen Webserver zu starten, erscheint die App hier.",
-    "uk": "Якщо ви накажете OpenHands запустити вебсервер, програма з'явиться тут."
+    "en": "If you tell the agent to start a web server, the app will appear here.",
+    "ja": "エージェントにWebサーバーの起動を指示すると、ここにアプリが表示されます。",
+    "zh-CN": "如果您告诉 Agent 启动 Web 服务器，应用将在此处显示。",
+    "zh-TW": "如果您要求 Agent 啟動網頁伺服器，應用程式將會顯示在此處。",
+    "ko-KR": "에이전트에게 웹 서버를 시작하도록 지시하면 여기에 앱이 표시됩니다.",
+    "no": "Hvis du ber agenten om å starte en webserver, vil appen vises her.",
+    "it": "Se chiedi all'agente di avviare un server web, l'app apparirà qui.",
+    "pt": "Se você disser ao agente para iniciar um servidor web, o aplicativo aparecerá aqui.",
+    "es": "Si le dices al agente que inicie un servidor web, la aplicación aparecerá aquí.",
+    "ar": "إذا طلبت من الوكيل بدء خادم ويب، سيظهر التطبيق هنا.",
+    "fr": "Si vous demandez à l'agent de démarrer un serveur web, l'application apparaîtra ici.",
+    "tr": "Ajana bir web sunucusu başlatmasını söylerseniz, uygulama burada görünecektir.",
+    "de": "Wenn Sie den Agenten anweisen, einen Webserver zu starten, erscheint die App hier.",
+    "uk": "Якщо ви накажете агенту запустити вебсервер, програма з'явиться тут."
   },
   "SETTINGS$TITLE": {
     "en": "Settings",
@@ -10498,36 +10498,36 @@
     "uk": "Ваша поточна робоча область не є репозиторієм git."
   },
   "DIFF_VIEWER$ASK_OH": {
-    "en": "Ask OpenHands to initialize a git repo to activate this UI.",
-    "ja": "このUIを有効にするために、OpenHandsにgitリポジトリを初期化するよう依頼します。",
-    "zh-CN": "请OpenHands初始化git存储库以激活此UI。",
-    "zh-TW": "請OpenHands初始化git存儲庫以啟用此UI。",
-    "ko-KR": "이 UI를 활성화하려면 OpenHands에 git 리포지토리를 초기화하도록 요청하세요.",
-    "no": "Be OpenHands om å initialisere et git-repositorium for å aktivere dette brukergrensesnittet.",
-    "it": "Chiedi a OpenHands di inizializzare un repository git per attivare questa interfaccia utente.",
-    "pt": "Peça ao OpenHands para inicializar um repositório git para ativar esta interface.",
-    "es": "Pida a OpenHands que inicialice un repositorio git para activar esta interfaz.",
-    "ar": "اطلب من OpenHands تهيئة مستودع git لتنشيط واجهة المستخدم هذه.",
-    "fr": "Demandez à OpenHands d'initialiser un dépôt git pour activer cette interface utilisateur.",
-    "tr": "Bu UI'yi etkinleştirmek için OpenHands'tan bir git deposunu başlatmasını isteyin.",
-    "de": "Bitten Sie OpenHands, ein git-Repository zu initialisieren, um diese Benutzeroberfläche zu aktivieren.",
-    "uk": "Попросіть OpenHands ініціалізувати git-репозиторій, щоб активувати цей інтерфейс користувача."
+    "en": "Ask the agent to initialize a git repo to activate this UI.",
+    "ja": "このUIを有効にするために、エージェントにgitリポジトリを初期化するよう依頼します。",
+    "zh-CN": "请让 Agent 初始化 git 存储库以激活此 UI。",
+    "zh-TW": "請讓 Agent 初始化 git 存儲庫以啟用此 UI。",
+    "ko-KR": "이 UI를 활성화하려면 에이전트에게 git 리포지토리를 초기화하도록 요청하세요.",
+    "no": "Be agenten om å initialisere et git-repositorium for å aktivere dette brukergrensesnittet.",
+    "it": "Chiedi all'agente di inizializzare un repository git per attivare questa interfaccia utente.",
+    "pt": "Peça ao agente para inicializar um repositório git para ativar esta interface.",
+    "es": "Pida al agente que inicialice un repositorio git para activar esta interfaz.",
+    "ar": "اطلب من الوكيل تهيئة مستودع git لتنشيط واجهة المستخدم هذه.",
+    "fr": "Demandez à l'agent d'initialiser un dépôt git pour activer cette interface utilisateur.",
+    "tr": "Bu UI'yi etkinleştirmek için ajandan bir git deposunu başlatmasını isteyin.",
+    "de": "Bitten Sie den Agenten, ein git-Repository zu initialisieren, um diese Benutzeroberfläche zu aktivieren.",
+    "uk": "Попросіть агента ініціалізувати git-репозиторій, щоб активувати цей інтерфейс користувача."
   },
   "DIFF_VIEWER$NO_CHANGES": {
-    "en": "OpenHands hasn't made any changes yet",
-    "ja": "OpenHandsはまだ変更を加えていません",
-    "zh-CN": "OpenHands尚未进行任何更改",
-    "zh-TW": "OpenHands尚未進行任何更改",
-    "ko-KR": "OpenHands는 아직 변경하지 않았습니다",
-    "no": "OpenHands har ikke gjort noen endringer ennå",
-    "it": "OpenHands non ha ancora apportato modifiche",
-    "pt": "O OpenHands ainda não fez nenhuma alteração",
-    "es": "OpenHands aún no ha realizado ningún cambio",
-    "ar": "لم يقم OpenHands بإجراء أي تغييرات بعد",
-    "fr": "OpenHands n'a pas encore apporté de modifications",
-    "tr": "OpenHands henüz herhangi bir değişiklik yapmadı",
-    "de": "OpenHands hat noch keine Änderungen vorgenommen",
-    "uk": "OpenHands ще не вніс жодних змін"
+    "en": "Agent hasn't made any changes yet",
+    "ja": "エージェントはまだ変更を加えていません",
+    "zh-CN": "Agent 尚未进行任何更改",
+    "zh-TW": "Agent 尚未進行任何更改",
+    "ko-KR": "에이전트가 아직 변경하지 않았습니다",
+    "no": "Agenten har ikke gjort noen endringer ennå",
+    "it": "L'agente non ha ancora apportato modifiche",
+    "pt": "O agente ainda não fez nenhuma alteração",
+    "es": "El agente aún no ha realizado ningún cambio",
+    "ar": "لم يقم الوكيل بإجراء أي تغييرات بعد",
+    "fr": "L'agent n'a pas encore apporté de modifications",
+    "tr": "Ajan henüz herhangi bir değişiklik yapmadı",
+    "de": "Der Agent hat noch keine Änderungen vorgenommen",
+    "uk": "Агент ще не вніс жодних змін"
   },
   "DIFF_VIEWER$WAITING_FOR_RUNTIME": {
     "en": "Waiting for runtime to start...",
@@ -18259,6 +18259,61 @@
     "zh-CN": "就绪",
     "ja": "準備完了"
   },
+"CLARIFICATION$TITLE": {
+    "en": "Clarifying Questions",
+    "zh-CN": "澄清问题",
+    "ja": "確認の質問"
+  },
+  "CLARIFICATION$ANSWERED_COUNT": {
+    "en": "{{answered}}/{{total}} answered",
+    "zh-CN": "已回答 {{answered}}/{{total}}",
+    "ja": "{{answered}}/{{total}} 回答済み"
+  },
+  "CLARIFICATION$HELP_TEXT": {
+    "en": "Please answer these questions to help refine the requirements",
+    "zh-CN": "请回答这些问题以帮助完善需求",
+    "ja": "要件を明確にするためにこれらの質問にお答えください"
+  },
+  "CLARIFICATION$SKIP_ALL": {
+    "en": "Skip All (use AI suggestions)",
+    "zh-CN": "全部跳过（使用 AI 建议）",
+    "ja": "すべてスキップ（AI提案を使用）"
+  },
+  "CLARIFICATION$SUBMIT_ANSWERS": {
+    "en": "Submit Answers",
+    "zh-CN": "提交答案",
+    "ja": "回答を送信"
+  },
+  "CLARIFICATION$SKIP_QUESTION": {
+    "en": "Skip (use AI suggestion)",
+    "zh-CN": "跳过（使用 AI 建议）",
+    "ja": "スキップ（AI提案を使用）"
+  },
+  "CLARIFICATION$AI_SUGGESTION": {
+    "en": "AI: {{suggestion}}",
+    "zh-CN": "AI：{{suggestion}}",
+    "ja": "AI：{{suggestion}}"
+  },
+  "CLARIFICATION$TYPE_ANSWER": {
+    "en": "Type your answer...",
+    "zh-CN": "输入您的答案...",
+    "ja": "回答を入力..."
+  },
+  "CLARIFICATION$PRIORITY_CRITICAL": {
+    "en": "critical",
+    "zh-CN": "关键",
+    "ja": "重要"
+  },
+  "CLARIFICATION$PRIORITY_IMPORTANT": {
+    "en": "important",
+    "zh-CN": "重要",
+    "ja": "重要"
+  },
+  "CLARIFICATION$PRIORITY_NICE_TO_HAVE": {
+    "en": "nice-to-have",
+    "zh-CN": "可选",
+    "ja": "あれば良い"
+  },
   "AUTO_ROLE$RESPONDING": {
     "en": "responding",
     "zh-CN": "响应中",
@@ -18298,5 +18353,55 @@
     "en": "Skip (Dev Mode)",
     "zh-CN": "跳过 (开发模式)",
     "ja": "スキップ (開発モード)"
+  },
+  "TEAM_MODE$TEAM": {
+    "en": "Team",
+    "zh-CN": "团队",
+    "ja": "チーム"
+  },
+  "TEAM_MODE$TITLE": {
+    "en": "Team Mode",
+    "zh-CN": "团队模式",
+    "ja": "チームモード"
+  },
+  "TEAM_MODE$TOGGLE_LABEL": {
+    "en": "Toggle Team Mode",
+    "zh-CN": "切换团队模式",
+    "ja": "チームモードを切り替え"
+  },
+  "TEAM_MODE$ACTIVE_TOOLTIP": {
+    "en": "Team Mode: Multi-agent collaboration active",
+    "zh-CN": "团队模式：多代理协作已启用",
+    "ja": "チームモード：マルチエージェント連携中"
+  },
+  "TEAM_MODE$ENABLE_TOOLTIP": {
+    "en": "Enable Team Mode for multi-agent collaboration",
+    "zh-CN": "启用团队模式以进行多代理协作",
+    "ja": "マルチエージェント連携を有効化"
+  },
+  "TEAM_MODE$ACTIVE_DESCRIPTION": {
+    "en": "Multi-agent collaboration active",
+    "zh-CN": "多代理协作已启用",
+    "ja": "マルチエージェント連携中"
+  },
+  "TEAM_MODE$ENABLE_DESCRIPTION": {
+    "en": "Enable multi-agent collaboration",
+    "zh-CN": "启用多代理协作",
+    "ja": "マルチエージェント連携を有効化"
+  },
+  "TEAM_MODE$ERROR_TOOLTIP": {
+    "en": "Team Mode encountered an error",
+    "zh-CN": "团队模式遇到错误",
+    "ja": "チームモードでエラーが発生しました"
+  },
+  "TEAM_MODE$COMPLETED_TOOLTIP": {
+    "en": "Team Mode task completed successfully",
+    "zh-CN": "团队模式任务已完成",
+    "ja": "チームモードタスクが完了しました"
+  },
+  "TEAM_MODE$PROGRESS": {
+    "en": "Progress",
+    "zh-CN": "进度",
+    "ja": "進捗"
   }
 }

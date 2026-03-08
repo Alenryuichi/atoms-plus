@@ -13,7 +13,6 @@ import { useScrollToBottom } from "#/hooks/use-scroll-to-bottom";
 import { TypingIndicator } from "./typing-indicator";
 import { useWsClient } from "#/context/ws-client-provider";
 import { Messages as V0Messages } from "./messages";
-import { ChatSuggestions } from "./chat-suggestions";
 import { ScrollProvider } from "#/context/scroll-context";
 import { useInitialQueryStore } from "#/stores/initial-query-store";
 import { useSendMessage } from "#/hooks/use-send-message";
@@ -40,6 +39,18 @@ import { getStatusColor, getStatusText } from "#/utils/utils";
 import { AutoRoleIndicator } from "#/components/features/auto-role";
 import { RuntimeBootstrapProgress } from "./runtime-bootstrap-progress";
 import type { RuntimeStatus } from "#/types/runtime-status";
+import {
+  TeamModeToggle,
+  TeamModeThoughts,
+  useTeamModeWebSocket,
+} from "#/components/features/team-mode";
+import {
+  ClarificationPanel,
+  type UserAnswer,
+} from "#/components/features/team-mode/clarification";
+import { useTeamModeStore } from "#/stores/team-mode-store";
+import { useCreateTeamSession } from "#/hooks/mutation/use-create-team-session";
+import { AGENT_DISPLAY_INFO } from "#/api/team-mode-service/team-mode-service.types";
 
 function getEntryPoint(
   hasRepository: boolean | null,
@@ -64,7 +75,6 @@ export function ChatInterface() {
     v1UiEvents,
     v1FullEvents,
     totalEvents,
-    hasSubstantiveAgentActions,
     v0UserEventsExist,
     v1UserEventsExist,
     userEventsExist,
@@ -85,6 +95,35 @@ export function ChatInterface() {
 
   const { curAgentState } = useAgentState();
   const { handleBuildPlanClick } = useHandleBuildPlanClick();
+
+  // Team Mode integration
+  // Use individual selectors to prevent re-renders when unrelated state changes
+  const isTeamModeEnabled = useTeamModeStore((state) => state.isEnabled);
+  const isTeamModeRunning = useTeamModeStore((state) => state.isRunning);
+  const teamModeCurrentAgent = useTeamModeStore((state) => state.currentAgent);
+  const teamModeError = useTeamModeStore((state) => state.error);
+  const setTeamModeError = useTeamModeStore((state) => state.setError);
+  const createTeamSession = useCreateTeamSession();
+
+  // Initialize Team Mode WebSocket connection when session exists
+  // This hook auto-connects when sessionId changes in the store
+  const { sendClarificationAnswer } = useTeamModeWebSocket();
+
+  // Handle clarification submission from HITL panel
+  const handleClarificationSubmit = React.useCallback(
+    (answers: UserAnswer[], skipped: boolean) => {
+      sendClarificationAnswer(answers, skipped);
+    },
+    [sendClarificationAnswer],
+  );
+
+  // Show Team Mode errors as toast
+  React.useEffect(() => {
+    if (teamModeError) {
+      displayErrorToast(`Team Mode: ${teamModeError}`);
+      setTeamModeError(null); // Clear after showing
+    }
+  }, [teamModeError, setTeamModeError]);
 
   // Disable Build button while agent is running (streaming)
   const isAgentRunning =
@@ -120,9 +159,68 @@ export function ChatInterface() {
     "positive" | "negative"
   >("positive");
   const [feedbackModalIsOpen, setFeedbackModalIsOpen] = React.useState(false);
-  const { selectedRepository, replayJson } = useInitialQueryStore();
+  const { selectedRepository, replayJson, initialPrompt, clearInitialPrompt } =
+    useInitialQueryStore();
   const params = useParams();
   const { mutateAsync: uploadFiles } = useUnifiedUploadFiles();
+
+  // Team Mode: Handle initial query from home page
+  // When user submits a query from AtomsHome with Team Mode enabled,
+  // the query is stored in initialQueryStore instead of being sent via conversation creation.
+  // This effect triggers the Team Mode API once the conversation is ready.
+  //
+  // IMPORTANT: For V1 conversations, the URL initially contains a "task-{uuid}" format
+  // which is a start task ID, NOT the conversation ID. We must wait for the task to
+  // complete and the URL to be updated to the actual conversation ID before calling
+  // the Team Mode API, otherwise we get "Conversation not found" errors.
+  const hasTriggeredInitialQuery = React.useRef(false);
+  React.useEffect(() => {
+    // Skip if no initial prompt or no conversation ID yet
+    if (!initialPrompt || !params.conversationId || !isTeamModeEnabled) {
+      return;
+    }
+
+    // CRITICAL: Skip if this is a task ID (format: "task-{uuid}")
+    // The task polling hook (useTaskPolling) will navigate to the real conversation ID
+    // once the task is READY. Wait for that navigation before triggering Team Mode.
+    if (isTask) {
+      return;
+    }
+
+    // Skip if already triggered (prevent double execution)
+    if (hasTriggeredInitialQuery.current) {
+      return;
+    }
+    hasTriggeredInitialQuery.current = true;
+
+    // At this point, params.conversationId is the real conversation ID (not task-{uuid})
+    // For V0, it might be a hex string or UUID; for V1 after navigation, it's the app_conversation_id
+    const { conversationId } = params;
+
+    // Trigger Team Mode with the stored query
+    posthog.capture("team_mode_session_started", {
+      query_character_length: initialPrompt.length,
+      conversation_id: conversationId,
+      source: "initial_prompt",
+    });
+
+    createTeamSession.mutate({
+      task: initialPrompt,
+      conversationId,
+    });
+
+    setOptimisticUserMessage(initialPrompt);
+    clearInitialPrompt();
+  }, [
+    initialPrompt,
+    params.conversationId,
+    isTeamModeEnabled,
+    isTask, // Add isTask to dependencies
+    createTeamSession,
+    setOptimisticUserMessage,
+    clearInitialPrompt,
+    posthog,
+  ]);
 
   const optimisticUserMessage = getOptimisticUserMessage();
 
@@ -151,6 +249,31 @@ export function ChatInterface() {
     // Create mutable copies of the arrays
     const images = [...originalImages];
     const files = [...originalFiles];
+
+    // Team Mode: When enabled, create a Team Mode session with conversation binding
+    // This enables the Handoff mechanism to execute code via CodeActAgent
+    // Note: isTask check not needed here since handleSendMessage is only called from
+    // an active conversation (user typing in chat), not during initial task creation.
+    if (isTeamModeEnabled && params.conversationId && !isTask) {
+      // At this point, params.conversationId is the real conversation ID
+      const { conversationId } = params;
+
+      posthog.capture("team_mode_session_started", {
+        query_character_length: content.length,
+        conversation_id: conversationId,
+      });
+
+      createTeamSession.mutate({
+        task: content,
+        conversationId,
+      });
+
+      setOptimisticUserMessage(content);
+      setMessageToSend("");
+      return;
+    }
+
+    // Normal message flow (Team Mode disabled)
     if (totalEvents === 0) {
       posthog.capture("initial_query_submitted", {
         entry_point: getEntryPoint(
@@ -259,17 +382,6 @@ export function ChatInterface() {
     <ScrollProvider value={scrollProviderValue}>
       {/* Atoms Plus: Transparent chat interface - parent card handles background */}
       <div className="h-full flex flex-col relative bg-transparent min-h-0">
-        {/* Atoms Plus: Show suggestions immediately for new conversations (no loading needed) */}
-        {!hasSubstantiveAgentActions &&
-          !optimisticUserMessage &&
-          !userEventsExist &&
-          !isReturningToConversation && (
-            <ChatSuggestions
-              onSuggestionsClick={(message) => setMessageToSend(message)}
-            />
-          )}
-        {/* Note: We only hide chat suggestions when there's a user message */}
-
         {/* Atoms Plus: Message area - flex-grow to fill space */}
         <div
           ref={scrollRef}
@@ -296,8 +408,6 @@ export function ChatInterface() {
               />
             )}
 
-          {/* Note: Removed spinner for new conversations - ChatSuggestions shows immediately */}
-
           {(!isLoadingMessages || v0Events.length > 0) && v0UserEventsExist && (
             <V0Messages
               messages={v0Events}
@@ -307,9 +417,16 @@ export function ChatInterface() {
             />
           )}
 
-          {showV1Messages && v1UserEventsExist && (
+          {/* Render V1Messages if:
+              1. showV1Messages is true AND
+              2. Either v1UserEventsExist OR we have an optimisticUserMessage
+                 (to display the initial prompt while waiting for first event) */}
+          {showV1Messages && (v1UserEventsExist || optimisticUserMessage) && (
             <V1Messages messages={v1UiEvents} allEvents={v1FullEvents} />
           )}
+
+          {/* Team Mode: Show agent thoughts during collaboration */}
+          {isTeamModeEnabled && <TeamModeThoughts />}
         </div>
 
         {/* Atoms Plus: Bottom control area - transparent background */}
@@ -318,15 +435,29 @@ export function ChatInterface() {
           <div className="flex items-center justify-between relative">
             {/* Left: Role + Status indicators (same height h-8) */}
             <div className="flex items-center gap-2">
-              {/* Auto Role Indicator - Shows current responding role */}
-              <AutoRoleIndicator showDetails={false} />
+              {/* Auto Role Indicator - Shows current responding role
+                  Hidden when Team Mode is enabled to avoid confusion with
+                  Team Mode's own role indicators */}
+              {!isTeamModeEnabled && <AutoRoleIndicator showDetails={false} />}
 
-              {/* Status Indicator - Shows agent state */}
-              {isStartingStatus && (
+              {/* Team Mode Toggle - compact inline version */}
+              <TeamModeToggle compact />
+
+              {/* Status Indicator - Shows agent state or Team Mode status */}
+              {isTeamModeRunning && teamModeCurrentAgent ? (
+                // Team Mode: Show current agent status
                 <ChatStatusIndicator
-                  statusColor={serverStatusColor}
-                  status={serverStatusText}
+                  statusColor="#f59e0b"
+                  status={`${AGENT_DISPLAY_INFO[teamModeCurrentAgent].icon} ${AGENT_DISPLAY_INFO[teamModeCurrentAgent].name} 处理中...`}
                 />
+              ) : (
+                // Normal mode: Show OpenHands agent status
+                isStartingStatus && (
+                  <ChatStatusIndicator
+                    statusColor={serverStatusColor}
+                    status={serverStatusText}
+                  />
+                )
               )}
 
               <ConfirmationModeEnabled />
@@ -358,6 +489,11 @@ export function ChatInterface() {
               message={errorMessage}
               onDismiss={removeErrorMessage}
             />
+          )}
+
+          {/* Team Mode: HITL Clarification Panel */}
+          {isTeamModeEnabled && (
+            <ClarificationPanel onSubmit={handleClarificationSubmit} />
           )}
 
           <InteractiveChatBox onSubmit={handleSendMessage} />
