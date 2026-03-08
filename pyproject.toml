@@ -101,7 +101,7 @@ dependencies = [
   "uvicorn",
   "whatthepatch>=1.0.6",
   "zope-interface==7.2",
-"langgraph (>=1.0.10,<2.0.0)",
+  "langgraph (>=1.0.10,<2.0.0)",
   "langchain-core (>=0.3.0)",
   "langgraph-checkpoint (>=2.0.0)",
   "langgraph-checkpoint-sqlite (>=2.0.0)",
