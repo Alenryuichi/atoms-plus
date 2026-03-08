@@ -41,8 +41,8 @@ export function ConversationMain() {
       <div
         ref={containerRef}
         className={cn(
-          // Atoms Plus: Clean layout with side-by-side floating cards
-          "flex flex-1 min-h-0 overflow-hidden gap-2 p-2 pt-0",
+          // Atoms Plus: Direct layout without floating cards - panels sit directly on container
+          "flex flex-1 min-h-0 overflow-hidden gap-2",
           isMobile ? "flex-col" : "transition-all duration-300 ease-in-out",
         )}
         style={
@@ -51,12 +51,10 @@ export function ConversationMain() {
             : undefined
         }
       >
-        {/* Chat Panel - Left side floating glass card */}
+        {/* Chat Panel - Left side, no card styling */}
         <div
           className={cn(
             "flex flex-col min-h-0 overflow-hidden",
-            "bg-[#0a0b0d] border border-white/5",
-            "rounded-xl",
             isMobile
               ? getMobileChatPanelClass(isRightPanelShown)
               : "transition-all duration-300 ease-in-out",
@@ -82,12 +80,10 @@ export function ConversationMain() {
           <ResizeHandle onMouseDown={handleMouseDown} />
         )}
 
-        {/* Tab Content Panel - Right side floating glass card */}
+        {/* Tab Content Panel - Right side, no card styling */}
         <div
           className={cn(
             "flex flex-col min-h-0 transition-all duration-300 ease-in-out overflow-hidden",
-            "bg-[#0a0b0d] border border-white/5",
-            "rounded-xl shadow-2xl shadow-black/50",
             isMobile
               ? cn(
                   "absolute bottom-4 left-3 right-3 top-160",
