@@ -1,27 +1,73 @@
 ---
 name: team-mode-e2e-test
-description: End-to-end testing tool for Team Mode multi-agent collaboration. Use when testing Team Mode locally, debugging WebSocket connections, or validating agent workflows.
+description: CLI tool for Team Mode diagnostics and E2E testing. Use when checking deployment status, testing Team Mode locally, debugging WebSocket connections, or validating agent workflows.
 ---
 
-# Team Mode E2E Test
+# Team Mode CLI
 
-CLI tool for end-to-end testing of Team Mode multi-agent collaboration.
+CLI tool for deployment diagnostics and end-to-end testing of Team Mode multi-agent collaboration.
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `status` | Quick deployment status check (default) |
+| `test` | Run full E2E test |
 
 ## Quick Start
 
 ```bash
-# Basic test with default settings
-poetry run python -m atoms_plus.team_mode.e2e_test
+# Quick deployment status check (default command)
+poetry run python -m atoms_plus.team_mode.e2e_test status
 
-# Custom task
-poetry run python -m atoms_plus.team_mode.e2e_test --task "Create a REST API with FastAPI"
+# Full E2E test
+poetry run python -m atoms_plus.team_mode.e2e_test test
 
-# Custom model
-poetry run python -m atoms_plus.team_mode.e2e_test --model openai/qwen-plus
+# E2E test with custom task
+poetry run python -m atoms_plus.team_mode.e2e_test test --task "Create a REST API with FastAPI"
 
-# Verbose output
-poetry run python -m atoms_plus.team_mode.e2e_test -v
+# E2E test with custom model
+poetry run python -m atoms_plus.team_mode.e2e_test test --model openai/qwen-plus
+
+# Verbose E2E test
+poetry run python -m atoms_plus.team_mode.e2e_test test -v
 ```
+
+## Status Command
+
+Quick check of all services and API endpoints:
+
+```bash
+poetry run python -m atoms_plus.team_mode.e2e_test status
+```
+
+**Output:**
+```
+═══════════════════════════════════════════════════════════
+  Atoms Plus 部署状态
+═══════════════════════════════════════════════════════════
+
+服务状态:
+  后端: ✅ http://localhost:3000 (v0.3.0)
+  前端: ✅ http://localhost:3002
+
+API 端点:
+  Team Mode: ✅
+  Race Mode: ✅
+  Agent Roles: ✅
+  Scaffolding: ✅
+
+运行进程:
+  PID 56021: /opt/homebrew/.../Python -m atoms_plus.atoms_server...
+
+✓ 所有服务正常运行
+```
+
+**Checks performed:**
+- Backend `/atoms-plus` API response + version
+- Frontend accessibility on port 3002
+- Each feature endpoint (Team/Race/Roles/Scaffolding)
+- Running `atoms_plus` processes via `pgrep`
 
 ## Prerequisites
 
@@ -42,15 +88,29 @@ poetry run python -m atoms_plus.team_mode.e2e_test -v
 
 ## CLI Options
 
+### Global Options
+
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--host` | `localhost` | Backend host |
 | `--port` | `3000` | Backend port |
+| `--frontend-port` | `3002` | Frontend port (for status check) |
+
+### Test Command Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
 | `--task` | Hello World script | Task description |
 | `--model` | From settings.json | LLM model (e.g., `openai/qwen-plus`) |
 | `--skip-clarification` | `True` | Auto-skip HITL clarification |
 | `--timeout` | `300` | WebSocket timeout in seconds |
 | `-v, --verbose` | `False` | Verbose output |
+
+### Status Command Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-q, --quiet` | `False` | Minimal output |
 
 ## Test Flow
 
@@ -152,10 +212,11 @@ NO_PROXY=localhost,127.0.0.1 ALL_PROXY= HTTP_PROXY= HTTPS_PROXY= \
 
 | Scenario | Command | Expected Result |
 |----------|---------|-----------------|
-| Basic Hello World | `poetry run python -m atoms_plus.team_mode.e2e_test` | PASSED |
-| Custom Task | `--task "Create a REST API"` | PASSED |
-| Invalid Model | `--model invalid` | FAILED (auth error) |
-| No Backend | (backend stopped) | FAILED (unreachable) |
+| Status Check | `status` | Shows all services |
+| Basic E2E Test | `test` | PASSED |
+| Custom Task | `test --task "Create a REST API"` | PASSED |
+| Invalid Model | `test --model invalid` | FAILED (auth error) |
+| No Backend | `status` (backend stopped) | Shows ❌ for backend |
 
 ## Related Files
 
