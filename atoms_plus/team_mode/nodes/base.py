@@ -160,16 +160,127 @@ async def call_llm(
         raise
 
 
+def parse_structured_response(response: str) -> dict[str, str]:
+    """
+    Parse LLM response to extract summary and details.
+
+    Expected format from LLM:
+    ```json
+    {
+      "summary": "One-line summary for user",
+      "details": "Full internal analysis"
+    }
+    ```
+
+    Falls back gracefully if JSON parsing fails:
+    - First line becomes summary
+    - Full response becomes details
+    """
+    # Try to extract JSON from response
+    try:
+        # Look for JSON block in markdown code fence
+        if '```json' in response:
+            start = response.index('```json') + 7
+            end = response.index('```', start)
+            json_str = response[start:end].strip()
+        elif '```' in response and '{' in response:
+            # Try to find JSON in any code block
+            start = response.index('{')
+            end = response.rindex('}') + 1
+            json_str = response[start:end]
+        elif response.strip().startswith('{'):
+            # Direct JSON response
+            json_str = response.strip()
+        else:
+            raise ValueError('No JSON found')
+
+        parsed = json.loads(json_str)
+        summary = parsed.get('summary', '').strip()
+        details = parsed.get('details', '').strip()
+
+        if summary:
+            return {'summary': summary, 'details': details or response}
+
+    except (ValueError, json.JSONDecodeError, KeyError) as e:
+        logger.debug(f'[Base] JSON parsing failed: {e}, using fallback')
+
+    # Fallback: find first meaningful line as summary
+    lines = [line.strip() for line in response.split('\n') if line.strip()]
+
+    # Filter out code block markers and JSON structure
+    filtered_lines = []
+    for line in lines:
+        # Skip markdown code fences (```json, ```python, ```, etc.)
+        if line.startswith('```') or line.endswith('```'):
+            continue
+        # Skip empty JSON braces
+        if line in ['{', '}', '[', ']']:
+            continue
+        filtered_lines.append(line)
+
+    # Try to extract summary value from JSON-like lines
+    first_line = ''
+    for line in filtered_lines:
+        # Try to extract value from "summary": "..." pattern
+        if '"summary"' in line:
+            # Extract the value after the colon
+            match = line.split(':', 1)
+            if len(match) > 1:
+                value = match[1].strip().strip(',').strip('"').strip()
+                if value and value not in ['{', '}', '[', ']', '']:
+                    first_line = value
+                    break
+        # Skip "details" field
+        elif '"details"' in line:
+            continue
+        # Use any other meaningful content
+        elif line and not line.startswith('"'):
+            first_line = line
+            break
+
+    # If still no good line, use first filtered line
+    if not first_line and filtered_lines:
+        first_line = filtered_lines[0]
+
+    # If no good line found, use a generic message
+    if not first_line:
+        first_line = '处理完成'
+
+    # Clean up first line if it's a markdown header
+    if first_line.startswith('#'):
+        first_line = first_line.lstrip('#').strip()
+
+    # Remove leading/trailing quotes and commas (JSON artifacts)
+    first_line = first_line.strip('"').strip(',').strip()
+
+    # Truncate if too long
+    if len(first_line) > 150:
+        first_line = first_line[:147] + '...'
+
+    return {'summary': first_line, 'details': response}
+
+
 def create_thought(
     role: AgentRole,
     content: str,
     status: AgentStatus = AgentStatus.THINKING,
     metadata: dict[str, Any] | None = None,
+    summary: str | None = None,
 ) -> dict[str, Any]:
-    """Create a thought entry for streaming to UI."""
+    """
+    Create a thought entry for streaming to UI.
+
+    Args:
+        role: Agent role (PM, ARCHITECT, ENGINEER)
+        content: Full thought content (details)
+        status: Current agent status
+        metadata: Additional metadata
+        summary: One-line summary for user display (optional)
+    """
     return {
         'role': role.value,
         'content': content,
+        'summary': summary or content[:100] + '...' if len(content) > 100 else content,
         'timestamp': datetime.utcnow().isoformat(),
         'status': status.value,
         'metadata': metadata or {},
@@ -181,9 +292,19 @@ def update_state_with_thought(
     role: AgentRole,
     content: str,
     status: AgentStatus = AgentStatus.THINKING,
+    summary: str | None = None,
 ) -> TeamState:
-    """Update state with a new thought from an agent."""
-    thought = create_thought(role, content, status)
+    """
+    Update state with a new thought from an agent.
+
+    Args:
+        state: Current team state
+        role: Agent role
+        content: Full thought content (details)
+        status: Agent status
+        summary: One-line summary for user display
+    """
+    thought = create_thought(role, content, status, summary=summary)
 
     # Create new state with updated thoughts
     new_thoughts = list(state.get('thoughts', []))

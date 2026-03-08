@@ -130,8 +130,9 @@ class TeamState(TypedDict):
 
     # OpenHands Integration (CodeAct execution)
     conversation_id: str | None  # OpenHands conversation ID
-    sandbox_url: str | None  # Sandbox HTTP URL
-    sandbox_api_key: str | None  # Session API key
+    conversation_version: str  # 'V0' or 'V1' - determines handoff method
+    sandbox_url: str | None  # Sandbox HTTP URL (V1) or main server URL (V0)
+    sandbox_api_key: str | None  # Session API key (V1 only, None for V0)
     execution_mode: str  # 'plan_only' or 'execute'
     handoff_message: str | None  # Message sent to OpenHands for execution
 
@@ -143,6 +144,7 @@ def create_initial_state(
     model: str = 'qwen-plus',
     max_iterations: int = 3,
     conversation_id: str | None = None,
+    conversation_version: str = 'V0',
     sandbox_url: str | None = None,
     sandbox_api_key: str | None = None,
     execution_mode: str = ExecutionMode.PLAN_ONLY.value,
@@ -157,8 +159,9 @@ def create_initial_state(
         model: LLM model to use
         max_iterations: Maximum revision iterations
         conversation_id: OpenHands conversation ID (enables execution mode)
-        sandbox_url: Sandbox HTTP URL (e.g., http://localhost:8003)
-        sandbox_api_key: Session API key for sandbox access
+        conversation_version: 'V0' or 'V1' - determines handoff method
+        sandbox_url: Sandbox HTTP URL (V1) or main server URL (V0)
+        sandbox_api_key: Session API key for sandbox access (V1 only)
         execution_mode: 'plan_only' or 'execute'
 
     Returns:
@@ -186,6 +189,7 @@ def create_initial_state(
         refined_requirements=None,
         # OpenHands Integration
         conversation_id=conversation_id,
+        conversation_version=conversation_version,
         sandbox_url=sandbox_url,
         sandbox_api_key=sandbox_api_key,
         execution_mode=execution_mode,

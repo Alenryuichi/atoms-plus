@@ -30,7 +30,8 @@ export interface ClarifyingQuestion {
   category: QuestionCategory;
   priority: QuestionPriority;
   options: QuestionOption[];
-  ai_suggestion?: string;
+  allow_other?: boolean; // Whether to show "Other" option with text input
+  ai_suggestion?: string; // Default option ID if skipped
 }
 
 export interface ClarificationPayload {

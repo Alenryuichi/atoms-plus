@@ -68,14 +68,54 @@ def format_handoff_message(state: TeamState) -> str:
     return '\n'.join(parts)
 
 
-async def send_message_to_openhands(
+async def send_message_to_openhands_v0(
+    server_url: str,
+    conversation_id: str,
+    message: str,
+) -> dict[str, Any]:
+    """
+    Send a message to a V0 OpenHands conversation via HTTP API.
+
+    V0 conversations run in the main server process and use the simpler
+    /message endpoint that accepts just a message string.
+
+    Args:
+        server_url: Base URL of the main server (e.g., http://localhost:3000)
+        conversation_id: OpenHands conversation ID
+        message: Message content to send
+
+    Returns:
+        API response as dict
+    """
+    url = f'{server_url}/api/conversations/{conversation_id}/message'
+
+    # V0 uses simple message format
+    payload = {'message': message}
+
+    headers = {'Content-Type': 'application/json'}
+
+    logger.info(f'[Handoff V0] POST {url} (payload size: {len(message)} chars)')
+
+    async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
+        response = await client.post(url, json=payload, headers=headers)
+        logger.info(f'[Handoff V0] Response status: {response.status_code}')
+        response.raise_for_status()
+        result = response.json()
+        logger.info(f'[Handoff V0] Response body: {result}')
+        return result
+
+
+async def send_message_to_openhands_v1(
     sandbox_url: str,
     conversation_id: str,
     session_api_key: str,
     message: str,
 ) -> dict[str, Any]:
     """
-    Send a message to an OpenHands conversation via HTTP API.
+    Send a message to a V1 OpenHands conversation via HTTP API.
+
+    V1 conversations run in separate sandbox processes and require
+    the SendMessageRequest format with API key authentication.
 
     Args:
         sandbox_url: Base URL of the sandbox (e.g., http://localhost:8003)
@@ -86,10 +126,20 @@ async def send_message_to_openhands(
     Returns:
         API response as dict
     """
+    # Use /events endpoint with SendMessageRequest format (V1 Agent Server)
+    # See: OpenAPI schema at /openapi.json -> SendMessageRequest
     url = f'{sandbox_url}/api/conversations/{conversation_id}/events'
 
+    # Format as SendMessageRequest with TextContent array
     payload = {
-        'message': message,
+        'role': 'user',
+        'content': [
+            {
+                'type': 'text',
+                'text': message,
+            }
+        ],
+        'run': True,  # Auto-run the agent loop
     }
 
     headers = {
@@ -97,10 +147,15 @@ async def send_message_to_openhands(
         'X-Session-API-Key': session_api_key,
     }
 
+    logger.info(f'[Handoff V1] POST {url} (payload size: {len(message)} chars)')
+
     async with httpx.AsyncClient(timeout=HTTP_TIMEOUT) as client:
         response = await client.post(url, json=payload, headers=headers)
+        logger.info(f'[Handoff V1] Response status: {response.status_code}')
         response.raise_for_status()
-        return response.json()
+        result = response.json()
+        logger.info(f'[Handoff V1] Response body: {result}')
+        return result
 
 
 async def handoff_to_openhands(state: TeamState) -> TeamState:
@@ -114,8 +169,13 @@ async def handoff_to_openhands(state: TeamState) -> TeamState:
 
     It sends the formatted plan/code to the OpenHands conversation,
     which triggers the CodeActAgent to execute it.
+
+    Supports both V0 and V1 conversations:
+    - V0: Uses /message endpoint, no API key required
+    - V1: Uses /events endpoint with SendMessageRequest format
     """
     conversation_id = state.get('conversation_id')
+    conversation_version = state.get('conversation_version', 'V0')
     sandbox_url = state.get('sandbox_url')
     sandbox_api_key = state.get('sandbox_api_key')
     execution_mode = state.get('execution_mode')
@@ -125,31 +185,57 @@ async def handoff_to_openhands(state: TeamState) -> TeamState:
         logger.info('[Handoff] Skipping - execution_mode is not execute')
         return state
 
-    if not all([conversation_id, sandbox_url, sandbox_api_key]):
-        logger.warning('[Handoff] Missing sandbox info, cannot execute')
+    # Validate required fields based on version
+    if not conversation_id or not sandbox_url:
+        logger.warning('[Handoff] Missing conversation_id or sandbox_url')
         thought = create_thought(
             AgentRole.ENGINEER,
-            '⚠️ Cannot execute code: sandbox information not available',
+            '⚠️ Cannot execute code: conversation binding not available',
             AgentStatus.ERROR,
         )
         return {
             **state,
             'thoughts': [*state.get('thoughts', []), thought],
-            'error': 'Missing sandbox information for code execution',
+            'error': 'Missing conversation information for code execution',
+        }
+
+    # V1 requires API key
+    if conversation_version == 'V1' and not sandbox_api_key:
+        logger.warning('[Handoff] V1 session requires sandbox_api_key')
+        thought = create_thought(
+            AgentRole.ENGINEER,
+            '⚠️ Cannot execute code: V1 session API key not available',
+            AgentStatus.ERROR,
+        )
+        return {
+            **state,
+            'thoughts': [*state.get('thoughts', []), thought],
+            'error': 'Missing API key for V1 code execution',
         }
 
     # Format the handoff message
     message = format_handoff_message(state)
-    logger.info(f'[Handoff] Sending message to OpenHands ({len(message)} chars)')
+    logger.info(
+        f'[Handoff] Sending message to OpenHands {conversation_version} '
+        f'({len(message)} chars)'
+    )
 
     try:
-        # Send to OpenHands
-        result = await send_message_to_openhands(
-            sandbox_url=sandbox_url,
-            conversation_id=conversation_id,
-            session_api_key=sandbox_api_key,
-            message=message,
-        )
+        # Send to OpenHands based on conversation version
+        if conversation_version == 'V1':
+            result = await send_message_to_openhands_v1(
+                sandbox_url=sandbox_url,
+                conversation_id=conversation_id,
+                session_api_key=sandbox_api_key,
+                message=message,
+            )
+        else:
+            # V0 - use simpler /message endpoint
+            result = await send_message_to_openhands_v0(
+                server_url=sandbox_url,
+                conversation_id=conversation_id,
+                message=message,
+            )
 
         # Record successful handoff with properly truncated preview
         preview_len = 500
@@ -163,9 +249,9 @@ async def handoff_to_openhands(state: TeamState) -> TeamState:
 
         thought = create_thought(
             AgentRole.ENGINEER,
-            f'✅ Handed off to CodeActAgent for execution\n\n{message_preview}',
+            f'✅ Handed off to CodeActAgent ({conversation_version}) for execution\n\n{message_preview}',
             AgentStatus.RESPONDING,
-            {'handoff_result': result},
+            {'handoff_result': result, 'conversation_version': conversation_version},
         )
 
         return {
@@ -177,6 +263,8 @@ async def handoff_to_openhands(state: TeamState) -> TeamState:
     except httpx.HTTPStatusError as e:
         logger.error(f'[Handoff] HTTP error: {e}')
         error_msg = f'Handoff failed: HTTP {e.response.status_code}'
+        if e.response.status_code == 404:
+            error_msg += ' (conversation not found - it may have been closed)'
     except httpx.TimeoutException:
         logger.error('[Handoff] Request timeout')
         error_msg = 'Handoff failed: Request timeout'

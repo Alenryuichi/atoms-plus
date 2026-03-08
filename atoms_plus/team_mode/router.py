@@ -151,18 +151,28 @@ def should_handoff(state: TeamState) -> Literal['handoff', 'end']:
     conversation_id = state.get('conversation_id')
     sandbox_url = state.get('sandbox_url')
     sandbox_api_key = state.get('sandbox_api_key')
+    conversation_version = state.get('conversation_version', 'V0')
 
     # Check if execution is enabled and sandbox info is available
     if execution_mode == ExecutionMode.EXECUTE.value:
-        if all([conversation_id, sandbox_url, sandbox_api_key]):
+        # V0: Only needs conversation_id and sandbox_url (no API key required)
+        # V1: Needs all three: conversation_id, sandbox_url, and sandbox_api_key
+        if conversation_version == 'V0':
+            required_present = all([conversation_id, sandbox_url])
+        else:
+            required_present = all([conversation_id, sandbox_url, sandbox_api_key])
+
+        if required_present:
             logger.info(
-                f'[Router] Execution enabled, handing off to OpenHands '
-                f'(conversation_id={conversation_id})'
+                f'[Router] Execution enabled ({conversation_version}), handing off '
+                f'to OpenHands (conversation_id={conversation_id})'
             )
             return 'handoff'
         else:
             logger.warning(
-                '[Router] Execution enabled but sandbox info missing, skipping handoff'
+                f'[Router] Execution enabled but sandbox info missing '
+                f'(version={conversation_version}, cid={conversation_id}, '
+                f'url={sandbox_url}, key={bool(sandbox_api_key)}), skipping handoff'
             )
 
     logger.info('[Router] Plan-only mode, ending without handoff')

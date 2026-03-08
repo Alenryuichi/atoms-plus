@@ -75,7 +75,8 @@ class ClarifyingQuestion(BaseModel):
     category: QuestionCategory
     priority: QuestionPriority
     options: list[QuestionOption] = Field(default_factory=list)
-    ai_suggestion: str | None = None  # What AI would assume if skipped
+    allow_other: bool = True  # Whether to show "Other" option with text input
+    ai_suggestion: str | None = None  # What AI would assume if skipped (option ID)
 
 
 class UserAnswer(BaseModel):

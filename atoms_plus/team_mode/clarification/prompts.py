@@ -42,41 +42,72 @@ Respond with a JSON object:
   "clarity_areas": ["List of aspects that are clear/consistent"]
 }}"""
 
-QUESTION_GENERATION_PROMPT = """Generate clarifying questions for the following ambiguous requirement.
+QUESTION_GENERATION_PROMPT = """Generate **single-choice clarifying questions** for the following ambiguous requirement.
 
 User Requirement: {user_input}
 
 Identified Ambiguous Aspects:
 {ambiguous_aspects}
 
-Generate targeted questions to resolve these ambiguities.
+Generate **closed-ended questions** with pre-defined options that represent different interpretations.
 
-RULES:
+CRITICAL RULES:
 1. Maximum {max_questions} questions
-2. Each question must be specific and actionable
-3. Provide 2-4 options for single/multi-choice questions
-4. Include what you would assume if the user skips (ai_suggestion)
-5. Prioritize questions by impact on implementation
+2. **ALWAYS use "single-choice"** question type (NOT free-text)
+3. Each question must have **exactly 4 options**:
+   - Option 1-3: Specific interpretations (from simple to complex)
+   - Option 4: "other" - Allow user to specify custom answer
+4. Options should represent **different implementation approaches**
+5. Include "ai_suggestion" - the default option if user skips
 
-Question Categories:
+Question Design Guidelines:
+- Start simple: First option should be the simplest/minimal approach
+- Be specific: Each option should describe a concrete implementation
+- Avoid jargon: Use plain language users can understand
+- Progressive: Options should increase in complexity
+
+Categories:
 - data: Data sources, storage, fields
 - ui: Layout, styling, components
 - behavior: User interactions, error handling
 - integration: APIs, services, authentication
 - constraints: Performance, browser support, accessibility
 
-Respond with a JSON array of questions:
+Respond with a JSON array:
 [
   {{
     "id": "q1",
-    "question_text": "Clear, specific question",
-    "question_type": "single-choice|multi-choice|free-text",
+    "question_text": "Clear question ending with ?",
+    "question_type": "single-choice",
     "category": "data|ui|behavior|integration|constraints",
     "priority": "critical|important|nice-to-have",
+    "allow_other": true,
     "options": [
-      {{"id": "opt1", "text": "Option text", "description": "Optional description"}}
+      {{"id": "opt1", "text": "Simple approach", "description": "Brief explanation"}},
+      {{"id": "opt2", "text": "Medium approach", "description": "Brief explanation"}},
+      {{"id": "opt3", "text": "Full-featured approach", "description": "Brief explanation"}},
+      {{"id": "other", "text": "Other (specify)", "description": "I have a different requirement"}}
     ],
-    "ai_suggestion": "What AI would assume if skipped"
+    "ai_suggestion": "opt1"
+  }}
+]
+
+EXAMPLE for "build a blog":
+[
+  {{
+    "id": "q1",
+    "question_text": "What features should the blog include?",
+    "question_type": "single-choice",
+    "category": "behavior",
+    "priority": "critical",
+    "allow_other": true,
+    "options": [
+      {{"id": "opt1", "text": "Simple blog", "description": "Post list + single post view"}},
+      {{"id": "opt2", "text": "Interactive blog", "description": "+ Comments and likes"}},
+      {{"id": "opt3", "text": "Full-featured blog", "description": "+ User accounts, categories, tags, search"}},
+      {{"id": "other", "text": "Other (specify)", "description": "I have a different requirement"}}
+    ],
+    "ai_suggestion": "opt1"
   }}
 ]"""
 

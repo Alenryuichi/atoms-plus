@@ -17,7 +17,8 @@ export type AgentStatus = "idle" | "thinking" | "responding" | "waiting";
 
 export interface AgentThought {
   role: AgentRole;
-  content: string;
+  content: string; // Full details (internal analysis)
+  summary: string; // User-friendly summary (displayed by default)
   status: AgentStatus;
   timestamp: string;
   metadata?: Record<string, unknown>;

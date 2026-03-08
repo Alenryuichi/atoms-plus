@@ -18,6 +18,7 @@ from atoms_plus.team_mode.nodes.base import (
     AgentRole,
     AgentStatus,
     call_llm,
+    parse_structured_response,
     update_state_with_thought,
 )
 from atoms_plus.team_mode.state import TeamState
@@ -45,11 +46,19 @@ When analyzing requirements:
 - Consider edge cases and error scenarios
 - Prioritize based on user value and effort
 
-Always structure your output with:
-1. Feature breakdown
-2. User stories (As a... I want... So that...)
-3. Acceptance criteria
-4. Priority recommendations"""
+**IMPORTANT: You MUST respond in the following JSON format:**
+```json
+{
+  "summary": "A single sentence summarizing your decision for the user (max 100 chars)",
+  "details": "Your full analysis including feature breakdown, user stories, acceptance criteria, and priority recommendations"
+}
+```
+
+The summary should be user-friendly and concise, like:
+- "Identified 8 core features for the Admin Panel, prioritized by user value."
+- "Requirements analysis complete: 5 user stories defined with acceptance criteria."
+
+The details field contains your full internal analysis for the team."""
 
 
 async def pm_node(state: TeamState) -> TeamState:
@@ -103,26 +112,32 @@ This analysis will be used by the Architect for system design and the Engineer f
     try:
         response = await call_llm(messages, AgentRole.PM, state.get('model'))
 
-        # Update state with PM's analysis
+        # Parse structured response (summary + details)
+        parsed = parse_structured_response(response)
+        summary = parsed['summary']
+        details = parsed['details']
+
+        # Update state with PM's analysis (summary for UI, details for internal)
         state = update_state_with_thought(
             state,
             AgentRole.PM,
-            response,
+            details,  # Full content stored in state
             AgentStatus.RESPONDING,
+            summary=summary,  # Summary sent to UI
         )
 
-        # Add PM's analysis to messages for context
+        # Add PM's analysis to messages for context (full details for team)
         new_messages = list(state.get('messages', []))
         new_messages.append(
             {
                 'role': 'assistant',
-                'content': f'[PM Analysis]\n{response}',
+                'content': f'[PM Analysis]\n{details}',
                 'name': 'pm',
             }
         )
         state['messages'] = new_messages
 
-        logger.info('[PM] Requirements analysis complete')
+        logger.info(f'[PM] Requirements analysis complete. Summary: {summary[:50]}...')
 
     except Exception as e:
         logger.error(f'[PM] Error: {e}')

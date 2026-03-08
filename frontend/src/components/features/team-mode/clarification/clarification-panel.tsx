@@ -11,9 +11,9 @@ import {
 import type { ClarifyingQuestion, UserAnswer } from "./types";
 
 const PRIORITY_COLORS = {
-  critical: "text-danger-600 bg-danger-50",
-  important: "text-warning-600 bg-warning-50",
-  "nice-to-have": "text-default-500 bg-default-100",
+  critical: "text-destructive dark:text-red-400 bg-destructive/10 dark:bg-red-500/20",
+  important: "text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/20",
+  "nice-to-have": "text-muted-foreground bg-muted",
 } as const;
 
 const CATEGORY_ICONS = {
@@ -50,7 +50,7 @@ function QuestionItem({
   return (
     <div className={`space-y-2 ${isAnswered ? "opacity-60" : ""}`}>
       <div className="flex items-start gap-2">
-        <span className="text-xs font-bold text-primary-500 mt-0.5">
+        <span className="text-xs font-bold text-primary mt-0.5">
           Q{index + 1}
         </span>
         <div className="flex-1">
@@ -62,7 +62,7 @@ function QuestionItem({
               {question.priority}
             </span>
           </div>
-          <p className="text-sm font-medium text-default-800">
+          <p className="text-sm font-medium text-foreground">
             {question.question_text}
           </p>
         </div>
@@ -133,24 +133,24 @@ export function ClarificationPanel({ onSubmit }: ClarificationPanelProps) {
   const totalCount = questions.length;
 
   return (
-    <div className="rounded-lg border border-primary-200 bg-primary-50/50 dark:bg-primary-900/10 overflow-hidden">
+    <div className="rounded-lg border border-primary/30 dark:border-primary/20 bg-card dark:bg-card/80 overflow-hidden">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-primary-200 bg-primary-100/50 dark:bg-primary-900/20">
+      <div className="px-4 py-3 border-b border-primary/20 dark:border-primary/10 bg-primary/5 dark:bg-primary/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-lg">❓</span>
-            <h3 className="font-semibold text-primary-700 dark:text-primary-300">
+            <h3 className="font-semibold text-foreground">
               {t(I18nKey.CLARIFICATION$TITLE)}
             </h3>
           </div>
-          <span className="text-xs text-primary-600 dark:text-primary-400">
+          <span className="text-xs text-muted-foreground">
             {t(I18nKey.CLARIFICATION$ANSWERED_COUNT, {
               answered: answeredCount,
               total: totalCount,
             })}
           </span>
         </div>
-        <p className="text-xs text-primary-600/80 dark:text-primary-400/80 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           {t(I18nKey.CLARIFICATION$HELP_TEXT)}
         </p>
       </div>
@@ -170,7 +170,7 @@ export function ClarificationPanel({ onSubmit }: ClarificationPanelProps) {
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-primary-200 bg-primary-100/50 dark:bg-primary-900/20 flex justify-between">
+      <div className="px-4 py-3 border-t border-primary/20 dark:border-primary/10 bg-primary/5 dark:bg-primary/10 flex justify-between">
         {canSkip && (
           <Button size="sm" variant="ghost" onClick={handleSkipAll}>
             {t(I18nKey.CLARIFICATION$SKIP_ALL)}

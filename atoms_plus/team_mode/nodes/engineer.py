@@ -18,6 +18,7 @@ from atoms_plus.team_mode.nodes.base import (
     AgentRole,
     AgentStatus,
     call_llm,
+    parse_structured_response,
     update_state_with_thought,
 )
 from atoms_plus.team_mode.state import TeamState
@@ -46,7 +47,19 @@ When writing code:
 - Structure code for testability
 - Use type hints and proper naming
 
-Always provide complete, runnable code with explanations."""
+**IMPORTANT: You MUST respond in the following JSON format:**
+```json
+{
+  "summary": "A single sentence summarizing what you implemented (max 100 chars)",
+  "details": "Your complete, runnable code with explanations"
+}
+```
+
+The summary should be user-friendly and concise, like:
+- "Implemented the Admin Panel with React, including auth and dashboard."
+- "Created 5 API endpoints for user management with full error handling."
+
+The details field contains your complete code implementation for the team."""
 
 
 async def engineer_node(state: TeamState) -> TeamState:
@@ -106,16 +119,22 @@ async def engineer_node(state: TeamState) -> TeamState:
     try:
         response = await call_llm(messages, AgentRole.ENGINEER, state.get('model'))
 
+        # Parse structured response (summary + details)
+        parsed = parse_structured_response(response)
+        summary = parsed['summary']
+        details = parsed['details']
+
         # Update state with engineer's code
         state = update_state_with_thought(
             state,
             AgentRole.ENGINEER,
-            response,
+            details,  # Full code stored in state
             AgentStatus.RESPONDING,
+            summary=summary,  # Summary sent to UI
         )
 
-        state['code'] = response
-        logger.info('[Engineer] Implementation complete')
+        state['code'] = details  # Full code for team
+        logger.info(f'[Engineer] Implementation complete. Summary: {summary[:50]}...')
 
     except Exception as e:
         logger.error(f'[Engineer] Error: {e}')

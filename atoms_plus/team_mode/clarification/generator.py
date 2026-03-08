@@ -98,15 +98,31 @@ async def generate_questions(
                 for i, opt in enumerate(q_data.get('options', []))
             ]
 
+            # Ensure "other" option exists if allow_other is true
+            allow_other = q_data.get('allow_other', True)
+            has_other = any(opt.id == 'other' for opt in options)
+            if allow_other and not has_other:
+                options.append(
+                    QuestionOption(
+                        id='other',
+                        text='Other (specify)',
+                        description='I have a different requirement',
+                    )
+                )
+
+            # Force single-choice for MCQ UX (override any free-text)
+            question_type_str = q_data.get('question_type', 'single-choice')
+            if question_type_str == 'free-text':
+                question_type_str = 'single-choice'  # Convert to MCQ
+
             question = ClarifyingQuestion(
                 id=q_data.get('id', f'q_{uuid.uuid4().hex[:8]}'),
                 question_text=q_data.get('question_text', ''),
-                question_type=QuestionType(
-                    q_data.get('question_type', 'single-choice')
-                ),
+                question_type=QuestionType(question_type_str),
                 category=QuestionCategory(q_data.get('category', 'behavior')),
                 priority=QuestionPriority(q_data.get('priority', 'important')),
                 options=options,
+                allow_other=allow_other,
                 ai_suggestion=q_data.get('ai_suggestion'),
             )
             questions.append(question)
@@ -116,18 +132,158 @@ async def generate_questions(
 
     except Exception as e:
         logger.error(f'[Generator] Failed to generate questions: {e}')
-        # Return a single fallback question
-        return [
-            ClarifyingQuestion(
-                id='fallback_q1',
-                question_text='Could you provide more details about what you want to build?',
-                question_type=QuestionType.FREE_TEXT,
+        # Return fallback questions for each ambiguous aspect
+        fallback_questions = []
+
+        # Question templates for common aspects
+        aspect_templates = {
+            'scope': ClarifyingQuestion(
+                id='fallback_scope',
+                question_text='What is the scope of this project?',
+                question_type=QuestionType.SINGLE_CHOICE,
                 category=QuestionCategory.BEHAVIOR,
                 priority=QuestionPriority.CRITICAL,
-                options=[],
-                ai_suggestion='I will make reasonable assumptions based on common patterns.',
-            )
-        ]
+                options=[
+                    QuestionOption(
+                        id='opt1',
+                        text='Prototype / Demo',
+                        description='Quick proof of concept',
+                    ),
+                    QuestionOption(
+                        id='opt2',
+                        text='MVP',
+                        description='Minimum viable product for launch',
+                    ),
+                    QuestionOption(
+                        id='opt3',
+                        text='Production-ready',
+                        description='Full application ready for users',
+                    ),
+                    QuestionOption(
+                        id='other',
+                        text='Other (specify)',
+                        description='I have specific scope requirements',
+                    ),
+                ],
+                allow_other=True,
+                ai_suggestion='opt2',
+            ),
+            'complexity': ClarifyingQuestion(
+                id='fallback_complexity',
+                question_text='What level of complexity do you need?',
+                question_type=QuestionType.SINGLE_CHOICE,
+                category=QuestionCategory.BEHAVIOR,
+                priority=QuestionPriority.CRITICAL,
+                options=[
+                    QuestionOption(
+                        id='opt1',
+                        text='Simple / Basic',
+                        description='Core functionality only',
+                    ),
+                    QuestionOption(
+                        id='opt2',
+                        text='Standard',
+                        description='Common features included',
+                    ),
+                    QuestionOption(
+                        id='opt3',
+                        text='Advanced',
+                        description='Full-featured with edge cases',
+                    ),
+                    QuestionOption(
+                        id='other',
+                        text='Other (specify)',
+                        description='Custom complexity level',
+                    ),
+                ],
+                allow_other=True,
+                ai_suggestion='opt1',
+            ),
+            'features': ClarifyingQuestion(
+                id='fallback_features',
+                question_text='Which features are most important?',
+                question_type=QuestionType.MULTI_CHOICE,
+                category=QuestionCategory.BEHAVIOR,
+                priority=QuestionPriority.IMPORTANT,
+                options=[
+                    QuestionOption(
+                        id='opt1',
+                        text='User authentication',
+                        description='Login/signup system',
+                    ),
+                    QuestionOption(
+                        id='opt2',
+                        text='Data persistence',
+                        description='Save and retrieve data',
+                    ),
+                    QuestionOption(
+                        id='opt3',
+                        text='Responsive UI',
+                        description='Works on mobile and desktop',
+                    ),
+                    QuestionOption(
+                        id='opt4',
+                        text='API integration',
+                        description='Connect to external services',
+                    ),
+                    QuestionOption(
+                        id='other',
+                        text='Other (specify)',
+                        description='Different features needed',
+                    ),
+                ],
+                allow_other=True,
+                ai_suggestion='opt1',
+            ),
+        }
+
+        # Generate fallback question for each aspect
+        for i, aspect in enumerate(ambiguous_aspects[: config.max_questions_per_round]):
+            aspect_lower = aspect.lower()
+            if aspect_lower in aspect_templates:
+                fallback_questions.append(aspect_templates[aspect_lower])
+            else:
+                # Generic fallback for unknown aspects
+                fallback_questions.append(
+                    ClarifyingQuestion(
+                        id=f'fallback_q{i + 1}',
+                        question_text=f'What are your requirements for "{aspect}"?',
+                        question_type=QuestionType.SINGLE_CHOICE,
+                        category=QuestionCategory.BEHAVIOR,
+                        priority=QuestionPriority.IMPORTANT,
+                        options=[
+                            QuestionOption(
+                                id='opt1',
+                                text='Simple approach',
+                                description='Basic implementation',
+                            ),
+                            QuestionOption(
+                                id='opt2',
+                                text='Standard approach',
+                                description='Common implementation',
+                            ),
+                            QuestionOption(
+                                id='opt3',
+                                text='Advanced approach',
+                                description='Full implementation',
+                            ),
+                            QuestionOption(
+                                id='other',
+                                text='Other (specify)',
+                                description='Custom requirements',
+                            ),
+                        ],
+                        allow_other=True,
+                        ai_suggestion='opt1',
+                    )
+                )
+
+        logger.info(f'[Generator] Using {len(fallback_questions)} fallback questions')
+        return (
+            fallback_questions
+            if fallback_questions
+            else [aspect_templates['complexity']]
+        )
 
 
 def generate_assumptions_from_questions(

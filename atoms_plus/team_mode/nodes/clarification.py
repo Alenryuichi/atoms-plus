@@ -320,8 +320,14 @@ def should_clarify(state: TeamState) -> str:
     Returns:
         'clarify' if clarification is required, 'proceed' otherwise
     """
-    if state.get('clarification_required', False):
+    clarification_required = state.get('clarification_required', False)
+    logger.info(
+        f'[Router] should_clarify called: clarification_required={clarification_required}'
+    )
+    if clarification_required:
+        logger.info('[Router] Routing to pm_await_clarification')
         return 'clarify'
+    logger.info('[Router] Routing to pm (proceed)')
     return 'proceed'
 
 

@@ -7,20 +7,24 @@ Provides:
 - WebSocket endpoint for real-time streaming
 - Integration with existing atoms_server.py
 - OpenHands conversation integration for code execution
+
+Supports both V0 and V1 OpenHands sessions:
+- V0: Sessions run in main server process, use /message endpoint
+- V1: Sessions run in separate sandboxes, use /events endpoint with SendMessageRequest
 """
 
 from __future__ import annotations
 
 import logging
+import os
 import uuid as uuid_module
 from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel, Field
-
+from fastapi import APIRouter, HTTPException, Request, WebSocket, WebSocketDisconnect
 from langgraph.types import Command
+from pydantic import BaseModel, Field
 
 from atoms_plus.team_mode.graph import (
     compile_team_graph,
@@ -30,25 +34,50 @@ from atoms_plus.team_mode.graph import (
 )
 from atoms_plus.team_mode.nodes.base import get_llm_config
 from atoms_plus.team_mode.state import ExecutionMode, create_initial_state
-from openhands.app_server.app_conversation.app_conversation_service import (
-    AppConversationService,
-)
-from openhands.app_server.config import (
-    depends_app_conversation_service,
-    depends_sandbox_service,
-)
-from openhands.app_server.sandbox.sandbox_service import SandboxService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix='/api/v1/team', tags=['team-mode'])
 
-# Dependency injection for OpenHands services
-# Note: These are resolved at module load time, which is the standard pattern
-# in OpenHands (see app_conversation_router.py). This requires atoms_server.py
-# to import this module AFTER AppServerConfig is initialized.
-app_conversation_service_dependency = depends_app_conversation_service()
-sandbox_service_dependency = depends_sandbox_service()
+# Lazy dependency resolution for V1 services (may not be available in V0-only mode)
+_app_conversation_service_dependency = None
+_sandbox_service_dependency = None
+
+
+def _get_v1_dependencies():
+    """Lazily resolve V1 dependencies to avoid import errors in V0-only mode."""
+    global _app_conversation_service_dependency, _sandbox_service_dependency
+    if _app_conversation_service_dependency is None:
+        try:
+            from openhands.app_server.config import (
+                depends_app_conversation_service,
+                depends_sandbox_service,
+            )
+
+            _app_conversation_service_dependency = depends_app_conversation_service()
+            _sandbox_service_dependency = depends_sandbox_service()
+        except Exception as e:
+            logger.warning(f'[API] V1 dependencies not available: {e}')
+    return _app_conversation_service_dependency, _sandbox_service_dependency
+
+
+def _get_server_base_url(request: Request | None = None) -> str:
+    """Get the base URL of the current server for V0 handoff.
+
+    V0 sessions run in the main server process, so the handoff URL
+    is the server's own URL.
+    """
+    # Check environment variables first
+    backend_host = os.getenv('BACKEND_HOST', os.getenv('WEB_HOST', 'localhost'))
+    backend_port = os.getenv('BACKEND_PORT', os.getenv('PORT', '3000'))
+    use_tls = os.getenv('USE_TLS', 'false').lower() == 'true'
+    protocol = 'https' if use_tls else 'http'
+
+    # If request is available, use it to construct URL
+    if request:
+        return str(request.base_url).rstrip('/')
+
+    return f'{protocol}://{backend_host}:{backend_port}'
 
 
 # Request/Response Models
@@ -121,14 +150,17 @@ async def get_team_mode_info() -> dict[str, Any]:
 @router.post('/sessions', response_model=SessionResponse)
 async def create_session(
     request: StartSessionRequest,
-    app_conversation_service: AppConversationService = app_conversation_service_dependency,
-    sandbox_service: SandboxService = sandbox_service_dependency,
+    http_request: Request,
 ) -> SessionResponse:
     """
     Create a new Team Mode session.
 
     If conversation_id is provided, the session will be bound to the existing
     OpenHands conversation and can execute code via CodeActAgent handoff.
+
+    Supports both V0 and V1 conversations:
+    - V0: Sessions run in main server, handoff uses /message endpoint
+    - V1: Sessions run in sandboxes, handoff uses /events endpoint
     """
     session_id = str(uuid_module.uuid4())
 
@@ -138,43 +170,58 @@ async def create_session(
     sandbox_api_key: str | None = None
     execution_mode = ExecutionMode.PLAN_ONLY.value
     binding_warning: str | None = None
+    conversation_version: str = 'V0'  # Default to V0
 
     # If conversation_id provided, lookup sandbox info
     if request.conversation_id:
-        try:
-            conv_uuid = UUID(request.conversation_id)
-            conversation = await app_conversation_service.get_app_conversation(
-                conv_uuid
-            )
+        conversation_id = request.conversation_id
 
-            if conversation:
-                conversation_id = request.conversation_id
-                # Get sandbox info
-                sandbox = await sandbox_service.get_sandbox(conversation.sandbox_id)
-                if sandbox:
-                    sandbox_api_key = sandbox.session_api_key
-                    # Build sandbox URL from conversation_url or sandbox info
-                    if conversation.conversation_url:
-                        # Extract base URL from conversation_url
-                        # e.g., http://localhost:8003/api/conversations/xxx -> http://localhost:8003
-                        url_parts = conversation.conversation_url.rsplit('/api/', 1)
-                        sandbox_url = url_parts[0] if url_parts else None
-                    execution_mode = ExecutionMode.EXECUTE.value
-                    logger.info(
-                        f'[API] Bound to OpenHands conversation {conversation_id}, '
-                        f'sandbox_url={sandbox_url}'
-                    )
-                else:
-                    binding_warning = (
-                        f'Sandbox not found for conversation {conversation_id}'
-                    )
-                    logger.warning(f'[API] {binding_warning}')
-            else:
-                binding_warning = f'Conversation not found: {request.conversation_id}'
-                logger.warning(f'[API] {binding_warning}')
-        except ValueError as e:
-            binding_warning = f'Invalid conversation_id format: {e}'
-            logger.warning(f'[API] {binding_warning}')
+        # Try V1 first (AppConversationService)
+        v1_bound = False
+        app_conv_dep, sandbox_dep = _get_v1_dependencies()
+
+        if app_conv_dep and sandbox_dep:
+            try:
+                # Resolve dependencies
+                app_conversation_service = await app_conv_dep()
+                sandbox_service = await sandbox_dep()
+
+                conv_uuid = UUID(request.conversation_id)
+                conversation = await app_conversation_service.get_app_conversation(
+                    conv_uuid
+                )
+
+                if conversation:
+                    # This is a V1 conversation
+                    conversation_version = 'V1'
+                    sandbox = await sandbox_service.get_sandbox(conversation.sandbox_id)
+                    if sandbox:
+                        sandbox_api_key = sandbox.session_api_key
+                        # Build sandbox URL from conversation_url
+                        if conversation.conversation_url:
+                            url_parts = conversation.conversation_url.rsplit('/api/', 1)
+                            sandbox_url = url_parts[0] if url_parts else None
+                        execution_mode = ExecutionMode.EXECUTE.value
+                        v1_bound = True
+                        logger.info(
+                            f'[API] Bound to V1 conversation {conversation_id}, '
+                            f'sandbox_url={sandbox_url}'
+                        )
+            except Exception as e:
+                logger.debug(f'[API] V1 lookup failed (may be V0): {e}')
+
+        # If V1 lookup failed, assume V0 session
+        if not v1_bound:
+            # V0 sessions run in the main server process
+            # The handoff URL is the server's own URL
+            conversation_version = 'V0'
+            sandbox_url = _get_server_base_url(http_request)
+            sandbox_api_key = None  # V0 doesn't require API key for local access
+            execution_mode = ExecutionMode.EXECUTE.value
+            logger.info(
+                f'[API] Bound to V0 conversation {conversation_id}, '
+                f'server_url={sandbox_url}'
+            )
 
     # Get model from request or user settings
     model = request.model
@@ -191,6 +238,7 @@ async def create_session(
         model=model,
         max_iterations=request.max_iterations,
         conversation_id=conversation_id,
+        conversation_version=conversation_version,
         sandbox_url=sandbox_url,
         sandbox_api_key=sandbox_api_key,
         execution_mode=execution_mode,
@@ -396,21 +444,27 @@ async def stream_session(websocket: WebSocket, session_id: str) -> None:
     # If session is already awaiting user input, don't restart the graph
     # Just wait for the user's clarification response
     if current_status == 'awaiting_input':
-        logger.info(f'[WS] Session {session_id} is awaiting_input, waiting for user response')
-        await websocket.send_json({
-            'event': 'awaiting_input',
-            'session_id': session_id,
-            'message': 'Session is waiting for your clarification response',
-        })
+        logger.info(
+            f'[WS] Session {session_id} is awaiting_input, waiting for user response'
+        )
+        await websocket.send_json(
+            {
+                'event': 'awaiting_input',
+                'session_id': session_id,
+                'message': 'Session is waiting for your clarification response',
+            }
+        )
 
         # Get pending interrupt data from session if available
         pending_interrupt = session.get('pending_interrupt')
         if pending_interrupt:
-            await websocket.send_json({
-                'event': 'interrupt',
-                'type': pending_interrupt.get('type', 'clarification:questions'),
-                **pending_interrupt,
-            })
+            await websocket.send_json(
+                {
+                    'event': 'interrupt',
+                    'type': pending_interrupt.get('type', 'clarification:questions'),
+                    **pending_interrupt,
+                }
+            )
 
         # Wait for user clarification
         try:
@@ -422,12 +476,16 @@ async def stream_session(websocket: WebSocket, session_id: str) -> None:
 
     # Check if execution is already in progress for this session
     if _active_executions.get(session_id):
-        logger.warning(f'[WS] Execution already in progress for session {session_id}, ignoring')
-        await websocket.send_json({
-            'event': 'already_running',
-            'session_id': session_id,
-            'message': 'Graph execution is already in progress for this session',
-        })
+        logger.warning(
+            f'[WS] Execution already in progress for session {session_id}, ignoring'
+        )
+        await websocket.send_json(
+            {
+                'event': 'already_running',
+                'session_id': session_id,
+                'message': 'Graph execution is already in progress for this session',
+            }
+        )
         # Keep connection open but don't start new execution
         try:
             while True:
@@ -446,9 +504,8 @@ async def stream_session(websocket: WebSocket, session_id: str) -> None:
     try:
         # Compile graph with async checkpointer
         checkpointer = await get_async_sqlite_checkpointer()
-        # TODO: Re-enable clarification when LLM JSON parsing is fixed
-        # Current MiniMax-M2.5 model returns empty responses causing parsing errors
-        graph = compile_team_graph(checkpointer, enable_clarification=False)
+        # Enable HITL clarification flow
+        graph = compile_team_graph(checkpointer, enable_clarification=True)
 
         # Update session status
         session['status'] = 'running'
@@ -492,7 +549,10 @@ async def stream_session(websocket: WebSocket, session_id: str) -> None:
                 if isinstance(payload, dict):
                     session['pending_interrupt'] = payload
                 else:
-                    session['pending_interrupt'] = {'type': 'generic', 'value': str(payload)}
+                    session['pending_interrupt'] = {
+                        'type': 'generic',
+                        'value': str(payload),
+                    }
 
                 # HITL: Wait for user response via WebSocket
                 # Keep connection open and wait for clarification:answer or clarification:skip
@@ -538,10 +598,12 @@ async def stream_session(websocket: WebSocket, session_id: str) -> None:
                 # This continues the graph from where it was interrupted
                 logger.info(f'[WS] Resuming graph with: {resume_value}')
                 session.pop('pending_interrupt', None)
-                await websocket.send_json({
-                    'event': 'clarification:resumed',
-                    'session_id': session_id,
-                })
+                await websocket.send_json(
+                    {
+                        'event': 'clarification:resumed',
+                        'session_id': session_id,
+                    }
+                )
 
                 # Continue streaming with resumed execution
                 async for resume_chunk in graph.astream(
@@ -550,24 +612,32 @@ async def stream_session(websocket: WebSocket, session_id: str) -> None:
                     # Process resumed chunks the same way
                     if '__interrupt__' in resume_chunk:
                         # Another interrupt - recursively handle
-                        logger.warning('[WS] Nested interrupt during resume - not supported yet')
+                        logger.warning(
+                            '[WS] Nested interrupt during resume - not supported yet'
+                        )
                         continue
                     for node_name, node_state in resume_chunk.items():
                         if not isinstance(node_state, dict):
                             continue
-                        thought = node_state.get('thought') or node_state.get('thoughts')
+                        thought = node_state.get('thought') or node_state.get(
+                            'thoughts'
+                        )
                         if thought:
-                            await websocket.send_json({
-                                'event': 'thought',
-                                'node': node_name,
-                                'thought': thought,
-                            })
+                            await websocket.send_json(
+                                {
+                                    'event': 'thought',
+                                    'node': node_name,
+                                    'thought': thought,
+                                }
+                            )
                         if node_state.get('error'):
-                            await websocket.send_json({
-                                'event': 'error',
-                                'node': node_name,
-                                'error': node_state['error'],
-                            })
+                            await websocket.send_json(
+                                {
+                                    'event': 'error',
+                                    'node': node_name,
+                                    'error': node_state['error'],
+                                }
+                            )
 
                 # After resume completes, we're done with this chunk
                 continue
@@ -581,15 +651,17 @@ async def stream_session(websocket: WebSocket, session_id: str) -> None:
                     )
                     continue
 
-                # Send thought updates
+                # Send thought updates (only summary to UI, not full details)
                 thoughts = node_state.get('thoughts', [])
                 if thoughts:
                     latest = thoughts[-1]
+                    # Use summary if available, otherwise use first 100 chars of content
+                    summary = latest.get('summary') or latest.get('content', '')[:100]
                     await websocket.send_json(
                         {
                             'event': 'thought',
                             'agent': latest.get('role'),
-                            'content': latest.get('content'),
+                            'content': summary,  # Summary only for UI
                             'status': latest.get('status'),
                             'timestamp': latest.get('timestamp'),
                         }

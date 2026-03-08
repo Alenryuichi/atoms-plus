@@ -18,6 +18,7 @@ from atoms_plus.team_mode.nodes.base import (
     AgentRole,
     AgentStatus,
     call_llm,
+    parse_structured_response,
     update_state_with_thought,
 )
 from atoms_plus.team_mode.state import TeamState
@@ -45,7 +46,19 @@ When reviewing code, focus on:
 - Extensibility and flexibility
 - Potential bottlenecks and failure points
 
-Always structure your responses with clear sections and reasoning."""
+**IMPORTANT: You MUST respond in the following JSON format:**
+```json
+{
+  "summary": "A single sentence summarizing your architecture decision (max 100 chars)",
+  "details": "Your full architecture design or code review with clear sections and reasoning"
+}
+```
+
+The summary should be user-friendly and concise, like:
+- "Designed a modular React + Node.js architecture with PostgreSQL."
+- "Code review complete: 3 improvements suggested for better maintainability."
+
+The details field contains your full internal analysis for the team."""
 
 
 async def architect_node(state: TeamState) -> TeamState:
@@ -102,21 +115,27 @@ async def architect_node(state: TeamState) -> TeamState:
     try:
         response = await call_llm(messages, AgentRole.ARCHITECT, state.get('model'))
 
+        # Parse structured response (summary + details)
+        parsed = parse_structured_response(response)
+        summary = parsed['summary']
+        details = parsed['details']
+
         # Update state with architect's plan/review
         state = update_state_with_thought(
             state,
             AgentRole.ARCHITECT,
-            response,
+            details,  # Full content stored in state
             AgentStatus.RESPONDING,
+            summary=summary,  # Summary sent to UI
         )
 
-        # Store in appropriate field based on context
+        # Store in appropriate field based on context (full details for team)
         if code:
-            state['review'] = response
+            state['review'] = details
         else:
-            state['plan'] = response
+            state['plan'] = details
 
-        logger.info('[Architect] Analysis complete')
+        logger.info(f'[Architect] Analysis complete. Summary: {summary[:50]}...')
 
     except Exception as e:
         logger.error(f'[Architect] Error: {e}')
