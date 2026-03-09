@@ -5,8 +5,20 @@ description: Complete guide for deploying Atoms Plus (OpenHands fork) locally. U
 
 # Atoms Plus 本地部署指南
 
-**Version**: 0.3.0  
+**Version**: 0.3.0
 **Runtime**: `RUNTIME=local` (ProcessSandboxService)
+
+## 安装 CLI 工具
+
+```bash
+# 安装 atoms-plus-cli 到项目环境
+poetry run pip install -e atoms_plus/
+
+# 验证安装
+poetry run atoms --help
+```
+
+安装后，AI Agent (Claude Code, Gemini CLI 等) 可以直接调用 `atoms` 命令。
 
 ## 架构概览
 
@@ -14,7 +26,7 @@ description: Complete guide for deploying Atoms Plus (OpenHands fork) locally. U
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │   Frontend      │────▶│   App Server    │────▶│  Agent Server   │
 │   (Vite)        │     │   (FastAPI)     │     │  (Subprocess)   │
-│   :3001         │     │   :3000         │     │  :8000+         │
+│   :3002         │     │   :3000         │     │  :8000+         │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
                               │
                               ▼
@@ -24,29 +36,76 @@ description: Complete guide for deploying Atoms Plus (OpenHands fork) locally. U
                         └─────────────────┘
 ```
 
-## 快速启动
+## 快速启动 (推荐)
+
+### 一键部署
+
+```bash
+# 启动后端 + 前端
+poetry run atoms start
+
+# 访问地址
+#   前端: http://localhost:3002
+#   后端: http://localhost:3000/atoms-plus
+```
+
+### CLI 命令参考
+
+| 命令 | 说明 |
+|------|------|
+| `atoms start` | 启动后端和前端服务 |
+| `atoms stop` | 停止所有服务 |
+| `atoms restart` | 重启所有服务 |
+| `atoms status` | 检查部署状态 (默认) |
+| `atoms logs` | 查看服务日志 |
+| `atoms test` | 运行 E2E 测试 |
+
+```bash
+# 检查状态 (默认命令)
+poetry run atoms status
+poetry run atoms
+
+# 查看日志
+poetry run atoms logs
+poetry run atoms logs --service backend -f
+
+# 停止服务
+poetry run atoms stop
+
+# 重启服务
+poetry run atoms restart
+
+# E2E 测试
+poetry run atoms test --task "Create a todo app"
+```
+
+### 日志文件位置
+
+```
+/tmp/atoms-plus-logs/
+├── backend.log   # 后端日志
+└── frontend.log  # 前端日志
+```
+
+---
+
+## 手动启动 (高级)
 
 ### 1. 启动后端 (App Server)
 
 ```bash
 export RUNTIME=local
 export SKIP_DEPENDENCY_CHECK=1
-export LLM_API_KEY="your-api-key"
-export LLM_BASE_URL="https://coding.dashscope.aliyuncs.com/v1"
-export LLM_MODEL="openai/MiniMax-M2.5"
 export OH_DISABLE_MCP=true
 
 poetry run python -m atoms_plus.atoms_server
-# 或
-poetry run python -m openhands.app_server
 ```
 
 ### 2. 启动前端
 
 ```bash
 cd frontend
-echo 'VITE_BACKEND_BASE_URL=localhost:3000' > .env.local
-npm run dev
+VITE_FRONTEND_PORT=3002 npm run dev
 ```
 
 ### 3. 验证服务
@@ -155,12 +214,13 @@ curl -s https://coding.dashscope.aliyuncs.com/v1/chat/completions \
 
 | 端口 | 服务 | 说明 |
 |------|------|------|
-| 3001 | Vite Dev Server | 前端 |
+| 3002 | Vite Dev Server | 前端 |
 | 3000 | App Server | FastAPI 后端 |
 | 8000+ | Agent Server | 每个沙盒一个端口 |
 
 ## 相关文件
 
+- `atoms_plus/team_mode/e2e_test.py` - **CLI 工具入口 (推荐)**
 - `atoms_plus/atoms_server.py` - 扩展服务器入口
 - `openhands/app_server/sandbox/process_sandbox_service.py` - 本地沙盒服务
 - `openhands/app_server/runtime_proxy/runtime_proxy_router.py` - WebSocket 代理

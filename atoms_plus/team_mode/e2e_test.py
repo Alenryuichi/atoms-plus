@@ -1,28 +1,44 @@
 #!/usr/bin/env python3
-# Atoms Plus - Team Mode E2E Test CLI
+# Atoms Plus - Local Development CLI
 """
-End-to-end test and diagnostic tool for Team Mode multi-agent collaboration.
+Local development CLI for Atoms Plus - deployment, testing, and diagnostics.
 
 Usage:
-    # Quick deployment status check
-    poetry run python -m atoms_plus.team_mode.e2e_test status
+    # One-command local deployment
+    poetry run atoms start
+    # or: atoms start (if installed globally)
+
+    # Stop all services
+    atoms stop
+
+    # Restart services
+    atoms restart
+
+    # Check deployment status (default command)
+    atoms status
+    atoms
+
+    # View logs
+    atoms logs
+    atoms logs --service backend -f
 
     # Full E2E test
-    poetry run python -m atoms_plus.team_mode.e2e_test
-    poetry run python -m atoms_plus.team_mode.e2e_test --task "Create a todo app"
-    poetry run python -m atoms_plus.team_mode.e2e_test --host localhost --port 3000
+    atoms test
+    atoms test --task "Create a todo app"
 
 Commands:
-    status  - Quick deployment status check (backend, frontend, API endpoints)
-    test    - Run full E2E test (default)
+    start   - Start backend and frontend services
+    stop    - Stop all running services
+    restart - Restart all services
+    status  - Quick deployment status check (default)
+    logs    - View service logs
+    test    - Run full E2E test
 
-This tool:
-1. Checks backend health
-2. Creates a Team Mode session
-3. Connects to WebSocket stream
-4. Handles HITL clarification (auto-skip or provide answers)
-5. Validates the PM → Architect → Engineer workflow
-6. Outputs colored logs showing agent thoughts
+Environment:
+    RUNTIME=local (ProcessSandboxService)
+    OH_DISABLE_MCP=true
+    Backend port: 3000
+    Frontend port: 3002
 """
 
 from __future__ import annotations
@@ -30,7 +46,11 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
+import signal
+import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -244,6 +264,327 @@ async def run_status_check(host: str, port: int, frontend_port: int) -> int:
     return 0 if all_ok else 1
 
 
+# ============================================================================
+# LOCAL DEPLOYMENT MANAGEMENT
+# ============================================================================
+
+# Log file paths
+LOG_DIR = Path('/tmp/atoms-plus-logs')
+BACKEND_LOG = LOG_DIR / 'backend.log'
+FRONTEND_LOG = LOG_DIR / 'frontend.log'
+PID_FILE = LOG_DIR / 'pids.json'
+
+
+def get_project_root() -> Path:
+    """Get the project root directory."""
+    # This file is at atoms_plus/team_mode/e2e_test.py
+    return Path(__file__).parent.parent.parent
+
+
+def ensure_log_dir() -> None:
+    """Ensure log directory exists."""
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def save_pids(backend_pid: int | None, frontend_pid: int | None) -> None:
+    """Save process PIDs to file."""
+    ensure_log_dir()
+    pids = {'backend': backend_pid, 'frontend': frontend_pid, 'timestamp': time.time()}
+    with open(PID_FILE, 'w') as f:
+        json.dump(pids, f)
+
+
+def load_pids() -> dict:
+    """Load process PIDs from file."""
+    if PID_FILE.exists():
+        try:
+            with open(PID_FILE) as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {'backend': None, 'frontend': None}
+
+
+def is_port_in_use(port: int) -> bool:
+    """Check if a port is in use."""
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+
+
+def kill_process_on_port(port: int) -> bool:
+    """Kill process using a specific port."""
+    try:
+        result = subprocess.run(
+            ['lsof', '-ti', f':{port}'],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.stdout.strip():
+            pids = result.stdout.strip().split('\n')
+            for pid in pids:
+                try:
+                    os.kill(int(pid), signal.SIGTERM)
+                except (ProcessLookupError, ValueError):
+                    pass
+            time.sleep(1)
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def start_backend(project_root: Path, port: int = 3000) -> subprocess.Popen | None:
+    """Start the backend server."""
+    ensure_log_dir()
+
+    # Kill existing process on port
+    if is_port_in_use(port):
+        print(f'{Colors.YELLOW}  → 端口 {port} 已占用，正在关闭...{Colors.RESET}')
+        kill_process_on_port(port)
+        time.sleep(2)
+
+    env = os.environ.copy()
+    env.update({
+        'RUNTIME': 'local',
+        'SKIP_DEPENDENCY_CHECK': '1',
+        'OH_DISABLE_MCP': 'true',
+    })
+
+    with open(BACKEND_LOG, 'w') as log_file:
+        process = subprocess.Popen(
+            ['poetry', 'run', 'python', '-m', 'atoms_plus.atoms_server'],
+            cwd=project_root,
+            env=env,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+
+    return process
+
+
+def start_frontend(project_root: Path, port: int = 3002) -> subprocess.Popen | None:
+    """Start the frontend dev server."""
+    ensure_log_dir()
+
+    frontend_dir = project_root / 'frontend'
+    if not frontend_dir.exists():
+        print(f'{Colors.RED}  ✗ frontend 目录不存在{Colors.RESET}')
+        return None
+
+    # Kill existing process on port
+    if is_port_in_use(port):
+        print(f'{Colors.YELLOW}  → 端口 {port} 已占用，正在关闭...{Colors.RESET}')
+        kill_process_on_port(port)
+        time.sleep(2)
+
+    env = os.environ.copy()
+    env['VITE_FRONTEND_PORT'] = str(port)
+
+    with open(FRONTEND_LOG, 'w') as log_file:
+        process = subprocess.Popen(
+            ['npm', 'run', 'dev'],
+            cwd=frontend_dir,
+            env=env,
+            stdout=log_file,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+
+    return process
+
+
+async def wait_for_service(url: str, timeout: int = 60) -> bool:
+    """Wait for a service to become available."""
+    import httpx
+
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                response = await client.get(url)
+                if response.status_code == 200:
+                    return True
+        except Exception:
+            pass
+        await asyncio.sleep(2)
+    return False
+
+
+async def run_start(backend_port: int, frontend_port: int) -> int:
+    """Start backend and frontend services."""
+    print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}')
+    print(f'{Colors.BOLD}  Atoms Plus 本地部署{Colors.RESET}')
+    print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}\n')
+
+    project_root = get_project_root()
+    print(f'{Colors.CYAN}项目目录:{Colors.RESET} {project_root}\n')
+
+    # Start backend
+    print(f'{Colors.BOLD}[1/2] 启动后端服务...{Colors.RESET}')
+    backend_proc = start_backend(project_root, backend_port)
+    if backend_proc:
+        print(f'{Colors.GREEN}  ✓ 后端进程已启动 (PID: {backend_proc.pid}){Colors.RESET}')
+    else:
+        print(f'{Colors.RED}  ✗ 后端启动失败{Colors.RESET}')
+        return 1
+
+    # Start frontend
+    print(f'{Colors.BOLD}[2/2] 启动前端服务...{Colors.RESET}')
+    frontend_proc = start_frontend(project_root, frontend_port)
+    if frontend_proc:
+        print(f'{Colors.GREEN}  ✓ 前端进程已启动 (PID: {frontend_proc.pid}){Colors.RESET}')
+    else:
+        print(f'{Colors.RED}  ✗ 前端启动失败{Colors.RESET}')
+        # Still save backend PID
+        save_pids(backend_proc.pid, None)
+        return 1
+
+    # Save PIDs
+    save_pids(backend_proc.pid, frontend_proc.pid)
+
+    # Wait for services
+    print(f'\n{Colors.CYAN}等待服务就绪...{Colors.RESET}')
+
+    backend_ready = await wait_for_service(f'http://localhost:{backend_port}/atoms-plus', timeout=30)
+    if backend_ready:
+        print(f'{Colors.GREEN}  ✓ 后端就绪{Colors.RESET}')
+    else:
+        print(f'{Colors.YELLOW}  ⚠ 后端未响应 (可能仍在启动中){Colors.RESET}')
+
+    frontend_ready = await wait_for_service(f'http://localhost:{frontend_port}/', timeout=30)
+    if frontend_ready:
+        print(f'{Colors.GREEN}  ✓ 前端就绪{Colors.RESET}')
+    else:
+        print(f'{Colors.YELLOW}  ⚠ 前端未响应 (可能仍在启动中){Colors.RESET}')
+
+    # Summary
+    print(f'\n{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}')
+    if backend_ready and frontend_ready:
+        print(f'{Colors.GREEN}{Colors.BOLD}✓ 部署完成！{Colors.RESET}')
+    else:
+        print(f'{Colors.YELLOW}{Colors.BOLD}⚠ 部署完成 (部分服务仍在启动){Colors.RESET}')
+
+    print(f'\n{Colors.BOLD}访问地址:{Colors.RESET}')
+    print(f'  前端: {Colors.CYAN}http://localhost:{frontend_port}{Colors.RESET}')
+    print(f'  后端: {Colors.CYAN}http://localhost:{backend_port}/atoms-plus{Colors.RESET}')
+    print(f'\n{Colors.BOLD}日志文件:{Colors.RESET}')
+    print(f'  后端: {BACKEND_LOG}')
+    print(f'  前端: {FRONTEND_LOG}')
+    print(f'\n{Colors.BOLD}停止服务:{Colors.RESET}')
+    print(f'  poetry run python -m atoms_plus.team_mode.e2e_test stop')
+
+    return 0
+
+
+def run_stop() -> int:
+    """Stop all running services."""
+    print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}')
+    print(f'{Colors.BOLD}  停止 Atoms Plus 服务{Colors.RESET}')
+    print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}\n')
+
+    stopped = 0
+
+    # Kill by PID file
+    pids = load_pids()
+    for name, pid in [('后端', pids.get('backend')), ('前端', pids.get('frontend'))]:
+        if pid:
+            try:
+                os.kill(pid, signal.SIGTERM)
+                print(f'{Colors.GREEN}  ✓ {name} (PID {pid}) 已停止{Colors.RESET}')
+                stopped += 1
+            except ProcessLookupError:
+                print(f'{Colors.YELLOW}  ⚠ {name} (PID {pid}) 已不存在{Colors.RESET}')
+            except Exception as e:
+                print(f'{Colors.RED}  ✗ 停止 {name} 失败: {e}{Colors.RESET}')
+
+    # Also kill by port (fallback)
+    for port, name in [(3000, '后端'), (3002, '前端')]:
+        if is_port_in_use(port):
+            if kill_process_on_port(port):
+                print(f'{Colors.GREEN}  ✓ 端口 {port} ({name}) 已释放{Colors.RESET}')
+                stopped += 1
+
+    # Kill any remaining atoms_plus processes
+    try:
+        result = subprocess.run(
+            ['pkill', '-f', 'atoms_plus.atoms_server'],
+            capture_output=True, timeout=5
+        )
+        if result.returncode == 0:
+            print(f'{Colors.GREEN}  ✓ atoms_server 进程已清理{Colors.RESET}')
+    except Exception:
+        pass
+
+    # Clean up PID file
+    if PID_FILE.exists():
+        PID_FILE.unlink()
+
+    if stopped > 0:
+        print(f'\n{Colors.GREEN}{Colors.BOLD}✓ 服务已停止{Colors.RESET}')
+    else:
+        print(f'\n{Colors.YELLOW}{Colors.BOLD}⚠ 没有运行中的服务{Colors.RESET}')
+
+    return 0
+
+
+async def run_restart(backend_port: int, frontend_port: int) -> int:
+    """Restart all services."""
+    print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}')
+    print(f'{Colors.BOLD}  重启 Atoms Plus 服务{Colors.RESET}')
+    print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}\n')
+
+    print(f'{Colors.CYAN}[1/2] 停止现有服务...{Colors.RESET}')
+    run_stop()
+
+    print(f'\n{Colors.CYAN}[2/2] 启动服务...{Colors.RESET}\n')
+    time.sleep(2)
+
+    return await run_start(backend_port, frontend_port)
+
+
+def run_logs(service: str, lines: int, follow: bool) -> int:
+    """View service logs."""
+    log_file = None
+
+    if service == 'backend':
+        log_file = BACKEND_LOG
+    elif service == 'frontend':
+        log_file = FRONTEND_LOG
+    elif service == 'all':
+        # Show both
+        print(f'{Colors.BOLD}═══ 后端日志 ({BACKEND_LOG}) ═══{Colors.RESET}')
+        if BACKEND_LOG.exists():
+            subprocess.run(['tail', f'-{lines}', str(BACKEND_LOG)])
+        else:
+            print(f'{Colors.YELLOW}  日志文件不存在{Colors.RESET}')
+
+        print(f'\n{Colors.BOLD}═══ 前端日志 ({FRONTEND_LOG}) ═══{Colors.RESET}')
+        if FRONTEND_LOG.exists():
+            subprocess.run(['tail', f'-{lines}', str(FRONTEND_LOG)])
+        else:
+            print(f'{Colors.YELLOW}  日志文件不存在{Colors.RESET}')
+        return 0
+    else:
+        print(f'{Colors.RED}未知服务: {service}{Colors.RESET}')
+        return 1
+
+    if not log_file.exists():
+        print(f'{Colors.YELLOW}日志文件不存在: {log_file}{Colors.RESET}')
+        return 1
+
+    if follow:
+        print(f'{Colors.CYAN}实时跟踪 {log_file} (Ctrl+C 退出){Colors.RESET}\n')
+        try:
+            subprocess.run(['tail', '-f', str(log_file)])
+        except KeyboardInterrupt:
+            print(f'\n{Colors.CYAN}已停止跟踪{Colors.RESET}')
+    else:
+        subprocess.run(['tail', f'-{lines}', str(log_file)])
+
+    return 0
+
+
 async def create_session(
     host: str, port: int, task: str, model: str, max_iterations: int = 3
 ) -> dict | None:
@@ -385,17 +726,31 @@ def main() -> int:
     default_model = settings.get('llm_model', 'openai/qwen-plus')
 
     parser = argparse.ArgumentParser(
-        description='Team Mode CLI - E2E Test & Deployment Diagnostics',
+        description='Atoms Plus 本地开发 CLI - 部署、测试、诊断',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 Examples:
-  # Quick deployment status check
-  poetry run python -m atoms_plus.team_mode.e2e_test status
+  # 一键启动本地部署
+  atoms start
 
-  # Full E2E test
-  poetry run python -m atoms_plus.team_mode.e2e_test
-  poetry run python -m atoms_plus.team_mode.e2e_test test --task "Create a todo app"
-  poetry run python -m atoms_plus.team_mode.e2e_test test --model openai/qwen-plus
+  # 停止所有服务
+  atoms stop
+
+  # 重启服务
+  atoms restart
+
+  # 检查部署状态 (默认命令)
+  atoms status
+  atoms
+
+  # 查看日志
+  atoms logs
+  atoms logs --service backend -f
+
+  # E2E 测试
+  atoms test --task "Create a todo app"
+
+Note: Use "poetry run atoms" if not installed globally.
         ''',
     )
 
@@ -407,11 +762,36 @@ Examples:
     # Subcommands
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
 
+    # Start command
+    subparsers.add_parser('start', help='Start backend and frontend services')
+
+    # Stop command
+    subparsers.add_parser('stop', help='Stop all running services')
+
+    # Restart command
+    subparsers.add_parser('restart', help='Restart all services')
+
     # Status command
     status_parser = subparsers.add_parser('status', help='Quick deployment status check')
     status_parser.add_argument('-q', '--quiet', action='store_true', help='Minimal output')
 
-    # Test command (default)
+    # Logs command
+    logs_parser = subparsers.add_parser('logs', help='View service logs')
+    logs_parser.add_argument(
+        '--service', '-s', default='all',
+        choices=['all', 'backend', 'frontend'],
+        help='Which service logs to show (default: all)'
+    )
+    logs_parser.add_argument(
+        '--lines', '-n', type=int, default=50,
+        help='Number of lines to show (default: 50)'
+    )
+    logs_parser.add_argument(
+        '--follow', '-f', action='store_true',
+        help='Follow log output in real-time'
+    )
+
+    # Test command
     test_parser = subparsers.add_parser('test', help='Run full E2E test')
     test_parser.add_argument(
         '--task',
@@ -432,8 +812,17 @@ Examples:
     if args.command is None:
         args.command = 'status'
 
-    if args.command == 'status':
+    # Route to appropriate handler
+    if args.command == 'start':
+        return asyncio.run(run_start(args.port, args.frontend_port))
+    elif args.command == 'stop':
+        return run_stop()
+    elif args.command == 'restart':
+        return asyncio.run(run_restart(args.port, args.frontend_port))
+    elif args.command == 'status':
         return asyncio.run(run_status_check(args.host, args.port, args.frontend_port))
+    elif args.command == 'logs':
+        return run_logs(args.service, args.lines, args.follow)
     elif args.command == 'test':
         return asyncio.run(
             run_e2e_test(
