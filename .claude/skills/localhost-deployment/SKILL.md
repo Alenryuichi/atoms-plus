@@ -54,16 +54,26 @@ poetry run atoms start
 | 命令 | 说明 |
 |------|------|
 | `atoms start` | 启动后端和前端服务 |
+| `atoms start -b` | 仅启动后端 |
+| `atoms start -f` | 仅启动前端 |
 | `atoms stop` | 停止所有服务 |
+| `atoms stop -b` | 仅停止后端 |
+| `atoms stop -f` | 仅停止前端 |
 | `atoms restart` | 重启所有服务 |
 | `atoms status` | 检查部署状态 (默认) |
 | `atoms logs` | 查看服务日志 |
 | `atoms test` | 运行 E2E 测试 |
 
 ```bash
-# 检查状态 (默认命令)
+# 检查状态 (默认命令，会检测 CLI 安装)
 poetry run atoms status
 poetry run atoms
+
+# 独立启动/停止服务
+poetry run atoms start --backend-only   # 仅启动后端
+poetry run atoms start --frontend-only  # 仅启动前端
+poetry run atoms stop -b                # 仅停止后端
+poetry run atoms stop -f                # 仅停止前端
 
 # 查看日志
 poetry run atoms logs

@@ -281,6 +281,41 @@ def get_project_root() -> Path:
     return Path(__file__).parent.parent.parent
 
 
+def check_cli_installed() -> tuple[bool, str]:
+    """Check if atoms-plus-cli is installed.
+
+    Returns:
+        tuple: (is_installed, version_or_message)
+    """
+    try:
+        result = subprocess.run(
+            ['pip', 'show', 'atoms-plus-cli'],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode == 0:
+            # Extract version
+            for line in result.stdout.split('\n'):
+                if line.startswith('Version:'):
+                    return True, line.split(':', 1)[1].strip()
+            return True, 'unknown'
+        return False, 'not installed'
+    except Exception as e:
+        return False, str(e)
+
+
+def show_install_hint() -> None:
+    """Show installation hint for CLI."""
+    print(f'{Colors.YELLOW}╭─────────────────────────────────────────────────────────╮{Colors.RESET}')
+    print(f'{Colors.YELLOW}│ 💡 提示: atoms-plus-cli 未安装                          │{Colors.RESET}')
+    print(f'{Colors.YELLOW}│                                                         │{Colors.RESET}')
+    print(f'{Colors.YELLOW}│ 安装后可直接使用 "atoms" 命令:                          │{Colors.RESET}')
+    print(f'{Colors.YELLOW}│   poetry run pip install -e atoms_plus/                 │{Colors.RESET}')
+    print(f'{Colors.YELLOW}│                                                         │{Colors.RESET}')
+    print(f'{Colors.YELLOW}│ 然后使用: poetry run atoms start                        │{Colors.RESET}')
+    print(f'{Colors.YELLOW}╰─────────────────────────────────────────────────────────╯{Colors.RESET}')
+    print()
+
+
 def ensure_log_dir() -> None:
     """Ensure log directory exists."""
     LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -411,114 +446,179 @@ async def wait_for_service(url: str, timeout: int = 60) -> bool:
     return False
 
 
-async def run_start(backend_port: int, frontend_port: int) -> int:
-    """Start backend and frontend services."""
+async def run_start(
+    backend_port: int,
+    frontend_port: int,
+    backend_only: bool = False,
+    frontend_only: bool = False,
+) -> int:
+    """Start backend and/or frontend services."""
+    # Determine what to start
+    start_backend_flag = not frontend_only
+    start_frontend_flag = not backend_only
+
+    service_name = '后端' if backend_only else ('前端' if frontend_only else '后端 + 前端')
+
     print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}')
-    print(f'{Colors.BOLD}  Atoms Plus 本地部署{Colors.RESET}')
+    print(f'{Colors.BOLD}  Atoms Plus 本地部署 ({service_name}){Colors.RESET}')
     print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}\n')
 
     project_root = get_project_root()
     print(f'{Colors.CYAN}项目目录:{Colors.RESET} {project_root}\n')
 
+    # Load existing PIDs
+    existing_pids = load_pids()
+    backend_pid = existing_pids.get('backend')
+    frontend_pid = existing_pids.get('frontend')
+
+    step = 0
+    total_steps = int(start_backend_flag) + int(start_frontend_flag)
+
     # Start backend
-    print(f'{Colors.BOLD}[1/2] 启动后端服务...{Colors.RESET}')
-    backend_proc = start_backend(project_root, backend_port)
-    if backend_proc:
-        print(f'{Colors.GREEN}  ✓ 后端进程已启动 (PID: {backend_proc.pid}){Colors.RESET}')
-    else:
-        print(f'{Colors.RED}  ✗ 后端启动失败{Colors.RESET}')
-        return 1
+    if start_backend_flag:
+        step += 1
+        print(f'{Colors.BOLD}[{step}/{total_steps}] 启动后端服务...{Colors.RESET}')
+        backend_proc = start_backend(project_root, backend_port)
+        if backend_proc:
+            print(f'{Colors.GREEN}  ✓ 后端进程已启动 (PID: {backend_proc.pid}){Colors.RESET}')
+            backend_pid = backend_proc.pid
+        else:
+            print(f'{Colors.RED}  ✗ 后端启动失败{Colors.RESET}')
+            return 1
 
     # Start frontend
-    print(f'{Colors.BOLD}[2/2] 启动前端服务...{Colors.RESET}')
-    frontend_proc = start_frontend(project_root, frontend_port)
-    if frontend_proc:
-        print(f'{Colors.GREEN}  ✓ 前端进程已启动 (PID: {frontend_proc.pid}){Colors.RESET}')
-    else:
-        print(f'{Colors.RED}  ✗ 前端启动失败{Colors.RESET}')
-        # Still save backend PID
-        save_pids(backend_proc.pid, None)
-        return 1
+    if start_frontend_flag:
+        step += 1
+        print(f'{Colors.BOLD}[{step}/{total_steps}] 启动前端服务...{Colors.RESET}')
+        frontend_proc = start_frontend(project_root, frontend_port)
+        if frontend_proc:
+            print(f'{Colors.GREEN}  ✓ 前端进程已启动 (PID: {frontend_proc.pid}){Colors.RESET}')
+            frontend_pid = frontend_proc.pid
+        else:
+            print(f'{Colors.RED}  ✗ 前端启动失败{Colors.RESET}')
+            # Still save backend PID if we started it
+            if start_backend_flag:
+                save_pids(backend_pid, None)
+            return 1
 
     # Save PIDs
-    save_pids(backend_proc.pid, frontend_proc.pid)
+    save_pids(backend_pid, frontend_pid)
 
     # Wait for services
     print(f'\n{Colors.CYAN}等待服务就绪...{Colors.RESET}')
 
-    backend_ready = await wait_for_service(f'http://localhost:{backend_port}/atoms-plus', timeout=30)
-    if backend_ready:
-        print(f'{Colors.GREEN}  ✓ 后端就绪{Colors.RESET}')
-    else:
-        print(f'{Colors.YELLOW}  ⚠ 后端未响应 (可能仍在启动中){Colors.RESET}')
+    backend_ready = True
+    frontend_ready = True
 
-    frontend_ready = await wait_for_service(f'http://localhost:{frontend_port}/', timeout=30)
-    if frontend_ready:
-        print(f'{Colors.GREEN}  ✓ 前端就绪{Colors.RESET}')
-    else:
-        print(f'{Colors.YELLOW}  ⚠ 前端未响应 (可能仍在启动中){Colors.RESET}')
+    if start_backend_flag:
+        backend_ready = await wait_for_service(f'http://localhost:{backend_port}/atoms-plus', timeout=30)
+        if backend_ready:
+            print(f'{Colors.GREEN}  ✓ 后端就绪{Colors.RESET}')
+        else:
+            print(f'{Colors.YELLOW}  ⚠ 后端未响应 (可能仍在启动中){Colors.RESET}')
+
+    if start_frontend_flag:
+        frontend_ready = await wait_for_service(f'http://localhost:{frontend_port}/', timeout=30)
+        if frontend_ready:
+            print(f'{Colors.GREEN}  ✓ 前端就绪{Colors.RESET}')
+        else:
+            print(f'{Colors.YELLOW}  ⚠ 前端未响应 (可能仍在启动中){Colors.RESET}')
 
     # Summary
     print(f'\n{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}')
-    if backend_ready and frontend_ready:
+    all_ready = (not start_backend_flag or backend_ready) and (not start_frontend_flag or frontend_ready)
+    if all_ready:
         print(f'{Colors.GREEN}{Colors.BOLD}✓ 部署完成！{Colors.RESET}')
     else:
         print(f'{Colors.YELLOW}{Colors.BOLD}⚠ 部署完成 (部分服务仍在启动){Colors.RESET}')
 
     print(f'\n{Colors.BOLD}访问地址:{Colors.RESET}')
-    print(f'  前端: {Colors.CYAN}http://localhost:{frontend_port}{Colors.RESET}')
-    print(f'  后端: {Colors.CYAN}http://localhost:{backend_port}/atoms-plus{Colors.RESET}')
+    if start_frontend_flag:
+        print(f'  前端: {Colors.CYAN}http://localhost:{frontend_port}{Colors.RESET}')
+    if start_backend_flag:
+        print(f'  后端: {Colors.CYAN}http://localhost:{backend_port}/atoms-plus{Colors.RESET}')
     print(f'\n{Colors.BOLD}日志文件:{Colors.RESET}')
-    print(f'  后端: {BACKEND_LOG}')
-    print(f'  前端: {FRONTEND_LOG}')
+    if start_backend_flag:
+        print(f'  后端: {BACKEND_LOG}')
+    if start_frontend_flag:
+        print(f'  前端: {FRONTEND_LOG}')
     print(f'\n{Colors.BOLD}停止服务:{Colors.RESET}')
-    print(f'  poetry run python -m atoms_plus.team_mode.e2e_test stop')
+    print(f'  atoms stop')
 
     return 0
 
 
-def run_stop() -> int:
-    """Stop all running services."""
+def run_stop(backend_only: bool = False, frontend_only: bool = False) -> int:
+    """Stop backend and/or frontend services."""
+    # Determine what to stop
+    stop_backend = not frontend_only
+    stop_frontend = not backend_only
+
+    service_name = '后端' if backend_only else ('前端' if frontend_only else '所有服务')
+
     print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}')
-    print(f'{Colors.BOLD}  停止 Atoms Plus 服务{Colors.RESET}')
+    print(f'{Colors.BOLD}  停止 Atoms Plus 服务 ({service_name}){Colors.RESET}')
     print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}\n')
 
     stopped = 0
 
-    # Kill by PID file
+    # Load existing PIDs
     pids = load_pids()
-    for name, pid in [('后端', pids.get('backend')), ('前端', pids.get('frontend'))]:
+    new_backend_pid = pids.get('backend')
+    new_frontend_pid = pids.get('frontend')
+
+    # Kill by PID file
+    services_to_stop = []
+    if stop_backend:
+        services_to_stop.append(('后端', pids.get('backend'), 3000))
+    if stop_frontend:
+        services_to_stop.append(('前端', pids.get('frontend'), 3002))
+
+    for name, pid, port in services_to_stop:
         if pid:
             try:
                 os.kill(pid, signal.SIGTERM)
                 print(f'{Colors.GREEN}  ✓ {name} (PID {pid}) 已停止{Colors.RESET}')
                 stopped += 1
+                # Clear PID
+                if name == '后端':
+                    new_backend_pid = None
+                else:
+                    new_frontend_pid = None
             except ProcessLookupError:
                 print(f'{Colors.YELLOW}  ⚠ {name} (PID {pid}) 已不存在{Colors.RESET}')
+                if name == '后端':
+                    new_backend_pid = None
+                else:
+                    new_frontend_pid = None
             except Exception as e:
                 print(f'{Colors.RED}  ✗ 停止 {name} 失败: {e}{Colors.RESET}')
 
-    # Also kill by port (fallback)
-    for port, name in [(3000, '后端'), (3002, '前端')]:
+        # Also kill by port (fallback)
         if is_port_in_use(port):
             if kill_process_on_port(port):
                 print(f'{Colors.GREEN}  ✓ 端口 {port} ({name}) 已释放{Colors.RESET}')
                 stopped += 1
 
-    # Kill any remaining atoms_plus processes
-    try:
-        result = subprocess.run(
-            ['pkill', '-f', 'atoms_plus.atoms_server'],
-            capture_output=True, timeout=5
-        )
-        if result.returncode == 0:
-            print(f'{Colors.GREEN}  ✓ atoms_server 进程已清理{Colors.RESET}')
-    except Exception:
-        pass
+    # Kill any remaining atoms_plus processes (only if stopping backend)
+    if stop_backend:
+        try:
+            result = subprocess.run(
+                ['pkill', '-f', 'atoms_plus.atoms_server'],
+                capture_output=True, timeout=5
+            )
+            if result.returncode == 0:
+                print(f'{Colors.GREEN}  ✓ atoms_server 进程已清理{Colors.RESET}')
+        except Exception:
+            pass
 
-    # Clean up PID file
-    if PID_FILE.exists():
-        PID_FILE.unlink()
+    # Update PID file (don't delete if only stopping one service)
+    if backend_only or frontend_only:
+        save_pids(new_backend_pid, new_frontend_pid)
+    else:
+        # Clean up PID file completely
+        if PID_FILE.exists():
+            PID_FILE.unlink()
 
     if stopped > 0:
         print(f'\n{Colors.GREEN}{Colors.BOLD}✓ 服务已停止{Colors.RESET}')
@@ -528,19 +628,29 @@ def run_stop() -> int:
     return 0
 
 
-async def run_restart(backend_port: int, frontend_port: int) -> int:
-    """Restart all services."""
+async def run_restart(
+    backend_port: int,
+    frontend_port: int,
+    backend_only: bool = False,
+    frontend_only: bool = False,
+) -> int:
+    """Restart backend and/or frontend services."""
+    service_name = '后端' if backend_only else ('前端' if frontend_only else '所有服务')
+
     print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}')
-    print(f'{Colors.BOLD}  重启 Atoms Plus 服务{Colors.RESET}')
+    print(f'{Colors.BOLD}  重启 Atoms Plus 服务 ({service_name}){Colors.RESET}')
     print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}\n')
 
     print(f'{Colors.CYAN}[1/2] 停止现有服务...{Colors.RESET}')
-    run_stop()
+    run_stop(backend_only=backend_only, frontend_only=frontend_only)
 
     print(f'\n{Colors.CYAN}[2/2] 启动服务...{Colors.RESET}\n')
     time.sleep(2)
 
-    return await run_start(backend_port, frontend_port)
+    return await run_start(
+        backend_port, frontend_port,
+        backend_only=backend_only, frontend_only=frontend_only
+    )
 
 
 def run_logs(service: str, lines: int, follow: bool) -> int:
@@ -763,13 +873,37 @@ Note: Use "poetry run atoms" if not installed globally.
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
 
     # Start command
-    subparsers.add_parser('start', help='Start backend and frontend services')
+    start_parser = subparsers.add_parser('start', help='Start backend and frontend services')
+    start_parser.add_argument(
+        '--backend-only', '-b', action='store_true',
+        help='Start only the backend server'
+    )
+    start_parser.add_argument(
+        '--frontend-only', '-f', action='store_true',
+        help='Start only the frontend server'
+    )
 
     # Stop command
-    subparsers.add_parser('stop', help='Stop all running services')
+    stop_parser = subparsers.add_parser('stop', help='Stop all running services')
+    stop_parser.add_argument(
+        '--backend-only', '-b', action='store_true',
+        help='Stop only the backend server'
+    )
+    stop_parser.add_argument(
+        '--frontend-only', '-f', action='store_true',
+        help='Stop only the frontend server'
+    )
 
     # Restart command
-    subparsers.add_parser('restart', help='Restart all services')
+    restart_parser = subparsers.add_parser('restart', help='Restart all services')
+    restart_parser.add_argument(
+        '--backend-only', '-b', action='store_true',
+        help='Restart only the backend server'
+    )
+    restart_parser.add_argument(
+        '--frontend-only', '-f', action='store_true',
+        help='Restart only the frontend server'
+    )
 
     # Status command
     status_parser = subparsers.add_parser('status', help='Quick deployment status check')
@@ -814,12 +948,28 @@ Note: Use "poetry run atoms" if not installed globally.
 
     # Route to appropriate handler
     if args.command == 'start':
-        return asyncio.run(run_start(args.port, args.frontend_port))
+        backend_only = getattr(args, 'backend_only', False)
+        frontend_only = getattr(args, 'frontend_only', False)
+        return asyncio.run(run_start(
+            args.port, args.frontend_port,
+            backend_only=backend_only, frontend_only=frontend_only
+        ))
     elif args.command == 'stop':
-        return run_stop()
+        backend_only = getattr(args, 'backend_only', False)
+        frontend_only = getattr(args, 'frontend_only', False)
+        return run_stop(backend_only=backend_only, frontend_only=frontend_only)
     elif args.command == 'restart':
-        return asyncio.run(run_restart(args.port, args.frontend_port))
+        backend_only = getattr(args, 'backend_only', False)
+        frontend_only = getattr(args, 'frontend_only', False)
+        return asyncio.run(run_restart(
+            args.port, args.frontend_port,
+            backend_only=backend_only, frontend_only=frontend_only
+        ))
     elif args.command == 'status':
+        # Check CLI installation status
+        cli_installed, cli_version = check_cli_installed()
+        if not cli_installed:
+            show_install_hint()
         return asyncio.run(run_status_check(args.host, args.port, args.frontend_port))
     elif args.command == 'logs':
         return run_logs(args.service, args.lines, args.follow)
