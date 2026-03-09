@@ -6271,6 +6271,22 @@
     "ja": "画像をアップロード",
     "uk": "Завантажити зображення"
   },
+  "CHAT_INTERFACE$MESSAGE_SENT": {
+    "en": "Sent",
+    "zh-CN": "已发送",
+    "de": "Gesendet",
+    "ko-KR": "전송됨",
+    "no": "Sendt",
+    "zh-TW": "已傳送",
+    "it": "Inviato",
+    "pt": "Enviado",
+    "es": "Enviado",
+    "ar": "تم الإرسال",
+    "fr": "Envoyé",
+    "tr": "Gönderildi",
+    "ja": "送信済み",
+    "uk": "Надіслано"
+  },
   "CHAT_INTERFACE$INITIAL_MESSAGE": {
     "en": "Hi! I'm OpenHands, an AI Software Engineer. What would you like to build with me today?",
     "zh-CN": "你好！我是 OpenHands，一名 AI 软件工程师。今天想和我一起编写什么程序呢?",
