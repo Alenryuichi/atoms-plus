@@ -201,7 +201,13 @@ export default function MainApp() {
   }, [isAuthed, checkLoginMethodExists]);
 
   // Check if we're on a public page (marketing pages that don't require auth)
-  const isPublicPage = ["/", "/pricing", "/usecases", "/videos", "/blog"].includes(pathname);
+  const isPublicPage = [
+    "/",
+    "/pricing",
+    "/usecases",
+    "/videos",
+    "/blog",
+  ].includes(pathname);
 
   // Determine if we should redirect to login based on auth mode
   // Public pages (marketing pages) should be accessible without authentication
