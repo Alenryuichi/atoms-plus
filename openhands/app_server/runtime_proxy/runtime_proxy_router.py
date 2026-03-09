@@ -312,7 +312,15 @@ async def proxy_websocket(websocket: WebSocket, port: int, conversation_id: str)
             # Explicitly disable proxy to avoid SOCKS proxy issues on localhost
             import websockets
 
-            async with websockets.connect(target_url, proxy=None) as target_ws:
+            # Increase timeouts for slow Agent Server startup during LLM operations
+            # Default open_timeout=10s is too short when LLM is processing
+            async with websockets.connect(
+                target_url,
+                proxy=None,
+                open_timeout=60,  # 60s for WebSocket handshake (LLM can be slow)
+                ping_timeout=60,  # 60s for ping/pong
+                close_timeout=10,  # 10s for graceful close
+            ) as target_ws:
                 # Create tasks for bidirectional forwarding
                 async def forward_client_to_server():
                     try:
