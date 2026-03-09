@@ -20,6 +20,66 @@ poetry run atoms --help
 
 安装后，AI Agent (Claude Code, Gemini CLI 等) 可以直接调用 `atoms` 命令。
 
+## Git Worktree 支持
+
+CLI 支持在任何 git worktree 中运行，共享主项目的 virtualenv。
+
+### 配置 Shell Alias (推荐)
+
+```bash
+# 添加到 ~/.zshrc 或 ~/.bashrc
+alias atoms='/path/to/main-project/.venv/bin/atoms'
+```
+
+### 使用方式
+
+```bash
+# 在任何 worktree 中
+cd /path/to/worktree
+atoms start    # 使用主项目 venv，运行当前 worktree 的代码
+atoms status   # 显示 worktree 信息
+atoms stop
+```
+
+### 工作原理
+
+```
+主项目/
+├── .venv/              ← Python 解释器 + 依赖包 (共享)
+├── atoms_plus/         ← 主项目代码
+└── ...
+
+worktree/fix-xxx/
+├── atoms_plus/         ← 你修改的代码 ✅ (PYTHONPATH 注入)
+└── ...
+```
+
+- **共享 venv**: 所有 worktree 使用主项目的 `.venv`，无需重复安装依赖
+- **代码隔离**: 通过 PYTHONPATH 注入，运行的是当前 worktree 的代码
+- **自动检测**: CLI 自动检测 worktree 环境并显示相关信息
+
+### 输出示例
+
+```
+项目目录: /path/to/worktree/fix-xxx        ← 当前 worktree
+Worktree: 使用 /path/to/main-project/.venv ← 共享的 venv
+环境变量: RUNTIME=local, OH_DISABLE_MCP=true
+```
+
+### 注意事项
+
+| 修改内容 | 需要操作 |
+|----------|----------|
+| Python 源代码 (`*.py`) | ✅ 直接生效 |
+| 新增/修改依赖 (`pyproject.toml`) | ⚠️ 需要在主项目 `poetry install` |
+| 前端代码 | ⚠️ 需要在 worktree 创建 `frontend/build` 符号链接 |
+
+```bash
+# 如果需要前端，创建符号链接
+cd /path/to/worktree/frontend
+ln -s /path/to/main-project/frontend/build build
+```
+
 ## 架构概览
 
 ```

@@ -91,8 +91,14 @@ def atoms_plus_info():
 
 @base_app.get('/atoms-plus/health')
 def atoms_plus_health():
-    """健康检查端点"""
-    return {'status': 'ok', 'service': 'atoms-plus'}
+    """健康检查端点 - 包含 RUNTIME 信息供 CLI 验证"""
+    runtime = os.environ.get('RUNTIME', 'docker')
+    return {
+        'status': 'ok',
+        'service': 'atoms-plus',
+        'runtime': runtime,
+        'runtime_ok': runtime == 'local',
+    }
 
 
 # ==================== 应用导出 ====================
