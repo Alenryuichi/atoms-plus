@@ -25,6 +25,11 @@ from openhands.agent_server.utils import utc_now
 from openhands.app_server.errors import SandboxError
 from openhands.app_server.sandbox.sandbox_models import (
     AGENT_SERVER,
+    WORKER_1,
+    WORKER_2,
+    WORKER_3,
+    WORKER_4,
+    WORKER_5,
     ExposedUrl,
     SandboxInfo,
     SandboxPage,
@@ -39,6 +44,16 @@ from openhands.app_server.sandbox.sandbox_spec_service import SandboxSpecService
 from openhands.app_server.services.injector import InjectorState
 
 _logger = logging.getLogger(__name__)
+
+# Standard worker ports for dev servers (matches Docker/Daytona sandbox)
+# These ports are exposed via the runtime proxy so frontend can access them
+WORKER_1_PORT = 8011
+WORKER_2_PORT = 8012
+# Additional common dev server ports (Vite defaults to 5173, Next.js to 3000)
+# These are auto-detected so users don't need to specify --port explicitly
+WORKER_3_PORT = 5173  # Vite default
+WORKER_4_PORT = 5174  # Vite fallback
+WORKER_5_PORT = 3000  # Next.js / Create React App default
 
 
 class ProcessInfo(BaseModel):
@@ -170,9 +185,24 @@ class ProcessSandboxService(SandboxService):
         # to prevent them from appearing in the 'Changes' tab (git diff).
         # The working directory should only contain user project files.
         persistence_base = os.getenv('OH_PERSISTENCE_DIR', '/tmp/openhands-data')
-        env['OH_CONVERSATIONS_PATH'] = os.path.join(persistence_base, sandbox_id, 'conversations')
-        env['OH_BASH_EVENTS_DIR'] = os.path.join(persistence_base, sandbox_id, 'bash_events')
+        env['OH_CONVERSATIONS_PATH'] = os.path.join(
+            persistence_base, sandbox_id, 'conversations'
+        )
+        env['OH_BASH_EVENTS_DIR'] = os.path.join(
+            persistence_base, sandbox_id, 'bash_events'
+        )
         env['WORKSPACE_BASE'] = working_dir
+
+        # Add worker port environment variables so the agent knows which ports to use
+        # for web applications (npm run dev, etc.). These match the ports exposed via
+        # WORKER_* URLs in the sandbox's exposed_urls.
+        # WORKER_1 (8011) is the recommended port for dev servers.
+        # WORKER_3-5 are common defaults that are auto-detected by the frontend.
+        env[WORKER_1] = str(WORKER_1_PORT)
+        env[WORKER_2] = str(WORKER_2_PORT)
+        env[WORKER_3] = str(WORKER_3_PORT)
+        env[WORKER_4] = str(WORKER_4_PORT)
+        env[WORKER_5] = str(WORKER_5_PORT)
 
         # Prepare command arguments
         cmd = [
@@ -318,6 +348,17 @@ class ProcessSandboxService(SandboxService):
                     exposed_url = self.exposed_url_pattern.format(
                         port=process_info.port
                     )
+                    # Build WORKER URLs using the same pattern
+                    # Include both explicit ports (8011, 8012) and common dev server defaults
+                    # (5173, 5174, 3000) so users don't need to specify --port explicitly
+                    worker_ports = [
+                        (WORKER_1, WORKER_1_PORT),
+                        (WORKER_2, WORKER_2_PORT),
+                        (WORKER_3, WORKER_3_PORT),
+                        (WORKER_4, WORKER_4_PORT),
+                        (WORKER_5, WORKER_5_PORT),
+                    ]
+
                     exposed_urls = [
                         ExposedUrl(
                             name=AGENT_SERVER,
@@ -325,6 +366,17 @@ class ProcessSandboxService(SandboxService):
                             port=process_info.port,
                         ),
                     ]
+                    # Expose worker ports for dev servers (npm run dev, etc.)
+                    # These ports are accessed via the runtime proxy
+                    for worker_name, worker_port in worker_ports:
+                        worker_url = self.exposed_url_pattern.format(port=worker_port)
+                        exposed_urls.append(
+                            ExposedUrl(
+                                name=worker_name,
+                                url=worker_url,
+                                port=worker_port,
+                            )
+                        )
                     session_api_key = process_info.session_api_key
                     _logger.info(
                         f'Agent server on port {process_info.port} is healthy, exposed as {exposed_url}'

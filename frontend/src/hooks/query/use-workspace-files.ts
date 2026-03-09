@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import ConversationService from "#/api/conversation-service/conversation-service.api";
 import { useConversationId } from "#/hooks/use-conversation-id";
 import { useRuntimeIsReady } from "#/hooks/use-runtime-is-ready";
+import { useActiveConversation } from "#/hooks/query/use-active-conversation";
 
 // Web-related file extensions that can be previewed (excludes .json which are usually system files)
 const WEB_PREVIEWABLE_EXTENSIONS = [
@@ -143,21 +144,21 @@ export const useWorkspaceFiles = (path?: string) => {
   const { conversationId } = useConversationId();
   const runtimeIsReady = useRuntimeIsReady();
 
-  const isEnabled = runtimeIsReady && !!conversationId;
+  // Use the reactive conversation data to ensure we have URL and session_api_key
+  // This ensures V1 conversations use the correct runtime proxy URL
+  const { data: conversation, isFetched: isConversationFetched } =
+    useActiveConversation();
 
-  // Debug logging for mock mode
-  if (isMockMode) {
-    console.log(
-      "%c[useWorkspaceFiles]",
-      "background: #3b82f6; color: #fff; padding: 2px 6px; border-radius: 4px;",
-      {
-        conversationId,
-        runtimeIsReady,
-        isEnabled,
-        path,
-      },
-    );
-  }
+  // For V1 conversations, we need the URL to be set before making file requests
+  // This ensures the runtime proxy URL and session API key are available
+  const isConversationReady =
+    isConversationFetched &&
+    conversation?.conversation_id === conversationId &&
+    // V1 conversations have a URL, V0 don't - both should work
+    (conversation?.url !== undefined ||
+      conversation?.conversation_version === "V0");
+
+  const isEnabled = runtimeIsReady && !!conversationId && isConversationReady;
 
   return useQuery({
     queryKey: ["workspace-files", conversationId, path],
@@ -196,10 +197,20 @@ export const useAllWorkspaceFiles = (path?: string) => {
   const { conversationId } = useConversationId();
   const runtimeIsReady = useRuntimeIsReady();
 
+  // Use the reactive conversation data to ensure we have URL and session_api_key
+  const { data: conversation, isFetched: isConversationFetched } =
+    useActiveConversation();
+
+  const isConversationReady =
+    isConversationFetched &&
+    conversation?.conversation_id === conversationId &&
+    (conversation?.url !== undefined ||
+      conversation?.conversation_version === "V0");
+
   return useQuery({
     queryKey: ["all-workspace-files", conversationId, path],
     queryFn: () => ConversationService.getFiles(conversationId, path),
-    enabled: runtimeIsReady && !!conversationId,
+    enabled: runtimeIsReady && !!conversationId && isConversationReady,
     staleTime: 1000 * 30,
     gcTime: 1000 * 60 * 5,
     meta: {

@@ -191,6 +191,7 @@ export const useConversationStore = create<ConversationStore>()(
       conversationMode: getInitialConversationMode(),
       subConversationTaskId: null,
       previewViewMode: "preview" as PreviewViewMode, // Default to preview mode
+      previewSubTab: "design" as PreviewSubTab, // Default to design sub-tab (show preview, not console)
       // Panel width state - synced between TopNavbar and ConversationMain
       panelLeftWidth: getInitialPanelWidth(),
       panelIsDragging: false,
@@ -357,6 +358,9 @@ export const useConversationStore = create<ConversationStore>()(
 
       setPreviewViewMode: (previewViewMode) =>
         set({ previewViewMode }, false, "setPreviewViewMode"),
+
+      setPreviewSubTab: (previewSubTab) =>
+        set({ previewSubTab }, false, "setPreviewSubTab"),
 
       // Panel width actions - for synchronized resizable panels
       setPanelLeftWidth: (width) => {

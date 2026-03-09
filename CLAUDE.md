@@ -111,6 +111,8 @@ npx vercel deploy --prod --yes
 
 **关键：`RUNTIME=local` 时，V1 使用 `ProcessSandboxService`，不是 `LocalRuntime`！**
 
+**⚠️ Team Mode 暂不支持** - `team-mode-store.ts` 中 `isEnabled` 默认为 `false`，首页提交使用 V1 标准流程。
+
 ## 🚀 Daytona 云沙盒集成
 
 当 `RUNTIME=daytona` 时，使用 Daytona 云沙盒服务，提供完全隔离的云端开发环境。
