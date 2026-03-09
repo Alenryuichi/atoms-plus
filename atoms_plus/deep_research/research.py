@@ -40,7 +40,9 @@ from atoms_plus.deep_research.prompts import (
     STRUCTURE_PROMPT,
     STRUCTURE_PROMPT_TECH,
     SUMMARIZE_PROMPT,
-    # Sectioned prompts for parallel generation
+    # Tech stack decision (Stage 1)
+    TECH_STACK_DECISION,
+    # Sectioned prompts for parallel generation (Stage 2)
     TECH_SECTION_CHECKLIST,
     TECH_SECTION_DATABASE,
     TECH_SECTION_DEPLOYMENT,
@@ -177,9 +179,62 @@ async def _reflect(summary: str, topic: str) -> str:
     return response
 
 
+async def _decide_tech_stack(title: str, section_content: str) -> str:
+    """Stage 1: Decide the tech stack for the project.
+
+    This runs BEFORE parallel section generation to ensure all sections
+    use the same technology choices.
+
+    Args:
+        title: Report title
+        section_content: Combined content from research sections
+
+    Returns:
+        A formatted string describing the locked tech stack
+    """
+    logger.info("Stage 1: Deciding tech stack...")
+    prompt = TECH_STACK_DECISION.format(
+        title=title,
+        section_content=section_content,
+    )
+    response = await _call_llm(prompt, timeout=120)
+
+    # Try to parse JSON from the response
+    try:
+        # Extract JSON from markdown code block if present
+        json_match = re.search(r"```json\s*(.*?)\s*```", response, re.DOTALL)
+        if json_match:
+            stack_json = json.loads(json_match.group(1))
+        else:
+            stack_json = json.loads(response)
+
+        # Format as readable tech stack summary
+        frontend = stack_json.get("frontend", {})
+        backend = stack_json.get("backend", {})
+        database = stack_json.get("database", {})
+        deployment = stack_json.get("deployment", {})
+        summary = stack_json.get("summary", "")
+
+        tech_stack = f"""
+前端: {frontend.get("framework", "N/A")} + {frontend.get("ui", "N/A")} + {frontend.get("state", "N/A")}
+后端: {backend.get("framework", "N/A")} + {backend.get("orm", "N/A")} + {backend.get("auth", "N/A")}
+数据库: {database.get("primary", "N/A")} ({database.get("provider", "N/A")})
+部署: {deployment.get("frontend", "N/A")} + {deployment.get("backend", "N/A")}
+
+总结: {summary}
+""".strip()
+        logger.info(f"Tech stack decided: {summary}")
+        return tech_stack
+
+    except (json.JSONDecodeError, KeyError) as e:
+        logger.warning(f"Failed to parse tech stack JSON: {e}, using raw response")
+        return response
+
+
 async def _generate_section_parallel(
     title: str,
     section_content: str,
+    tech_stack: str,
     prompt_template: str,
 ) -> str:
     """Generate a single section using the given prompt template.
@@ -187,11 +242,13 @@ async def _generate_section_parallel(
     Args:
         title: Report title
         section_content: Combined content from research sections
+        tech_stack: The locked tech stack from Stage 1
         prompt_template: The section-specific prompt template
     """
     prompt = prompt_template.format(
         title=title,
         section_content=section_content,
+        tech_stack=tech_stack,
     )
     return await _call_llm(prompt, timeout=180)
 
@@ -201,22 +258,34 @@ async def _generate_final_report_sectioned(
     sections: list[SectionResult],
     all_sources: list[str],
 ) -> str:
-    """Generate technical report using parallel section generation.
+    """Generate technical report using two-stage generation.
 
-    This approach splits the report into 7 independent sections and generates
-    them in parallel, reducing total time from ~360s to ~120s.
+    Stage 1: Decide tech stack (single LLM call)
+    Stage 2: Generate 7 sections in parallel (all using the same tech stack)
+
+    This ensures consistency across all sections while maintaining speed.
 
     Args:
         title: Report title
         sections: List of section results from research
         all_sources: All cited sources
     """
-    logger.info(f"Generating sectioned report in parallel: {title}")
+    logger.info(f"Generating sectioned report (two-stage): {title}")
+    start_time = time.time()
 
     # Combine all section content
     combined_content = "\n\n".join(f"### {s.title}\n{s.content}" for s in sections)
 
-    # Define section prompts with their templates
+    # =========================================================================
+    # Stage 1: Decide tech stack
+    # =========================================================================
+    tech_stack = await _decide_tech_stack(title, combined_content)
+    stage1_time = time.time() - start_time
+    logger.info(f"Stage 1 completed in {stage1_time:.1f}s")
+
+    # =========================================================================
+    # Stage 2: Generate sections in parallel with locked tech stack
+    # =========================================================================
     section_tasks = [
         ("quick_start", TECH_SECTION_QUICK_START),
         ("stack", TECH_SECTION_STACK),
@@ -227,23 +296,29 @@ async def _generate_final_report_sectioned(
         ("checklist", TECH_SECTION_CHECKLIST),
     ]
 
-    # Generate all sections in parallel
-    logger.info(f"Starting parallel generation of {len(section_tasks)} sections")
-    start_time = time.time()
+    logger.info(f"Stage 2: Parallel generation of {len(section_tasks)} sections")
+    stage2_start = time.time()
 
     results = await asyncio.gather(
         *[
-            _generate_section_parallel(title, combined_content, template)
+            _generate_section_parallel(title, combined_content, tech_stack, template)
             for _, template in section_tasks
         ],
         return_exceptions=True,
     )
 
-    elapsed = time.time() - start_time
-    logger.info(f"Parallel generation completed in {elapsed:.1f}s")
+    stage2_time = time.time() - stage2_start
+    logger.info(f"Stage 2 completed in {stage2_time:.1f}s")
 
+    # =========================================================================
     # Assemble report
+    # =========================================================================
     report_parts = [f"# {title}\n"]
+
+    # Add tech stack summary at the top
+    report_parts.append(
+        f"\n> **锁定技术栈**: {tech_stack.split('总结:')[-1].strip()}\n"
+    )
 
     for i, (section_name, _) in enumerate(section_tasks):
         result = results[i]
@@ -258,6 +333,11 @@ async def _generate_final_report_sectioned(
     # Add sources
     sources_text = "\n".join(f"- {url}" for url in all_sources[:20])
     report_parts.append(f"\n\n## 参考来源\n{sources_text}")
+
+    total_time = time.time() - start_time
+    logger.info(
+        f"Total report generation: {total_time:.1f}s (Stage1: {stage1_time:.1f}s, Stage2: {stage2_time:.1f}s)"
+    )
 
     return "".join(report_parts)
 

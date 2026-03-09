@@ -129,38 +129,67 @@ class DashScopeSearch(SearchEngine):
     def name(self) -> str:
         return "dashscope"
 
-    async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
-        """Execute search using DashScope WebSearch plugin."""
+    async def search(
+        self, query: str, max_results: int = 10, max_retries: int = 3
+    ) -> list[SearchResult]:
+        """Execute search using DashScope WebSearch plugin.
+
+        Includes retry logic for transient network failures.
+        """
+        import asyncio
+
         logger.info(f"DashScope search: {query} (max_results={max_results})")
 
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            try:
-                response = await client.post(
-                    self.API_URL,
-                    headers={
-                        "Authorization": f"Bearer {self.api_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={
-                        "model": "qwen-plus",  # DashScope search uses qwen-plus internally
-                        "input": {
-                            "messages": [
-                                {"role": "user", "content": f"搜索并总结: {query}"}
-                            ]
+        last_error: Exception | None = None
+        for attempt in range(max_retries):
+            # Increase timeout for each retry
+            timeout = 90.0 + (attempt * 30)
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                try:
+                    response = await client.post(
+                        self.API_URL,
+                        headers={
+                            "Authorization": f"Bearer {self.api_key}",
+                            "Content-Type": "application/json",
                         },
-                        "parameters": {
-                            "result_format": "message",
-                            "enable_search": True,
+                        json={
+                            "model": "qwen-plus",  # DashScope search uses qwen-plus internally
+                            "input": {
+                                "messages": [
+                                    {"role": "user", "content": f"搜索并总结: {query}"}
+                                ]
+                            },
+                            "parameters": {
+                                "result_format": "message",
+                                "enable_search": True,
+                            },
                         },
-                    },
-                )
-                response.raise_for_status()
-                data = response.json()
-                # Parse search results from response
-                return self._parse_response(data, max_results)
-            except Exception as e:
-                logger.error(f"DashScope search failed: {e}")
-                raise
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+                    return self._parse_response(data, max_results)
+                except (
+                    httpx.RemoteProtocolError,
+                    httpx.ConnectError,
+                    httpx.ReadTimeout,
+                    httpx.ConnectTimeout,
+                    httpx.WriteTimeout,
+                ) as e:
+                    last_error = e
+                    logger.warning(
+                        f"DashScope search attempt {attempt + 1}/{max_retries} failed: {e}"
+                    )
+                    if attempt < max_retries - 1:
+                        wait_time = 3 * (2**attempt)  # 3s, 6s, 12s
+                        logger.info(f"Retrying in {wait_time}s...")
+                        await asyncio.sleep(wait_time)
+                    continue
+                except Exception as e:
+                    logger.error(f"DashScope search failed: {e}")
+                    raise
+
+        logger.error(f"DashScope search failed after {max_retries} attempts")
+        raise last_error  # type: ignore[misc]
 
     def _parse_response(self, data: dict, max_results: int) -> list[SearchResult]:
         """Parse DashScope response to extract search results."""
