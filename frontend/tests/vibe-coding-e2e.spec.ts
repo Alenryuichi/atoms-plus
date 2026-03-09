@@ -44,6 +44,13 @@ const FRONTEND_URL = USE_PROD
 const LOCAL_FRONTEND_URL =
   process.env.LOCAL_FRONTEND_URL || LOCAL_FRONTEND_URL_DEFAULT;
 
+// ============================================================================
+// Test Configuration
+// ============================================================================
+// Note: Use the test runner script for formatted reports:
+//   ./scripts/run-vibe-coding-tests.sh
+// ============================================================================
+
 test.describe("Vibe Coding Backend Flow", () => {
   test("1. Role detection returns correct role and web_app flag", async ({
     request,

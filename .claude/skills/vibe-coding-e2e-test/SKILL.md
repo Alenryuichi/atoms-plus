@@ -40,12 +40,29 @@ asyncio.run(test())
 
 ### Frontend Tests (Playwright)
 
-```bash
-# Run Playwright tests
-cd frontend && npx playwright test vibe-coding-e2e.spec.ts --project=chromium
+**⚠️ 重要**: 使用测试运行脚本以获取格式化的报告输出！
 
-# With full UI flow (requires auth)
-TEST_VIBE_CODING=1 npx playwright test vibe-coding-e2e.spec.ts
+```bash
+# 推荐：使用测试脚本（自动输出报告）
+./scripts/run-vibe-coding-tests.sh
+
+# 包含完整 Agent 流程测试
+./scripts/run-vibe-coding-tests.sh --full
+
+# 针对生产环境测试
+./scripts/run-vibe-coding-tests.sh --prod
+
+# 两者结合
+./scripts/run-vibe-coding-tests.sh --full --prod
+```
+
+直接运行 Playwright（无报告头尾）:
+```bash
+# 基础测试
+cd frontend && TEST_VIBE_CODING=1 npx playwright test vibe-coding-e2e.spec.ts --project=chromium
+
+# 包含完整流程
+TEST_FULL_FLOW=1 TEST_VIBE_CODING=1 npx playwright test vibe-coding-e2e.spec.ts
 ```
 
 ## Test Coverage
@@ -79,16 +96,60 @@ The tests validate generated code against these criteria:
 
 **Pass threshold**: 70% (7/8 checks)
 
+## 测试脚本选项
+
+| 命令 | 描述 |
+|------|------|
+| `./scripts/run-vibe-coding-tests.sh` | 运行标准测试（跳过 Agent 流程） |
+| `./scripts/run-vibe-coding-tests.sh --full` | 包含完整 Agent 流程测试 |
+| `./scripts/run-vibe-coding-tests.sh --prod` | 针对生产环境测试 |
+| `./scripts/run-vibe-coding-tests.sh --full --prod` | 生产环境 + 完整流程 |
+
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DASHSCOPE_API_KEY` | - | Alibaba Cloud API key |
 | `LLM_API_KEY` | - | Alternative LLM API key |
-| `TEST_VIBE_CODING` | - | Enable full UI tests |
-| `VITE_BACKEND_BASE_URL` | Production URL | Backend URL for tests |
+| `TEST_VIBE_CODING` | `1` | 由脚本自动设置 |
+| `TEST_FULL_FLOW` | - | 启用完整 Agent 流程测试 |
+| `TEST_PROD` | - | 使用生产环境 URL |
+| `LOCAL_FRONTEND_URL` | `http://localhost:3002` | 本地前端 URL |
 
 ## Expected Results
+
+### Playwright 测试报告输出
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                     🧪 VIBE CODING E2E TEST RUNNER                           ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  Environment: LOCAL                                                           ║
+║  Backend: http://localhost:3000                                               ║
+║  Frontend: http://localhost:3002                                              ║
+║  TEST_FULL_FLOW: 0                                                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Running 8 tests using 7 workers
+
+  ✓  3 [chromium] › 2. Vibe Coding instructions contain required sections (544ms)
+  ✓  4 [chromium] › 1. Role detection returns correct role and web_app flag (547ms)
+  -  1 [chromium] › 6. Complete user flow: input → agent → code → preview
+  -  2 [chromium] › 7. Quick agent response test (validates agent starts)
+  ✓  8 [chromium] › 8. WebSocket connection test (237ms)
+  ✓  6 [chromium] › 5. Complete conversation flow - infrastructure check (866ms)
+  ✓  5 [chromium] › 3. Homepage loads and shows chat interface (4.8s)
+  ✓  7 [chromium] › 4. Preview tab is accessible (4.9s)
+
+  2 skipped
+  6 passed (9.1s)
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ✅ ALL TESTS COMPLETED SUCCESSFULLY                                         ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Python 后端测试输出
 
 ```
 ======================================================================
