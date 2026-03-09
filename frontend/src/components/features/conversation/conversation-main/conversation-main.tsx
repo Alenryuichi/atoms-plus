@@ -5,6 +5,7 @@ import { ResizeHandle } from "../../../ui/resize-handle";
 import { useResizablePanels } from "#/hooks/use-resizable-panels";
 import { useConversationStore } from "#/stores/conversation-store";
 import { useBreakpoint } from "#/hooks/use-breakpoint";
+import { useAutoPreview } from "#/hooks/use-auto-preview";
 
 function getMobileChatPanelClass(isRightPanelShown: boolean) {
   return isRightPanelShown ? "h-160" : "flex-1";
@@ -20,8 +21,9 @@ export function ConversationMain() {
   const isMobile = useBreakpoint();
   const { isRightPanelShown, isChatPanelCollapsed } = useConversationStore();
 
-  // Note: Auto-switch to Preview view is now handled in PreviewPanel component
-  // It switches from "Code" to "Preview" once workspace files and content are loaded
+  // Auto-switch to Preview tab when agent finishes with web files
+  // Auto-refresh Preview panel when files are written
+  useAutoPreview();
 
   // Panel width state is now in Zustand store, synchronized with TopNavbar
   const { leftWidth, rightWidth, isDragging, containerRef, handleMouseDown } =

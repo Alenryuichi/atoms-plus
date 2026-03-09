@@ -51,9 +51,7 @@ export function SystemMessageModal({
           <TabNavigation
             activeTab={activeTab}
             onTabChange={setActiveTab}
-            hasTools={
-              !!(systemMessage.tools && systemMessage.tools.length > 0)
-            }
+            hasTools={!!(systemMessage.tools && systemMessage.tools.length > 0)}
           />
         </div>
 

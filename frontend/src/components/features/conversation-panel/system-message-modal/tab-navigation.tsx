@@ -15,10 +15,7 @@ export function TabNavigation({
   const { t } = useTranslation();
 
   return (
-    <div
-      className="flex gap-1 p-1 bg-white/5 rounded-lg mb-4"
-      role="tablist"
-    >
+    <div className="flex gap-1 p-1 bg-white/5 rounded-lg mb-4" role="tablist">
       <button
         type="button"
         role="tab"

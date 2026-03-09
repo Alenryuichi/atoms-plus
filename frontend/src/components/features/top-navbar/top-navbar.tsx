@@ -767,7 +767,9 @@ export function TopNavbar() {
           className={cn(
             "absolute left-4 md:left-8 lg:left-12 top-1/2 -translate-y-1/2 z-10",
             "transition-opacity duration-300",
-            isConversationPage && isChatPanelCollapsed && "opacity-0 pointer-events-none",
+            isConversationPage &&
+              isChatPanelCollapsed &&
+              "opacity-0 pointer-events-none",
           )}
         >
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

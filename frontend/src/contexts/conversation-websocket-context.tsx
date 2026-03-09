@@ -167,7 +167,10 @@ export function ConversationWebSocketProvider({
     // Don't attempt connection if we're missing required data
     if (!conversationId || !conversationUrl) {
       // eslint-disable-next-line no-console
-      console.log("[WS Debug] Missing data:", { conversationId, conversationUrl });
+      console.log("[WS Debug] Missing data:", {
+        conversationId,
+        conversationUrl,
+      });
       return null;
     }
     const url = buildWebSocketUrl(conversationId, conversationUrl);
@@ -420,7 +423,10 @@ export function ConversationWebSocketProvider({
           if (isConversationStateUpdateEvent(event)) {
             if (isFullStateConversationStateUpdateEvent(event)) {
               // eslint-disable-next-line no-console
-              console.log("[WS Debug] Setting execution_status:", event.value.execution_status);
+              console.log(
+                "[WS Debug] Setting execution_status:",
+                event.value.execution_status,
+              );
               setExecutionStatus(event.value.execution_status);
             }
             if (isAgentStatusConversationStateUpdateEvent(event)) {

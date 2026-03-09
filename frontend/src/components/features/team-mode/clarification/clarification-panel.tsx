@@ -11,8 +11,10 @@ import {
 import type { ClarifyingQuestion, UserAnswer } from "./types";
 
 const PRIORITY_COLORS = {
-  critical: "text-destructive dark:text-red-400 bg-destructive/10 dark:bg-red-500/20",
-  important: "text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/20",
+  critical:
+    "text-destructive dark:text-red-400 bg-destructive/10 dark:bg-red-500/20",
+  important:
+    "text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/20",
   "nice-to-have": "text-muted-foreground bg-muted",
 } as const;
 
