@@ -34,11 +34,17 @@ from atoms_plus.deep_research.models import (
 )
 from atoms_plus.deep_research.prompts import (
     FINAL_REPORT_PROMPT,
+    FINAL_REPORT_PROMPT_TECH,
     REFLECT_PROMPT,
     STRUCTURE_PROMPT,
+    STRUCTURE_PROMPT_TECH,
     SUMMARIZE_PROMPT,
 )
-from atoms_plus.deep_research.query_rewriter import RewrittenQuery, rewrite_query
+from atoms_plus.deep_research.query_rewriter import (
+    IntentType,
+    RewrittenQuery,
+    rewrite_query,
+)
 from atoms_plus.deep_research.search import SearchEngine, get_search_engine
 
 logger = logging.getLogger(__name__)
@@ -81,11 +87,22 @@ async def _call_llm(prompt: str) -> str:
 # =============================================================================
 
 
-async def _generate_structure(query: str) -> ReportStructure:
-    """Generate report structure using LLM."""
-    logger.info(f"Generating structure for: {query}")
+async def _generate_structure(
+    query: str, intent: IntentType | None = None
+) -> ReportStructure:
+    """Generate report structure using LLM.
 
-    prompt = STRUCTURE_PROMPT.format(query=query)
+    Args:
+        query: Research topic or refined query
+        intent: User intent type (BUILD_APP uses technical prompt)
+    """
+    logger.info(f"Generating structure for: {query} (intent={intent})")
+
+    # Use technical prompt for BUILD_APP intent
+    if intent == IntentType.BUILD_APP:
+        prompt = STRUCTURE_PROMPT_TECH.format(query=query)
+    else:
+        prompt = STRUCTURE_PROMPT.format(query=query)
     response = await _call_llm(prompt)
 
     # Extract JSON from response
@@ -151,9 +168,17 @@ async def _generate_final_report(
     title: str,
     sections: list[SectionResult],
     all_sources: list[str],
+    intent: IntentType | None = None,
 ) -> str:
-    """Generate final Markdown report."""
-    logger.info(f"Generating final report: {title}")
+    """Generate final Markdown report.
+
+    Args:
+        title: Report title
+        sections: List of section results
+        all_sources: All cited sources
+        intent: User intent type (BUILD_APP uses technical prompt)
+    """
+    logger.info(f"Generating final report: {title} (intent={intent})")
 
     # Format sections content
     sections_content = "\n\n".join(f"### {s.title}\n{s.content}" for s in sections)
@@ -161,11 +186,19 @@ async def _generate_final_report(
     # Format sources
     sources = "\n".join(f"- {url}" for url in all_sources[:20])
 
-    prompt = FINAL_REPORT_PROMPT.format(
-        title=title,
-        sections_content=sections_content,
-        sources=sources,
-    )
+    # Use technical report prompt for BUILD_APP intent
+    if intent == IntentType.BUILD_APP:
+        prompt = FINAL_REPORT_PROMPT_TECH.format(
+            title=title,
+            sections_content=sections_content,
+            sources=sources,
+        )
+    else:
+        prompt = FINAL_REPORT_PROMPT.format(
+            title=title,
+            sections_content=sections_content,
+            sources=sources,
+        )
     return await _call_llm(prompt)
 
 
@@ -239,10 +272,11 @@ async def deep_research_async(
         # Use context_summary as the refined query for structure generation
         query = rewritten.context_summary
 
-    # Step 1: Generate report structure
-    structure = await _generate_structure(query)
+    # Step 1: Generate report structure (use intent-specific prompt)
+    intent = rewritten.intent if rewritten else None
+    structure = await _generate_structure(query, intent=intent)
     total_sections = len(structure.sections)
-    logger.info(f"Generated structure with {total_sections} sections")
+    logger.info(f"Generated structure with {total_sections} sections (intent={intent})")
 
     # Step 2: Process each section
     for idx, section in enumerate(structure.sections):
@@ -335,13 +369,13 @@ async def deep_research_async(
             progress=section_progress * 0.9,
         )
 
-    # Step 3: Generate final report
+    # Step 3: Generate final report (use intent-specific prompt)
     await send_progress(
         "generating_report", message="Generating final report", progress=0.95
     )
     unique_sources = list(dict.fromkeys(all_sources))  # Deduplicate
     final_report = await _generate_final_report(
-        structure.title, section_results, unique_sources
+        structure.title, section_results, unique_sources, intent=intent
     )
 
     execution_time = time.time() - start_time

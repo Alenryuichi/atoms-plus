@@ -76,50 +76,73 @@ INTENT_ANALYSIS_PROMPT = """分析用户输入的意图类型。
 ```
 """
 
-# Query Decomposition Prompt (针对 BUILD_APP 意图)
+# Query Decomposition Prompt (针对 BUILD_APP 意图) - 技术实施导向
 DECOMPOSITION_PROMPT_BUILD = """用户想要构建: {context_summary}
 
-将这个需求分解为 5 个研究维度，并为每个维度生成 3 个具体的搜索查询。
+你是一个高级全栈开发顾问。将这个需求分解为 5 个**技术实施**维度，生成开发者可直接使用的搜索查询。
+
+⚠️ 重要：不要生成商业分析类查询（市场调研、运营策略），只生成技术实现类查询。
 
 输出 JSON:
 ```json
 {{
   "dimensions": [
     {{
-      "name": "技术栈选择",
-      "description": "前端框架、后端服务、数据库选择",
+      "name": "推荐技术栈",
+      "description": "具体的框架、语言、工具选择",
       "queries": [
-        "2025 {app_type} 最佳前端框架推荐",
-        "{app_type} 后端技术栈 Node.js vs Python",
-        "{app_type} 数据库选择 PostgreSQL vs MongoDB"
+        "2025 {app_type} Next.js vs Nuxt.js 对比实战",
+        "{app_type} TypeScript 全栈项目结构最佳实践",
+        "Supabase vs Firebase {app_type} 后端选型"
       ]
     }},
     {{
-      "name": "核心功能设计",
-      "description": "必需的功能模块和设计模式",
-      "queries": ["查询1", "查询2", "查询3"]
+      "name": "数据库设计",
+      "description": "数据模型、表结构、关系设计",
+      "queries": [
+        "{app_type} PostgreSQL 数据库 ER 设计示例",
+        "{app_type} 用户-商品-订单 表结构 SQL",
+        "Prisma ORM {app_type} schema 设计"
+      ]
     }},
     {{
-      "name": "第三方服务集成",
-      "description": "支付、认证、存储等外部服务",
-      "queries": ["查询1", "查询2", "查询3"]
+      "name": "核心功能实现",
+      "description": "具体功能的代码实现方式",
+      "queries": [
+        "{app_type} 用户认证 NextAuth.js 实现代码",
+        "{app_type} 购物车 状态管理 Zustand 示例",
+        "{app_type} 搜索过滤 API 实现 TypeScript"
+      ]
     }},
     {{
-      "name": "部署与运维",
-      "description": "部署平台、CI/CD、监控",
-      "queries": ["查询1", "查询2", "查询3"]
+      "name": "支付与第三方集成",
+      "description": "支付网关、OAuth、云存储的具体接入",
+      "queries": [
+        "Stripe Checkout Session {app_type} 代码示例",
+        "支付宝 微信支付 Node.js SDK 集成教程",
+        "Cloudinary 图片上传 React 组件代码"
+      ]
     }},
     {{
-      "name": "安全与性能",
-      "description": "安全最佳实践、性能优化",
-      "queries": ["查询1", "查询2", "查询3"]
+      "name": "部署与安全",
+      "description": "部署命令、CI/CD、安全配置",
+      "queries": [
+        "Vercel {app_type} 部署配置 vercel.json 示例",
+        "Docker Compose {app_type} 全栈部署配置",
+        "{app_type} OWASP Top 10 防护 代码实现"
+      ]
     }}
   ]
 }}
 ```
 
 关键实体: {key_entities}
-确保查询具体、可搜索、与 {app_type} 直接相关。
+
+要求：
+1. 查询必须包含具体技术名称（如 Next.js, Stripe, Prisma）
+2. 查询应能返回代码示例或配置文件
+3. 避免模糊的商业术语，使用精确的技术术语
+4. 每个查询都应该对开发者有直接可操作的价值
 """
 
 # Query Decomposition Prompt (通用)
