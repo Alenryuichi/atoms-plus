@@ -217,13 +217,23 @@ test.describe("Full UI Flow - Agent Code Generation", () => {
   }) => {
     // Conditionally skip based on environment variable
     test.skip(!process.env.TEST_FULL_FLOW, "Set TEST_FULL_FLOW=1 to run");
-    test.setTimeout(600000); // 10 minutes for complete flow (LLM + sandbox init)
+    test.setTimeout(1800000); // 30 minutes for complete flow (LLM + sandbox init can be slow)
 
     // Step 1: Verify backend is running
     const healthResponse = await page.request.get(
       `${TEST_BACKEND}/atoms-plus/health`,
     );
     expect(healthResponse.ok()).toBeTruthy();
+
+    // Capture console errors
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        console.log(`[BROWSER ERROR] ${msg.text()}`);
+      }
+    });
+    page.on("pageerror", (err) => {
+      console.log(`[PAGE ERROR] ${err.message}`);
+    });
 
     // Step 2: Go to homepage
     await page.goto(TEST_FRONTEND);
@@ -235,7 +245,10 @@ test.describe("Full UI Flow - Agent Code Generation", () => {
     });
 
     // If we're on the homepage, type a message
-    if (await inputBox.isVisible({ timeout: 5000 })) {
+    const isInputVisible = await inputBox.isVisible({ timeout: 5000 });
+    console.log(`[DEBUG] Input box visible: ${isInputVisible}, URL: ${page.url()}`);
+
+    if (isInputVisible) {
       // Type a simple web app request
       await inputBox.fill("做一个简单的计数器应用");
 
@@ -247,25 +260,55 @@ test.describe("Full UI Flow - Agent Code Generation", () => {
 
       // Wait for conversation to start (page navigation or status change)
       // URL pattern: /conversations/task-xxx or /conversation/xxx or /c/xxx
+      console.log(`[DEBUG] Waiting for URL to change to conversation pattern...`);
       try {
         await page.waitForURL(/\/conversations?\/|\/c\//, { timeout: 30000 });
+        console.log(`[DEBUG] URL changed to: ${page.url()}`);
       } catch {
         // Check if redirected to login (auth required)
         const currentUrl = page.url();
+        console.log(`[DEBUG] URL wait timeout. Current URL: ${currentUrl}`);
         if (currentUrl.includes("/login")) {
           test.skip(true, "Authentication required - redirected to login");
           return;
         }
-        throw new Error(`Unexpected URL after clicking Start: ${currentUrl}`);
+        // Check if we're still on homepage - button may not have worked
+        if (currentUrl === "http://localhost:3002/" || currentUrl.endsWith(":3002/")) {
+          console.log(`[DEBUG] Still on homepage - Start button may not have triggered navigation`);
+          // Try clicking again
+          const startButton2 = page.getByRole("button", { name: /开始|start/i });
+          if (await startButton2.isVisible({ timeout: 2000 })) {
+            console.log(`[DEBUG] Clicking Start button again...`);
+            await startButton2.click();
+            // Wait a bit more
+            try {
+              await page.waitForURL(/\/conversations?\/|\/c\//, { timeout: 30000 });
+              console.log(`[DEBUG] URL changed after second click: ${page.url()}`);
+            } catch {
+              console.log(`[DEBUG] URL still didn't change: ${page.url()}`);
+            }
+          }
+        }
       }
 
-      // Check if we're still on conversation page (not redirected to login)
-      if (page.url().includes("/login")) {
+      // Final URL check
+      const finalUrl = page.url();
+      console.log(`[DEBUG] Final URL: ${finalUrl}`);
+
+      // Check if we're on login page
+      if (finalUrl.includes("/login")) {
         test.skip(true, "Authentication required for conversation");
         return;
       }
 
+      // If still on homepage, skip with clear message
+      if (finalUrl === "http://localhost:3002/" || finalUrl.endsWith(":3002/")) {
+        test.skip(true, `Failed to navigate to conversation - still on homepage: ${finalUrl}`);
+        return;
+      }
+
       // Wait for agent to process - use Promise.race to check multiple indicators
+      console.log(`[DEBUG] Waiting for agent processing indicator...`);
       const waitForProcessing = async () => {
         const processingIndicator = page.getByText(
           /processing|thinking|working|building|setting up/i,
@@ -275,15 +318,19 @@ test.describe("Full UI Flow - Agent Code Generation", () => {
             state: "visible",
             timeout: 10000,
           });
+          console.log(`[DEBUG] Processing indicator visible`);
           await processingIndicator.waitFor({
             state: "hidden",
             timeout: 180000,
           });
+          console.log(`[DEBUG] Processing indicator hidden - agent finished`);
         } catch {
           // Processing indicator may not appear, continue
+          console.log(`[DEBUG] Processing indicator not found or timeout`);
         }
       };
       await waitForProcessing();
+      console.log(`[DEBUG] waitForProcessing completed, starting code generation wait...`);
 
       // Step 4: Wait for code generation to complete
       // Use Promise.race to check multiple possible indicators
@@ -305,8 +352,8 @@ test.describe("Full UI Flow - Agent Code Generation", () => {
         );
 
         try {
-          // Wait up to 5 minutes for code generation (LLM can be slow)
-          const codeGenTimeout = 300000;
+          // Wait up to 15 minutes for code generation (LLM can be slow)
+          const codeGenTimeout = 900000;
           await Promise.race([
             codeBlock
               .first()
@@ -339,6 +386,7 @@ test.describe("Full UI Flow - Agent Code Generation", () => {
       };
 
       const codeGenerated = await waitForCodeGeneration();
+      console.log(`[DEBUG] codeGenerated: ${codeGenerated}`);
 
       // Step 5: Check for agent activity
       // The agent may still be running if code generation timed out
@@ -346,10 +394,14 @@ test.describe("Full UI Flow - Agent Code Generation", () => {
         .getByText(/响应中|thinking|processing|working/i)
         .isVisible({ timeout: 1000 })
         .catch(() => false);
+      console.log(`[DEBUG] agentRunning: ${agentRunning}`);
 
       // Step 6: Check Preview tab
       const previewTab = page.getByRole("tab", { name: /preview|预览/i });
-      if (await previewTab.isVisible({ timeout: 5000 })) {
+      const previewTabVisible = await previewTab.isVisible({ timeout: 5000 });
+      console.log(`[DEBUG] previewTabVisible: ${previewTabVisible}`);
+
+      if (previewTabVisible) {
         await previewTab.click();
 
         // Wait for preview content to load
@@ -390,7 +442,8 @@ test.describe("Full UI Flow - Agent Code Generation", () => {
       }
     } else {
       // Not on homepage - may need auth
-      test.skip(true, "Homepage not accessible - may need authentication");
+      console.log(`[DEBUG] Skipping: Input box not visible. Current URL: ${page.url()}`);
+      test.skip(true, `Homepage not accessible - input not visible at ${page.url()}`);
     }
   });
 

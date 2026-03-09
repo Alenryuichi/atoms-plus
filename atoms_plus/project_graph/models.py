@@ -46,14 +46,18 @@ class Entity:
     description: str = ''
     properties: list[str] = field(default_factory=list)  # For models
     methods: list[str] = field(default_factory=list)  # For services/APIs
+    id: str = ''  # Unique identifier for dependency tracking
+    dependencies: list[str] = field(default_factory=list)  # Entity IDs this depends on
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            'id': self.id,
             'name': self.name,
             'type': self.type.value,
             'description': self.description,
             'properties': self.properties,
             'methods': self.methods,
+            'dependencies': self.dependencies,
         }
 
 
