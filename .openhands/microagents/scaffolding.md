@@ -15,6 +15,7 @@ When the user describes an app in natural language (e.g., "Create a todo app"), 
 2. **Fully functional** — Generate working code, not templates
 3. **Instant feedback** — Always run `npm run dev` and report the preview URL
 4. **Smart defaults** — React + Vite + TypeScript + Tailwind unless user specifies otherwise
+5. **Standard naming** — Always use `index.html` as the main HTML entry point (required for Preview panel)
 
 ## Execution Workflow
 
@@ -127,10 +128,28 @@ export default function App() {
 
 ### Step 4: Install & Run
 
+⚠️ **CRITICAL - MUST FOLLOW EXACTLY**:
+
+The dev server **MUST** run on **port 8011** for the app to appear in the "Application" tab.
+
 ```bash
 npm install
-npm run dev
+npm run dev -- --port 8011 --host 0.0.0.0
 ```
+
+**⛔ NEVER DO THIS** (will break "Application" tab):
+- ❌ `npm run dev` (wrong - uses port 5173, not visible in UI)
+- ❌ `npm run dev -- --host 0.0.0.0` (wrong - missing --port 8011)
+- ❌ `npm run dev > server.log &` (wrong - no port specified)
+
+**✅ ALWAYS DO THIS**:
+```bash
+npm run dev -- --port 8011 --host 0.0.0.0
+```
+
+The `--port 8011` and `--host 0.0.0.0` flags are both **REQUIRED**. Without them, the user cannot see the app.
+
+For Vite projects, this ensures the dev server is accessible via the runtime proxy at `/runtime/8011/`.
 
 ### Step 5: Report Results
 
@@ -138,7 +157,7 @@ npm run dev
 ✅ App created successfully!
 
 📁 Location: /workspace/my-app
-🚀 Dev server: http://localhost:5173
+🚀 Dev server: http://localhost:8011 (visible in "Application" tab)
 
 Features implemented:
 - ✅ Add tasks
@@ -146,9 +165,9 @@ Features implemented:
 - ✅ Delete tasks
 
 Next steps:
+- View app in the "Application" tab
 - Customize styling
 - Add persistence (localStorage or Supabase)
-- Add more features
 ```
 
 ## Framework Selection

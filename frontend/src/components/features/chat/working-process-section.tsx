@@ -2,21 +2,16 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   IconChevronDown,
-  IconChevronUp,
   IconCheck,
   IconCircle,
   IconLoader2,
 } from "@tabler/icons-react";
-import { Card, CardContent, CardHeader } from "#/components/ui/card";
-import { Checkbox } from "#/components/ui/checkbox";
-import { Button } from "#/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "#/components/ui/collapsible";
 import { cn } from "#/lib/utils";
-import { I18nKey } from "#/i18n/declaration";
 
 interface WorkingProcessTask {
   id: string;
@@ -34,25 +29,12 @@ interface WorkingProcessSectionProps {
   className?: string;
 }
 
-// Atoms Plus: Dark theme status icons
 const statusIcons = {
-  todo: (
-    <IconCircle
-      size={16}
-      stroke={1.5}
-      className="text-[var(--atoms-text-muted)]"
-    />
-  ),
+  todo: <IconCircle size={14} className="text-white/30" />,
   in_progress: (
-    <IconLoader2
-      size={16}
-      stroke={1.5}
-      className="text-[var(--atoms-accent-primary)] animate-spin"
-    />
+    <IconLoader2 size={14} className="text-amber-500 animate-spin" />
   ),
-  done: (
-    <IconCheck size={16} stroke={1.5} className="text-[var(--atoms-success)]" />
-  ),
+  done: <IconCheck size={14} className="text-emerald-500" />,
 };
 
 export function WorkingProcessSection({
@@ -60,127 +42,67 @@ export function WorkingProcessSection({
   tasks,
   onEditPlans,
   onApprove,
-  defaultOpen = true,
+  defaultOpen = false,
   className,
 }: WorkingProcessSectionProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const completedCount = tasks.filter((task) => task.status === "done").length;
-  const progress = tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0;
 
-  const displayTitle = title || t(I18nKey.COMMON$WORKING_PROCESS);
+  const displayTitle = `Processed ${completedCount} ${completedCount === 1 ? "step" : "steps"}`;
 
   return (
-    // Atoms Plus: Dark card styling matching atoms.dev
-    <Card
-      className={cn(
-        "bg-[var(--atoms-bg-card)] border-[var(--atoms-border)] rounded-xl",
-        className,
-      )}
-    >
+    <div className={cn("w-full mb-4", className)}>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CardHeader className="p-4 pb-2">
-          <CollapsibleTrigger className="flex items-center justify-between w-full group cursor-pointer">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-[var(--atoms-text-primary)]">
-                {displayTitle}
-              </span>
-              <span className="text-xs text-[var(--atoms-text-muted)] bg-[var(--atoms-bg-elevated)] px-2 py-0.5 rounded-full">
-                {completedCount}/{tasks.length} {t(I18nKey.COMMON$COMPLETED)}
-              </span>
-            </div>
-            {isOpen ? (
-              <IconChevronUp
-                size={16}
-                stroke={1.5}
-                className="text-[var(--atoms-text-muted)] group-hover:text-[var(--atoms-text-primary)] transition-colors"
-              />
-            ) : (
-              <IconChevronDown
-                size={16}
-                stroke={1.5}
-                className="text-[var(--atoms-text-muted)] group-hover:text-[var(--atoms-text-primary)] transition-colors"
-              />
+        <CollapsibleTrigger className="flex items-center gap-2 px-1 py-1 hover:bg-white/5 rounded-md transition-colors group cursor-pointer">
+          <div
+            className={cn(
+              "transition-transform duration-200",
+              isOpen ? "rotate-0" : "-rotate-90",
             )}
-          </CollapsibleTrigger>
-          {/* Atoms Plus: Gradient progress bar */}
-          <div className="mt-3 h-1 w-full bg-[var(--atoms-bg-elevated)] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[var(--atoms-accent-primary)] transition-all duration-300 ease-out rounded-full"
-              style={{ width: `${progress}%` }}
+          >
+            <IconChevronDown
+              size={14}
+              className="text-white/40 group-hover:text-white/70"
             />
           </div>
-        </CardHeader>
+
+          <div className="flex items-center gap-2">
+            {completedCount === tasks.length && tasks.length > 0 ? (
+              <IconCheck size={14} className="text-emerald-500" />
+            ) : (
+              <IconLoader2 size={14} className="text-amber-500 animate-spin" />
+            )}
+            <span className="text-[13px] font-medium text-white/60 group-hover:text-white/80 transition-colors">
+              {displayTitle}
+            </span>
+          </div>
+        </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <CardContent className="p-4 pt-2 space-y-3">
-            {/* Atoms Plus: Task list with bullet styling */}
-            <div className="space-y-1">
-              {tasks.map((task) => (
-                <div
-                  key={task.id}
-                  className={cn(
-                    "flex items-start gap-3 p-2 rounded-lg transition-all duration-200",
-                    task.status === "done" && "opacity-50",
-                    task.status === "in_progress" &&
-                      "bg-[var(--atoms-accent-primary)]/5 border-l-2 border-[var(--atoms-accent-primary)]",
-                  )}
-                >
-                  <div className="mt-0.5">
-                    <Checkbox
-                      checked={task.status === "done"}
-                      disabled
-                      className="border-[var(--atoms-border)] data-[state=checked]:bg-[var(--atoms-accent-primary)] data-[state=checked]:border-[var(--atoms-accent-primary)]"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p
-                      className={cn(
-                        "text-sm text-[var(--atoms-text-primary)]",
-                        task.status === "done" &&
-                          "line-through text-[var(--atoms-text-muted)]",
-                      )}
-                    >
-                      {task.title}
-                    </p>
-                    {task.notes && (
-                      <p className="text-xs text-[var(--atoms-text-muted)] mt-0.5">
-                        {task.notes}
-                      </p>
-                    )}
-                  </div>
-                  <div className="shrink-0">{statusIcons[task.status]}</div>
+          <div className="mt-2 ml-4 pl-4 border-l border-white/10 space-y-2.5">
+            {tasks.map((task) => (
+              <div key={task.id} className="flex items-start gap-3 group/task">
+                <div className="mt-0.5 shrink-0">
+                  {statusIcons[task.status]}
                 </div>
-              ))}
-            </div>
-
-            {/* Atoms Plus: Action buttons with accent styling */}
-            {(onEditPlans || onApprove) && (
-              <div className="flex items-center gap-2 pt-3 border-t border-[var(--atoms-border)]">
-                {onEditPlans && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onEditPlans}
-                    className="text-xs border-[var(--atoms-border)] text-[var(--atoms-text-secondary)] hover:bg-[var(--atoms-bg-elevated)] hover:text-[var(--atoms-text-primary)]"
+                <div className="flex-1 min-w-0">
+                  <p
+                    className={cn(
+                      "text-[12px] leading-tight",
+                      task.status === "done"
+                        ? "text-white/40"
+                        : "text-white/80",
+                    )}
                   >
-                    {t(I18nKey.COMMON$EDIT_PLANS)}
-                  </Button>
-                )}
-                {onApprove && (
-                  <Button
-                    size="sm"
-                    onClick={onApprove}
-                    className="text-xs bg-[var(--atoms-accent-primary)] hover:bg-[var(--atoms-accent-primary)]/90 text-white"
-                  >
-                    {t(I18nKey.COMMON$APPROVE)}
-                  </Button>
-                )}
+                    {task.title}
+                  </p>
+                </div>
               </div>
-            )}
-          </CardContent>
+            ))}
+          </div>
         </CollapsibleContent>
       </Collapsible>
-    </Card>
+    </div>
   );
 }

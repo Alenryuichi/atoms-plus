@@ -21,6 +21,8 @@ export type ConversationMode = "code" | "plan";
 
 export type PreviewViewMode = "split" | "editor" | "preview";
 
+export type PreviewSubTab = "design" | "console";
+
 // Panel width constants
 const PANEL_WIDTH_STORAGE_KEY = "desktop-layout-panel-width";
 const DEFAULT_PANEL_LEFT_WIDTH = 50;
@@ -48,9 +50,12 @@ interface ConversationState {
   conversationMode: ConversationMode;
   subConversationTaskId: string | null; // Task ID for sub-conversation creation
   previewViewMode: PreviewViewMode; // Preview panel view mode (split/editor/preview)
+  previewSubTab: PreviewSubTab; // Sub-tab within preview panel (design/console)
   // Panel width state - shared between TopNavbar and ConversationMain
   panelLeftWidth: number; // Left panel width as percentage (30-80)
   panelIsDragging: boolean; // Whether user is currently dragging the resize handle
+  // Chat panel collapse state - hides chat and fully expands preview
+  isChatPanelCollapsed: boolean;
 }
 
 interface ConversationActions {
@@ -78,10 +83,14 @@ interface ConversationActions {
   setSubConversationTaskId: (taskId: string | null) => void;
   setPlanContent: (planContent: string | null) => void;
   setPreviewViewMode: (previewViewMode: PreviewViewMode) => void;
+  setPreviewSubTab: (previewSubTab: PreviewSubTab) => void;
   // Panel width actions
   setPanelLeftWidth: (width: number) => void;
   setPanelIsDragging: (isDragging: boolean) => void;
   persistPanelWidth: () => void; // Save to localStorage when drag ends
+  // Chat panel collapse actions
+  toggleChatPanelCollapsed: () => void;
+  setChatPanelCollapsed: (collapsed: boolean) => void;
 }
 
 type ConversationStore = ConversationState & ConversationActions;
@@ -182,9 +191,12 @@ export const useConversationStore = create<ConversationStore>()(
       conversationMode: getInitialConversationMode(),
       subConversationTaskId: null,
       previewViewMode: "preview" as PreviewViewMode, // Default to preview mode
+      previewSubTab: "design" as PreviewSubTab, // Default to design sub-tab (show preview, not console)
       // Panel width state - synced between TopNavbar and ConversationMain
       panelLeftWidth: getInitialPanelWidth(),
       panelIsDragging: false,
+      // Chat panel collapse state
+      isChatPanelCollapsed: false,
 
       // Actions
       setIsRightPanelShown: (isRightPanelShown) =>
@@ -347,6 +359,9 @@ export const useConversationStore = create<ConversationStore>()(
       setPreviewViewMode: (previewViewMode) =>
         set({ previewViewMode }, false, "setPreviewViewMode"),
 
+      setPreviewSubTab: (previewSubTab) =>
+        set({ previewSubTab }, false, "setPreviewSubTab"),
+
       // Panel width actions - for synchronized resizable panels
       setPanelLeftWidth: (width) => {
         const clamped = Math.max(
@@ -368,6 +383,21 @@ export const useConversationStore = create<ConversationStore>()(
           );
         }
       },
+
+      // Chat panel collapse actions
+      toggleChatPanelCollapsed: () =>
+        set(
+          (state) => ({ isChatPanelCollapsed: !state.isChatPanelCollapsed }),
+          false,
+          "toggleChatPanelCollapsed",
+        ),
+
+      setChatPanelCollapsed: (collapsed) =>
+        set(
+          { isChatPanelCollapsed: collapsed },
+          false,
+          "setChatPanelCollapsed",
+        ),
     }),
     {
       name: "conversation-store",

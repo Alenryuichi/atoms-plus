@@ -1,28 +1,25 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { IconArrowBackUp, IconDots } from "@tabler/icons-react";
 import { cn } from "#/lib/utils";
-import { CopyToClipboardButton } from "#/components/shared/buttons/copy-to-clipboard-button";
 import { OpenHandsSourceType } from "#/types/core/base";
-import { StyledTooltip } from "#/components/shared/buttons/styled-tooltip";
 import { MarkdownRenderer } from "../markdown/markdown-renderer";
 import { Card } from "#/components/ui/card";
+import { AgentAvatar } from "./agent-avatar";
 
 // Message animation variants - smoother spring for modern feel
 const messageVariants = {
   hidden: (type: OpenHandsSourceType) => ({
     opacity: 0,
-    x: type === "user" ? 16 : -16,
-    y: 8,
+    y: 10,
   }),
   visible: {
     opacity: 1,
-    x: 0,
     y: 0,
     transition: {
       type: "spring",
-      stiffness: 280,
-      damping: 24,
-      duration: 0.25,
+      stiffness: 260,
+      damping: 20,
     },
   },
 };
@@ -76,95 +73,106 @@ export function ChatMessage({
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       className={cn(
-        "relative w-fit last:mb-4 flex flex-col gap-2",
-        // User message: right-aligned with primary accent
-        isUserMessage && "max-w-[80%] self-end",
-        // Agent message: left-aligned, full width
-        isAgentMessage && "w-full max-w-full",
+        "relative w-full flex flex-col gap-2 mb-6",
+        isUserMessage && "items-end",
       )}
       variants={messageVariants}
       initial="hidden"
       animate="visible"
       custom={type}
     >
-      {/* Atoms Plus: User message bubble with gradient accent */}
+      {/* Atoms Plus: User message bubble with neutral glass styling */}
       {isUserMessage && (
-        <Card
-          className={cn(
-            "px-4 py-3 border-[var(--atoms-accent-primary)]/30 bg-[var(--atoms-accent-primary)]/10",
-            "rounded-2xl rounded-tr-md",
-            "shadow-lg shadow-[var(--atoms-accent-primary)]/5",
-          )}
-        >
-          <div
-            className="text-sm text-[var(--atoms-text-primary)] leading-relaxed"
-            style={{ whiteSpace: "normal", wordBreak: "break-word" }}
+        <div className="flex flex-col items-end max-w-[85%]">
+          <Card
+            className={cn(
+              "px-4 py-2.5 bg-white/[0.05] backdrop-blur-md border-white/10 shadow-none",
+              "rounded-2xl rounded-tr-sm",
+            )}
           >
-            <MarkdownRenderer includeStandard>{message}</MarkdownRenderer>
-          </div>
-        </Card>
-      )}
-
-      {/* Atoms Plus: Agent message with dark styling */}
-      {isAgentMessage && (
-        <div
-          className={cn(
-            "mt-3",
-            // Planning agent has special gradient border
-            isFromPlanningAgent &&
-              "border border-[var(--atoms-accent-secondary)]/30 bg-[var(--atoms-bg-card)] px-4 py-3 rounded-xl shadow-md",
-          )}
-        >
-          <div
-            className="text-sm text-[var(--atoms-text-primary)] leading-relaxed"
-            style={{ whiteSpace: "normal", wordBreak: "break-word" }}
-          >
-            <MarkdownRenderer includeStandard>{message}</MarkdownRenderer>
-          </div>
+            <div
+              className="text-[13px] text-white/90 leading-relaxed font-normal"
+              style={{ whiteSpace: "normal", wordBreak: "break-word" }}
+            >
+              <MarkdownRenderer includeStandard>{message}</MarkdownRenderer>
+            </div>
+          </Card>
         </div>
       )}
 
-      {/* Atoms Plus: Hover actions with dark styling */}
-      <div
-        className={cn(
-          "absolute -top-2 z-10",
-          isUserMessage ? "-left-2" : "-right-2",
-          !isHovering ? "hidden" : "flex",
-          "items-center gap-1 bg-[var(--atoms-bg-card)] rounded-lg shadow-lg border border-[var(--atoms-border)] p-1",
-        )}
-      >
-        {actions?.map((action, index) =>
-          action.tooltip ? (
-            <StyledTooltip key={index} content={action.tooltip} placement="top">
-              <button
-                type="button"
-                onClick={action.onClick}
-                className="p-1.5 rounded-md hover:bg-muted transition-colors cursor-pointer"
-                aria-label={action.tooltip}
-              >
-                {action.icon}
-              </button>
-            </StyledTooltip>
-          ) : (
-            <button
-              key={index}
-              type="button"
-              onClick={action.onClick}
-              className="p-1.5 rounded-md hover:bg-muted transition-colors cursor-pointer"
-              aria-label={`Action ${index + 1}`}
-            >
-              {action.icon}
-            </button>
-          ),
-        )}
+      {/* Atoms Plus: Agent message with avatar header and airy content */}
+      {isAgentMessage && (
+        <div className="flex flex-col gap-3 w-full group">
+          <AgentAvatar
+            name="Alex"
+            role={isFromPlanningAgent ? "Planner" : "Engineer"}
+            size="sm"
+          />
 
-        <CopyToClipboardButton
-          isHidden={!isHovering}
-          isDisabled={isCopy}
-          onClick={handleCopyToClipboard}
-          mode={isCopy ? "copied" : "copy"}
-        />
-      </div>
+          <div className="flex flex-col gap-3 pl-10">
+            <div
+              className={cn(
+                "text-[13px] text-white/90 leading-relaxed font-normal",
+                isFromPlanningAgent &&
+                  "bg-white/[0.03] p-4 rounded-xl border border-white/5 shadow-sm",
+              )}
+              style={{ whiteSpace: "normal", wordBreak: "break-word" }}
+            >
+              <MarkdownRenderer includeStandard>{message}</MarkdownRenderer>
+            </div>
+
+            {/* Action Bar - matches reference: reply, copy, more */}
+            <div
+              className={cn(
+                "flex items-center gap-4 transition-opacity duration-200",
+                isHovering ? "opacity-100" : "opacity-0",
+              )}
+            >
+              <button className="text-white/40 hover:text-white/80 transition-colors">
+                <IconArrowBackUp size={14} />
+              </button>
+
+              <button
+                onClick={handleCopyToClipboard}
+                className={cn(
+                  "text-white/40 hover:text-white/80 transition-colors",
+                  isCopy && "text-emerald-400",
+                )}
+              >
+                {/* Simplified copy icon or text indicator */}
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+              </button>
+
+              <button className="text-white/40 hover:text-white/80 transition-colors">
+                <IconDots size={14} />
+              </button>
+
+              {actions?.map((action, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={action.onClick}
+                  className="text-white/40 hover:text-white/80 transition-colors"
+                >
+                  {action.icon}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {children}
     </motion.article>

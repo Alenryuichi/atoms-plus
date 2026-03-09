@@ -1,7 +1,8 @@
+import { IconChevronDown, IconChevronRight } from "@tabler/icons-react";
 import { ToolParameters } from "./tool-parameters";
-import { ToggleButton } from "./toggle-button";
 import { ChatCompletionToolParam } from "#/types/v1/core";
 import { MarkdownRenderer } from "../../markdown/markdown-renderer";
+import { cn } from "#/utils/utils";
 
 interface FunctionData {
   name?: string;
@@ -65,21 +66,50 @@ export function ToolItem({ tool, index, isExpanded, onToggle }: ToolItemProps) {
     null;
 
   return (
-    <div className="rounded-md overflow-hidden">
-      <ToggleButton
-        title={String(name)}
-        isExpanded={isExpanded}
+    <div
+      className={cn(
+        "rounded-lg border transition-all duration-200",
+        isExpanded
+          ? "bg-white/5 border-white/10"
+          : "bg-transparent border-white/5 hover:border-white/10 hover:bg-white/[0.02]",
+      )}
+    >
+      {/* Tool header button */}
+      <button
+        type="button"
         onClick={() => onToggle(index)}
-      />
+        className="w-full px-4 py-3 flex items-center justify-between text-left"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-amber-500/60" />
+          <span className="text-sm font-medium text-white/80">
+            {String(name)}
+          </span>
+        </div>
+        <span className="text-white/40">
+          {isExpanded ? (
+            <IconChevronDown size={16} stroke={1.5} />
+          ) : (
+            <IconChevronRight size={16} stroke={1.5} />
+          )}
+        </span>
+      </button>
 
+      {/* Expanded content */}
       {isExpanded && (
-        <div className="px-2 pb-3 pt-1">
-          <div className="mt-2 mb-3 text-sm text-gray-300 leading-relaxed">
-            <MarkdownRenderer>{String(description)}</MarkdownRenderer>
-          </div>
+        <div className="px-4 pb-4 pt-0 border-t border-white/5">
+          {description && (
+            <div className="mt-3 text-sm text-white/60 leading-relaxed">
+              <MarkdownRenderer>{String(description)}</MarkdownRenderer>
+            </div>
+          )}
 
           {/* Parameters section */}
-          {parameters && <ToolParameters parameters={parameters} />}
+          {parameters && (
+            <div className="mt-4">
+              <ToolParameters parameters={parameters} />
+            </div>
+          )}
         </div>
       )}
     </div>

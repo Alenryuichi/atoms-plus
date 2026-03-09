@@ -279,3 +279,6 @@ DIAGNOSIS*.md
 FINAL_DIAGNOSIS*.md
 *.diagnosis.md
 image*.png
+# Temporary files
+.claude-flow/
+*.png

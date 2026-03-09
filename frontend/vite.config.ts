@@ -84,6 +84,13 @@ export default defineConfig(({ mode }) => {
           // Enable WebSocket for Team Mode: /api/v1/team/sessions/{id}/stream
           ws: true,
         },
+        "/runtime": {
+          target: API_URL,
+          changeOrigin: true,
+          secure: !INSECURE_SKIP_VERIFY,
+          // Enable WebSocket for HMR through the runtime proxy
+          ws: true,
+        },
         "/ws": {
           target: WS_URL,
           ws: true,

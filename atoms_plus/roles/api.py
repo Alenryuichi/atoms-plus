@@ -83,6 +83,12 @@ _role_cache: dict[str, RoleMicroagent] = {}
 _cache_initialized: bool = False
 
 
+def _get_project_root() -> Path:
+    """Get the project root directory based on this file's location."""
+    # atoms_plus/roles/api.py -> project root is 2 levels up
+    return Path(__file__).parent.parent.parent
+
+
 def _init_role_cache() -> None:
     """Load role microagents from .openhands/microagents/ and cache them."""
     global _role_cache, _cache_initialized
@@ -90,7 +96,12 @@ def _init_role_cache() -> None:
     if _cache_initialized:
         return
 
-    microagents_dir = Path('.openhands/microagents')
+    # Use absolute path based on project root to work on Railway
+    project_root = _get_project_root()
+    microagents_dir = project_root / '.openhands' / 'microagents'
+
+    logger.info(f'Looking for microagents in: {microagents_dir}')
+
     if not microagents_dir.exists():
         logger.warning(f'Microagents directory not found: {microagents_dir}')
         _cache_initialized = True
@@ -151,6 +162,7 @@ class AutoRouteRequest(BaseModel):
     """Request model for auto-routing."""
 
     user_input: str
+    use_llm: bool = True  # Default to LLM-based detection
 
 
 class AutoRouteResponse(BaseModel):
@@ -163,6 +175,8 @@ class AutoRouteResponse(BaseModel):
     confidence: float
     matched_keywords: list[str]
     reason: str
+    is_web_app_task: bool = True  # New field for Vibe Coding
+    vibe_coding_instructions: str | None = None  # Mandatory instructions
 
 
 # =============================================================================
@@ -200,33 +214,66 @@ async def auto_detect_role(request: AutoRouteRequest):
     """
     Automatically detect the best role based on user input.
 
-    This endpoint uses the same triggers as OpenHands microagents to ensure
-    consistency between UI display and actual agent behavior.
+    When use_llm=True (default), uses LLM for intelligent role detection.
+    When use_llm=False, falls back to keyword-based matching.
 
-    The detection is for UI display purposes only - the actual prompt injection
-    is handled by OpenHands microagents in the agent loop.
+    Also returns vibe_coding_instructions for mandatory web app generation.
 
     Args:
-        request: Contains the user's input text
+        request: Contains the user's input text and use_llm flag
 
     Returns:
-        The detected role with confidence score
+        The detected role with confidence score and vibe coding instructions
 
     Example:
         POST /api/v1/roles/auto-detect
-        {"user_input": "设计一个电商平台的微服务架构"}
+        {"user_input": "做一个番茄钟应用", "use_llm": true}
 
         Response:
         {
-            "role_id": "role-architect",
-            "role_name": "Alex",
-            "role_title": "Software Architect",
-            "avatar": "🏗️",
-            "confidence": 0.85,
-            "matched_keywords": ["架构", "设计", "微服务"],
-            "reason": "Matched role-architect triggers"
+            "role_id": "role-engineer",
+            "role_name": "Bob",
+            "role_title": "Senior Software Engineer",
+            "avatar": "💻",
+            "confidence": 0.95,
+            "matched_keywords": [],
+            "reason": "LLM detected: web app development task",
+            "is_web_app_task": true,
+            "vibe_coding_instructions": "..."
         }
     """
+    from atoms_plus.roles.llm_router import detect_role_with_llm
+    from atoms_plus.roles.vibe_coding_instructions import (
+        generate_vibe_coding_instructions,
+    )
+
+    # Try LLM-based detection first (if enabled)
+    if request.use_llm:
+        try:
+            detection = await detect_role_with_llm(request.user_input)
+            metadata = ROLE_METADATA.get(detection.role_id, {})
+
+            # Generate vibe coding instructions
+            instructions = generate_vibe_coding_instructions(
+                role_id=detection.role_id,
+                is_web_app_task=detection.is_web_app_task,
+            )
+
+            return AutoRouteResponse(
+                role_id=detection.role_id,
+                role_name=metadata.get('name', 'Bob'),
+                role_title=metadata.get('title', 'Senior Software Engineer'),
+                avatar=metadata.get('avatar', '💻'),
+                confidence=detection.confidence,
+                matched_keywords=[],
+                reason=f'LLM detected: {detection.reasoning}',
+                is_web_app_task=detection.is_web_app_task,
+                vibe_coding_instructions=instructions,
+            )
+        except Exception as e:
+            logger.warning(f'LLM detection failed, falling back to keywords: {e}')
+
+    # Fallback to keyword-based detection
     cache = _get_role_cache()
     user_input_lower = request.user_input.lower()
 
@@ -241,7 +288,7 @@ async def auto_detect_role(request: AutoRouteRequest):
             trigger_lower = trigger.lower()
             if trigger_lower in user_input_lower:
                 matched_triggers.append(trigger)
-                score += 0.15  # Each trigger match adds 0.15
+                score += 0.15
 
         if score > best_score:
             best_score = score
@@ -249,19 +296,21 @@ async def auto_detect_role(request: AutoRouteRequest):
 
     # Default to engineer if no match
     if best_match is None or best_score < 0.1:
-        metadata = ROLE_METADATA.get('role-engineer', {})
-        return AutoRouteResponse(
-            role_id='role-engineer',
-            role_name=metadata.get('name', 'Bob'),
-            role_title=metadata.get('title', 'Senior Software Engineer'),
-            avatar=metadata.get('avatar', '💻'),
-            confidence=0.5,
-            matched_keywords=[],
-            reason='Default role for general development tasks',
-        )
+        role_id = 'role-engineer'
+        matched_keywords = []
+        confidence = 0.5
+        reason = 'Default role for general development tasks'
+    else:
+        role_id, matched_keywords, confidence = best_match
+        reason = f'Matched {role_id} triggers'
 
-    role_id, matched_keywords, confidence = best_match
     metadata = ROLE_METADATA.get(role_id, {})
+
+    # Generate vibe coding instructions (assume web app task for keyword fallback)
+    instructions = generate_vibe_coding_instructions(
+        role_id=role_id,
+        is_web_app_task=True,
+    )
 
     return AutoRouteResponse(
         role_id=role_id,
@@ -270,7 +319,9 @@ async def auto_detect_role(request: AutoRouteRequest):
         avatar=metadata.get('avatar', '🤖'),
         confidence=confidence,
         matched_keywords=matched_keywords,
-        reason=f'Matched {role_id} triggers',
+        reason=reason,
+        is_web_app_task=True,
+        vibe_coding_instructions=instructions,
     )
 
 

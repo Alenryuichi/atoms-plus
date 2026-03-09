@@ -130,7 +130,10 @@ export const useWebSocket = <T = string>(
       connectWebSocket();
     } else {
       // eslint-disable-next-line no-console
-      console.log("[useWebSocket] Skipped connection - URL empty or invalid:", url);
+      console.log(
+        "[useWebSocket] Skipped connection - URL empty or invalid:",
+        url,
+      );
     }
 
     return () => {

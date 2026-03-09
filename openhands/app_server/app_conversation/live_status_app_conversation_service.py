@@ -247,9 +247,30 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
             ):
                 yield updated_task
 
-            # Note: agent_role is now handled by microagents in .openhands/microagents/
-            # The role detection is for UI display only; prompt injection is via microagents
-            system_message_suffix = request.system_message_suffix
+            # Atoms Plus: Inject vibe coding instructions for mandatory web app generation
+            # This uses LLM-based role detection and generates strong directives
+            # Wrap in timeout to prevent blocking conversation startup
+            try:
+                system_message_suffix = await asyncio.wait_for(
+                    self._inject_vibe_coding_instructions(
+                        request.system_message_suffix,
+                        request.initial_message,
+                        request.agent_role,
+                    ),
+                    timeout=30.0,  # 30 second timeout for LLM calls
+                )
+            except asyncio.TimeoutError:
+                _logger.warning(
+                    '[VibeCoding] Instruction injection timed out after 30s, '
+                    'continuing without vibe coding instructions'
+                )
+                system_message_suffix = request.system_message_suffix
+            except Exception as e:
+                _logger.warning(
+                    f'[VibeCoding] Instruction injection failed: {e}, '
+                    'continuing without vibe coding instructions'
+                )
+                system_message_suffix = request.system_message_suffix
 
             # Build the start request
             start_conversation_request = (
@@ -905,6 +926,113 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
         _logger.info(f'Final MCP configuration: {mcp_config}')
 
         return llm, mcp_config
+
+    async def _inject_vibe_coding_instructions(
+        self,
+        system_message_suffix: str | None,
+        initial_message: SendMessageRequest | None,
+        agent_role: str | None,
+    ) -> str | None:
+        """Inject Vibe Coding instructions for mandatory web app generation.
+
+        This method uses LLM-based role detection and project graph generation:
+        1. Whether this is a web app development task
+        2. What role is most suitable
+        3. Generate project graph for structured code generation (MiroFish-inspired)
+        4. What mandatory instructions to inject
+
+        Args:
+            system_message_suffix: Existing system message suffix
+            initial_message: The user's initial message
+            agent_role: Optional pre-selected role
+
+        Returns:
+            Updated system_message_suffix with vibe coding instructions
+        """
+        from openhands.agent_server.models import TextContent
+
+        # Extract user text from initial_message
+        user_text = ''
+        if initial_message and initial_message.content:
+            for content in initial_message.content:
+                if isinstance(content, TextContent):
+                    user_text += content.text + ' '
+            user_text = user_text.strip()
+
+        if not user_text:
+            _logger.debug('[VibeCoding] No initial message, skipping injection')
+            return system_message_suffix
+
+        try:
+            # Import atoms_plus modules
+            from atoms_plus.roles.llm_router import detect_role_with_llm
+            from atoms_plus.roles.vibe_coding_instructions import (
+                generate_vibe_coding_instructions,
+            )
+
+            # Detect role using LLM
+            if agent_role:
+                # Use pre-selected role
+                role_id = (
+                    agent_role
+                    if agent_role.startswith('role-')
+                    else f'role-{agent_role}'
+                )
+                is_web_app_task = True
+                _logger.info(f'[VibeCoding] Using pre-selected role: {role_id}')
+            else:
+                # Use LLM detection
+                detection = await detect_role_with_llm(user_text)
+                role_id = detection.role_id
+                is_web_app_task = detection.is_web_app_task
+                _logger.info(
+                    f'[VibeCoding] LLM detected: role={role_id}, '
+                    f'web_app={is_web_app_task}, confidence={detection.confidence:.2f}'
+                )
+
+            # Generate project graph for web app tasks (MiroFish-inspired)
+            project_graph = None
+            if is_web_app_task:
+                try:
+                    from atoms_plus.project_graph import generate_project_graph
+
+                    project_graph = await generate_project_graph(user_text)
+                    if project_graph:
+                        _logger.info(
+                            f'[VibeCoding] Project graph generated: {project_graph.name}, '
+                            f'{len(project_graph.entities)} entities, '
+                            f'{len(project_graph.features)} features'
+                        )
+                except ImportError:
+                    _logger.debug('[VibeCoding] project_graph module not available')
+                except Exception as e:
+                    _logger.warning(f'[VibeCoding] Project graph generation failed: {e}')
+
+            # Generate vibe coding instructions with project graph
+            instructions = generate_vibe_coding_instructions(
+                role_id=role_id,
+                is_web_app_task=is_web_app_task,
+                project_graph=project_graph,
+            )
+
+            # Combine with existing suffix
+            if system_message_suffix:
+                combined = f'{system_message_suffix}\n\n{instructions}'
+            else:
+                combined = instructions
+
+            _logger.info(
+                f'[VibeCoding] Injected instructions ({len(combined)} chars), '
+                f'graph={project_graph is not None}'
+            )
+            return combined
+
+        except ImportError as e:
+            _logger.warning(f'[VibeCoding] atoms_plus not available: {e}')
+            return system_message_suffix
+        except Exception as e:
+            _logger.warning(f'[VibeCoding] Failed to inject instructions: {e}')
+            return system_message_suffix
 
     # Note: _resolve_agent_role_prompt was removed.
     # Role prompts are now handled by microagents in .openhands/microagents/role-*.md

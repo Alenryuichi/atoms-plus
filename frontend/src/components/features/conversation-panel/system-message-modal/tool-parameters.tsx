@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import ReactJsonView from "@microlink/react-json-view";
 import { JSON_VIEW_THEME } from "#/utils/constants";
-import { Typography } from "#/ui/typography";
 
 interface ToolParametersProps {
   parameters: Record<string, unknown>;
@@ -11,12 +10,17 @@ export function ToolParameters({ parameters }: ToolParametersProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="mt-2" data-testid="tool-parameters">
-      <Typography.Text className="text-sm font-semibold text-gray-300">
+    <div data-testid="tool-parameters">
+      <div className="text-xs font-medium text-white/40 uppercase tracking-wider mb-2">
         {t("SYSTEM_MESSAGE_MODAL$PARAMETERS")}
-      </Typography.Text>
-      <div className="text-sm mt-2 p-3 bg-gray-900 rounded-md overflow-auto text-gray-300 max-h-[400px] shadow-inner">
-        <ReactJsonView name={false} src={parameters} theme={JSON_VIEW_THEME} />
+      </div>
+      <div className="text-sm p-3 bg-black/30 border border-white/5 rounded-lg overflow-auto max-h-[300px] custom-scrollbar-always">
+        <ReactJsonView
+          name={false}
+          src={parameters}
+          theme={JSON_VIEW_THEME}
+          style={{ backgroundColor: "transparent" }}
+        />
       </div>
     </div>
   );

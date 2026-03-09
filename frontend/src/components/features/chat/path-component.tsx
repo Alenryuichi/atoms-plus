@@ -53,27 +53,31 @@ const extractFilename = (path: string): string => {
 function PathComponent(props: { children?: ReactNode }) {
   const { children } = props;
 
-  const processPath = (path: string) => {
+  const processPath = (path: string, key?: string | number) => {
     try {
       // First decode any HTML entities in the path
       const decodedPath = decodeHtmlEntities(path);
       // Extract the filename from the decoded path
       const filename = extractFilename(decodedPath);
       return (
-        <span className="font-mono" title={decodedPath}>
+        <span key={key} className="font-mono" title={decodedPath}>
           {filename}
         </span>
       );
     } catch (e) {
       // Just log the error without any message to avoid localization issues
       EventLogger.error(String(e));
-      return <span className="font-mono">{path}</span>;
+      return (
+        <span key={key} className="font-mono">
+          {path}
+        </span>
+      );
     }
   };
 
   if (Array.isArray(children)) {
-    const processedChildren = children.map((child) =>
-      typeof child === "string" ? processPath(child) : child,
+    const processedChildren = children.map((child, index) =>
+      typeof child === "string" ? processPath(child, index) : child,
     );
 
     return <strong className="font-mono">{processedChildren}</strong>;
