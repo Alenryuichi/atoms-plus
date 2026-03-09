@@ -279,6 +279,261 @@ cd my-app && npm run dev
 """
 
 
+# =============================================================================
+# Sectioned Technical Report Prompts (for parallel generation)
+# =============================================================================
+
+TECH_SECTION_QUICK_START = """你是技术文档专家。根据以下研究结果，生成"快速开始"章节。
+
+研究主题: {title}
+
+相关研究内容:
+{section_content}
+
+要求:
+1. 输出一个技术栈推荐表格 (前端/后端/数据库/部署)
+2. 提供一键启动的 bash 命令 (3-5 行)
+3. 用中文写作，技术术语保持英文
+4. 控制在 500-800 字符
+
+输出格式:
+## 🎯 快速开始
+
+**推荐技术栈:**
+| 层级 | 技术选择 | 理由 |
+|------|----------|------|
+| ... | ... | ... |
+
+**一键启动:**
+```bash
+# 具体命令
+```
+"""
+
+TECH_SECTION_STACK = """你是技术架构师。根据以下研究结果，生成"技术栈详解"章节。
+
+研究主题: {title}
+
+相关研究内容:
+{section_content}
+
+要求:
+1. 对比 2-3 种主流框架/工具的优缺点
+2. 给出明确的选型建议和理由
+3. 提供配置代码示例 (package.json 或 config 片段)
+4. 用中文写作，控制在 1000-1500 字符
+
+输出格式:
+## 一、技术栈详解
+
+### 前端框架对比
+| 框架 | 优点 | 缺点 | 适用场景 |
+|------|------|------|----------|
+| ... | ... | ... | ... |
+
+**推荐选择**: [框架名] - [理由]
+
+```json
+// package.json 关键依赖
+{{ ... }}
+```
+
+### 后端/API 选型
+[类似结构]
+"""
+
+TECH_SECTION_DATABASE = """你是数据库架构师。根据以下研究结果，生成"数据库设计"章节。
+
+研究主题: {title}
+
+相关研究内容:
+{section_content}
+
+要求:
+1. 描述核心数据模型 (用户、商品、订单等)
+2. 提供 Prisma schema 或 SQL DDL 代码
+3. 说明表关系 (一对多、多对多)
+4. 用中文写作，控制在 1000-1500 字符
+
+输出格式:
+## 二、数据库设计
+
+### 数据模型概览
+- **用户表 (users)**: 存储用户信息
+- **商品表 (products)**: 商品基础信息
+- **订单表 (orders)**: 订单主表
+- **订单项 (order_items)**: 订单明细
+
+### Prisma Schema
+```prisma
+model User {{
+  id        String   @id @default(cuid())
+  email     String   @unique
+  // ...
+}}
+
+model Product {{
+  // ...
+}}
+```
+
+### 表关系
+[描述外键关系]
+"""
+
+TECH_SECTION_FEATURES = """你是全栈开发工程师。根据以下研究结果，生成"核心功能实现"章节。
+
+研究主题: {title}
+
+相关研究内容:
+{section_content}
+
+要求:
+1. 列出 3-5 个核心功能模块
+2. 每个功能提供关键代码片段 (React 组件或 API 路由)
+3. 代码要可运行，不要用伪代码
+4. 用中文写作，控制在 1500-2000 字符
+
+输出格式:
+## 三、核心功能实现
+
+### 3.1 用户认证
+```typescript
+// app/api/auth/[...nextauth]/route.ts
+import NextAuth from 'next-auth'
+// ...
+```
+
+### 3.2 商品列表
+```tsx
+// components/ProductList.tsx
+export function ProductList() {{
+  // ...
+}}
+```
+
+### 3.3 购物车
+[代码示例]
+"""
+
+TECH_SECTION_INTEGRATIONS = """你是第三方集成专家。根据以下研究结果，生成"第三方集成"章节。
+
+研究主题: {title}
+
+相关研究内容:
+{section_content}
+
+要求:
+1. 覆盖支付、认证、存储等关键集成
+2. 提供 SDK 初始化和 API 调用代码
+3. 包含环境变量配置示例
+4. 用中文写作，控制在 1000-1500 字符
+
+输出格式:
+## 四、第三方集成
+
+### 4.1 支付集成 (Stripe)
+```typescript
+// lib/stripe.ts
+import Stripe from 'stripe'
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+// ...
+```
+
+**.env.local 配置:**
+```
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+### 4.2 文件存储 (Cloudinary/S3)
+[代码示例]
+"""
+
+TECH_SECTION_DEPLOYMENT = """你是 DevOps 工程师。根据以下研究结果，生成"部署上线"章节。
+
+研究主题: {title}
+
+相关研究内容:
+{section_content}
+
+要求:
+1. 提供 Vercel/Railway 部署配置
+2. 包含 CI/CD 配置示例 (GitHub Actions)
+3. 列出上线前安全检查清单
+4. 用中文写作，控制在 1000-1500 字符
+
+输出格式:
+## 五、部署上线
+
+### 5.1 Vercel 部署
+```bash
+npm i -g vercel
+vercel --prod
+```
+
+**vercel.json 配置:**
+```json
+{{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next"
+}}
+```
+
+### 5.2 GitHub Actions CI/CD
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy
+on:
+  push:
+    branches: [main]
+# ...
+```
+
+### 5.3 上线检查清单
+- [ ] 环境变量已配置
+- [ ] HTTPS 已启用
+- [ ] 数据库已迁移
+- [ ] 错误监控已接入
+"""
+
+TECH_SECTION_CHECKLIST = """你是项目经理。根据以下研究结果，生成"实施清单"章节。
+
+研究主题: {title}
+
+相关研究内容:
+{section_content}
+
+要求:
+1. 按天/周分解实施步骤
+2. 每个步骤可执行、可验证
+3. 包含预估工时
+4. 用中文写作，控制在 800-1000 字符
+
+输出格式:
+## 📋 实施清单
+
+### Day 1: 项目初始化 (4h)
+- [ ] 创建 Next.js 项目
+- [ ] 配置 TypeScript + ESLint
+- [ ] 接入 Supabase
+
+### Day 2-3: 数据库 & 认证 (8h)
+- [ ] 设计 Prisma schema
+- [ ] 实现 NextAuth 登录
+- [ ] 添加用户管理页面
+
+### Day 4-5: 核心功能 (10h)
+- [ ] 商品 CRUD
+- [ ] 购物车逻辑
+- [ ] 订单流程
+
+### Day 6-7: 集成 & 部署 (8h)
+- [ ] 接入 Stripe 支付
+- [ ] Vercel 部署
+- [ ] 安全检查
+"""
+
 __all__ = [
     "STRUCTURE_PROMPT",
     "STRUCTURE_PROMPT_TECH",
@@ -286,4 +541,12 @@ __all__ = [
     "REFLECT_PROMPT",
     "FINAL_REPORT_PROMPT",
     "FINAL_REPORT_PROMPT_TECH",
+    # Sectioned prompts
+    "TECH_SECTION_QUICK_START",
+    "TECH_SECTION_STACK",
+    "TECH_SECTION_DATABASE",
+    "TECH_SECTION_FEATURES",
+    "TECH_SECTION_INTEGRATIONS",
+    "TECH_SECTION_DEPLOYMENT",
+    "TECH_SECTION_CHECKLIST",
 ]

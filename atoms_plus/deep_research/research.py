@@ -14,6 +14,7 @@ All operations are async for non-blocking execution.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -39,6 +40,14 @@ from atoms_plus.deep_research.prompts import (
     STRUCTURE_PROMPT,
     STRUCTURE_PROMPT_TECH,
     SUMMARIZE_PROMPT,
+    # Sectioned prompts for parallel generation
+    TECH_SECTION_CHECKLIST,
+    TECH_SECTION_DATABASE,
+    TECH_SECTION_DEPLOYMENT,
+    TECH_SECTION_FEATURES,
+    TECH_SECTION_INTEGRATIONS,
+    TECH_SECTION_QUICK_START,
+    TECH_SECTION_STACK,
 )
 from atoms_plus.deep_research.query_rewriter import (
     IntentType,
@@ -168,6 +177,91 @@ async def _reflect(summary: str, topic: str) -> str:
     return response
 
 
+async def _generate_section_parallel(
+    title: str,
+    section_content: str,
+    prompt_template: str,
+) -> str:
+    """Generate a single section using the given prompt template.
+
+    Args:
+        title: Report title
+        section_content: Combined content from research sections
+        prompt_template: The section-specific prompt template
+    """
+    prompt = prompt_template.format(
+        title=title,
+        section_content=section_content,
+    )
+    return await _call_llm(prompt, timeout=180)
+
+
+async def _generate_final_report_sectioned(
+    title: str,
+    sections: list[SectionResult],
+    all_sources: list[str],
+) -> str:
+    """Generate technical report using parallel section generation.
+
+    This approach splits the report into 7 independent sections and generates
+    them in parallel, reducing total time from ~360s to ~120s.
+
+    Args:
+        title: Report title
+        sections: List of section results from research
+        all_sources: All cited sources
+    """
+    logger.info(f"Generating sectioned report in parallel: {title}")
+
+    # Combine all section content
+    combined_content = "\n\n".join(f"### {s.title}\n{s.content}" for s in sections)
+
+    # Define section prompts with their templates
+    section_tasks = [
+        ("quick_start", TECH_SECTION_QUICK_START),
+        ("stack", TECH_SECTION_STACK),
+        ("database", TECH_SECTION_DATABASE),
+        ("features", TECH_SECTION_FEATURES),
+        ("integrations", TECH_SECTION_INTEGRATIONS),
+        ("deployment", TECH_SECTION_DEPLOYMENT),
+        ("checklist", TECH_SECTION_CHECKLIST),
+    ]
+
+    # Generate all sections in parallel
+    logger.info(f"Starting parallel generation of {len(section_tasks)} sections")
+    start_time = time.time()
+
+    results = await asyncio.gather(
+        *[
+            _generate_section_parallel(title, combined_content, template)
+            for _, template in section_tasks
+        ],
+        return_exceptions=True,
+    )
+
+    elapsed = time.time() - start_time
+    logger.info(f"Parallel generation completed in {elapsed:.1f}s")
+
+    # Assemble report
+    report_parts = [f"# {title}\n"]
+
+    for i, (section_name, _) in enumerate(section_tasks):
+        result = results[i]
+        if isinstance(result, Exception):
+            logger.warning(f"Section '{section_name}' failed: {result}")
+            report_parts.append(
+                f"\n\n<!-- Section {section_name} generation failed -->\n"
+            )
+        else:
+            report_parts.append(f"\n\n{result}")
+
+    # Add sources
+    sources_text = "\n".join(f"- {url}" for url in all_sources[:20])
+    report_parts.append(f"\n\n## 参考来源\n{sources_text}")
+
+    return "".join(report_parts)
+
+
 async def _generate_final_report(
     title: str,
     sections: list[SectionResult],
@@ -176,33 +270,30 @@ async def _generate_final_report(
 ) -> str:
     """Generate final Markdown report.
 
+    For BUILD_APP intent, uses parallel sectioned generation for faster results.
+    For other intents, uses single-shot generation.
+
     Args:
         title: Report title
         sections: List of section results
         all_sources: All cited sources
-        intent: User intent type (BUILD_APP uses technical prompt)
+        intent: User intent type (BUILD_APP uses parallel sectioned generation)
     """
     logger.info(f"Generating final report: {title} (intent={intent})")
 
-    # Format sections content
-    sections_content = "\n\n".join(f"### {s.title}\n{s.content}" for s in sections)
+    # Use parallel sectioned generation for BUILD_APP
+    if intent == IntentType.BUILD_APP:
+        return await _generate_final_report_sectioned(title, sections, all_sources)
 
-    # Format sources
+    # For other intents, use single-shot generation
+    sections_content = "\n\n".join(f"### {s.title}\n{s.content}" for s in sections)
     sources = "\n".join(f"- {url}" for url in all_sources[:20])
 
-    # Use technical report prompt for BUILD_APP intent
-    if intent == IntentType.BUILD_APP:
-        prompt = FINAL_REPORT_PROMPT_TECH.format(
-            title=title,
-            sections_content=sections_content,
-            sources=sources,
-        )
-    else:
-        prompt = FINAL_REPORT_PROMPT.format(
-            title=title,
-            sections_content=sections_content,
-            sources=sources,
-        )
+    prompt = FINAL_REPORT_PROMPT.format(
+        title=title,
+        sections_content=sections_content,
+        sources=sources,
+    )
     # Use longer timeout for final report (large prompt + long output)
     return await _call_llm(prompt, timeout=600)
 
