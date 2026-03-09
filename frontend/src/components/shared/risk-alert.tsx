@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { IconAlertTriangle } from "@tabler/icons-react";
 import { cn } from "#/utils/utils";
 
 interface RiskAlertProps {
@@ -12,7 +13,6 @@ interface RiskAlertProps {
 export function RiskAlert({
   className,
   content,
-  icon,
   severity,
   title,
 }: RiskAlertProps) {
@@ -21,13 +21,17 @@ export function RiskAlert({
     return (
       <div
         className={cn(
-          "flex items-center gap-3.5 bg-[#4A0709] border border-[#FF0006] text-red-400 rounded-xl px-3.5 h-13 text-sm text-white",
+          "p-3 bg-red-500/5 border-2 border-red-500/40 rounded-lg",
           className,
         )}
       >
-        {icon && <span className="">{icon}</span>}
-        <span className="font-bold">{title}</span>
-        <span className="font-normal">{content}</span>
+        <div className="flex items-center gap-2 mb-2">
+          <IconAlertTriangle size={12} className="text-red-400" stroke={2} />
+          <span className="text-xs text-red-400 uppercase tracking-wider font-medium">
+            {title}
+          </span>
+        </div>
+        <div className="text-sm text-white/80">{content}</div>
       </div>
     );
   }
