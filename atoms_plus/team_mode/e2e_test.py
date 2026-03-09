@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Atoms Plus - Team Mode E2E Test CLI
-"""
-End-to-end test and diagnostic tool for Team Mode multi-agent collaboration.
+"""End-to-end test and diagnostic tool for Team Mode multi-agent collaboration.
 
 Usage:
     # Quick deployment status check
@@ -34,6 +33,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
 # ANSI color codes
 class Colors:
     RESET = '\033[0m'
@@ -44,6 +44,7 @@ class Colors:
     BLUE = '\033[94m'
     MAGENTA = '\033[95m'
     CYAN = '\033[96m'
+
 
 AGENT_COLORS = {
     'pm': Colors.BLUE,
@@ -61,7 +62,9 @@ def load_user_settings() -> dict[str, Any]:
             with open(settings_path) as f:
                 return json.load(f)
         except Exception as e:
-            print(f'{Colors.YELLOW}[WARN] Failed to load settings.json: {e}{Colors.RESET}')
+            print(
+                f'{Colors.YELLOW}[WARN] Failed to load settings.json: {e}{Colors.RESET}'
+            )
     return {}
 
 
@@ -72,8 +75,10 @@ def print_event(event_type: str, data: dict, verbose: bool = False) -> None:
         status = data.get('status', '')
         content = data.get('content', '')
         color = AGENT_COLORS.get(agent, Colors.YELLOW)
-        
-        print(f'{color}{Colors.BOLD}[{agent.upper()}]{Colors.RESET} {Colors.YELLOW}({status}){Colors.RESET}')
+
+        print(
+            f'{color}{Colors.BOLD}[{agent.upper()}]{Colors.RESET} {Colors.YELLOW}({status}){Colors.RESET}'
+        )
         # Truncate long content
         if len(content) > 800:
             print(f'  {content[:800]}...')
@@ -88,13 +93,19 @@ def print_event(event_type: str, data: dict, verbose: bool = False) -> None:
         msg = data.get('message', data.get('error', 'Unknown error'))
         print(f'{Colors.RED}{Colors.BOLD}[ERROR]{Colors.RESET} {msg}')
     elif event_type == 'interrupt':
-        print(f'{Colors.YELLOW}{Colors.BOLD}[INTERRUPT]{Colors.RESET} Type: {data.get("type")}')
+        print(
+            f'{Colors.YELLOW}{Colors.BOLD}[INTERRUPT]{Colors.RESET} Type: {data.get("type")}'
+        )
         for q in data.get('questions', []):
             print(f'  Q: {q.get("question_text")}')
     elif event_type == 'clarification:resumed':
-        print(f'{Colors.CYAN}[RESUMED]{Colors.RESET} Continuing after clarification...\n')
+        print(
+            f'{Colors.CYAN}[RESUMED]{Colors.RESET} Continuing after clarification...\n'
+        )
     elif verbose:
-        print(f'{Colors.YELLOW}[{event_type.upper()}]{Colors.RESET} {json.dumps(data, ensure_ascii=False)[:200]}')
+        print(
+            f'{Colors.YELLOW}[{event_type.upper()}]{Colors.RESET} {json.dumps(data, ensure_ascii=False)[:200]}'
+        )
 
 
 async def check_health(host: str, port: int, quiet: bool = False) -> bool:
@@ -112,7 +123,9 @@ async def check_health(host: str, port: int, quiet: bool = False) -> bool:
                 return True
             else:
                 if not quiet:
-                    print(f'{Colors.RED}✗ Backend unhealthy: HTTP {response.status_code}{Colors.RESET}')
+                    print(
+                        f'{Colors.RED}✗ Backend unhealthy: HTTP {response.status_code}{Colors.RESET}'
+                    )
                 return False
     except Exception as e:
         if not quiet:
@@ -120,18 +133,29 @@ async def check_health(host: str, port: int, quiet: bool = False) -> bool:
         return False
 
 
-async def check_deployment_status(host: str, port: int, frontend_port: int = 3002) -> dict:
-    """
-    Quick deployment status check.
+async def check_deployment_status(
+    host: str, port: int, frontend_port: int = 3002
+) -> dict:
+    """Quick deployment status check.
 
     Returns dict with status of all services.
     """
-    import httpx
     import subprocess
 
+    import httpx
+
     status = {
-        'backend': {'status': '❌', 'url': f'http://{host}:{port}', 'version': None, 'details': None},
-        'frontend': {'status': '❌', 'url': f'http://{host}:{frontend_port}', 'details': None},
+        'backend': {
+            'status': '❌',
+            'url': f'http://{host}:{port}',
+            'version': None,
+            'details': None,
+        },
+        'frontend': {
+            'status': '❌',
+            'url': f'http://{host}:{frontend_port}',
+            'details': None,
+        },
         'api_endpoints': {},
         'processes': [],
     }
@@ -152,7 +176,11 @@ async def check_deployment_status(host: str, port: int, frontend_port: int = 300
                     name = feature.get('name', '')
                     try:
                         ep_resp = await client.get(f'http://{host}:{port}{path}')
-                        status['api_endpoints'][name] = '✅' if ep_resp.status_code == 200 else f'⚠️ {ep_resp.status_code}'
+                        status['api_endpoints'][name] = (
+                            '✅'
+                            if ep_resp.status_code == 200
+                            else f'⚠️ {ep_resp.status_code}'
+                        )
                     except Exception:
                         status['api_endpoints'][name] = '❌'
         except Exception as e:
@@ -170,17 +198,18 @@ async def check_deployment_status(host: str, port: int, frontend_port: int = 300
     # Check processes
     try:
         result = subprocess.run(
-            ['pgrep', '-fl', 'atoms_plus'],
-            capture_output=True, text=True, timeout=5
+            ['pgrep', '-fl', 'atoms_plus'], capture_output=True, text=True, timeout=5
         )
         if result.stdout.strip():
             for line in result.stdout.strip().split('\n'):
                 if line:
                     parts = line.split(' ', 1)
-                    status['processes'].append({
-                        'pid': parts[0],
-                        'cmd': parts[1] if len(parts) > 1 else 'unknown'
-                    })
+                    status['processes'].append(
+                        {
+                            'pid': parts[0],
+                            'cmd': parts[1] if len(parts) > 1 else 'unknown',
+                        }
+                    )
     except Exception:
         pass
 
@@ -189,47 +218,50 @@ async def check_deployment_status(host: str, port: int, frontend_port: int = 300
 
 def print_deployment_status(status: dict) -> None:
     """Print formatted deployment status."""
-    print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}')
+    print(
+        f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}'
+    )
     print(f'{Colors.BOLD}  Atoms Plus 部署状态{Colors.RESET}')
-    print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}\n')
+    print(
+        f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}\n'
+    )
 
     # Services
     print(f'{Colors.BOLD}服务状态:{Colors.RESET}')
     backend = status['backend']
-    version_str = f" (v{backend['version']})" if backend['version'] else ""
-    print(f"  后端: {backend['status']} {backend['url']}{version_str}")
+    version_str = f' (v{backend["version"]})' if backend['version'] else ''
+    print(f'  后端: {backend["status"]} {backend["url"]}{version_str}')
 
     frontend = status['frontend']
-    print(f"  前端: {frontend['status']} {frontend['url']}")
+    print(f'  前端: {frontend["status"]} {frontend["url"]}')
     print()
 
     # API Endpoints
     if status['api_endpoints']:
         print(f'{Colors.BOLD}API 端点:{Colors.RESET}')
         for name, ep_status in status['api_endpoints'].items():
-            print(f"  {name}: {ep_status}")
+            print(f'  {name}: {ep_status}')
         print()
 
     # Processes
     if status['processes']:
         print(f'{Colors.BOLD}运行进程:{Colors.RESET}')
         for proc in status['processes']:
-            print(f"  PID {proc['pid']}: {proc['cmd'][:60]}...")
+            print(f'  PID {proc["pid"]}: {proc["cmd"][:60]}...')
         print()
 
     # Summary
     all_ok = (
-        status['backend']['status'] == '✅' and
-        status['frontend']['status'] == '✅'
+        status['backend']['status'] == '✅' and status['frontend']['status'] == '✅'
     )
     if all_ok:
         print(f'{Colors.GREEN}{Colors.BOLD}✓ 所有服务正常运行{Colors.RESET}')
     else:
         print(f'{Colors.YELLOW}{Colors.BOLD}⚠ 部分服务异常{Colors.RESET}')
         if status['backend']['status'] != '✅':
-            print(f'  → 启动后端: poetry run python -m atoms_plus.atoms_server')
+            print('  → 启动后端: poetry run python -m atoms_plus.atoms_server')
         if status['frontend']['status'] != '✅':
-            print(f'  → 启动前端: cd frontend && npm run dev')
+            print('  → 启动前端: cd frontend && npm run dev')
 
 
 async def run_status_check(host: str, port: int, frontend_port: int) -> int:
@@ -238,8 +270,7 @@ async def run_status_check(host: str, port: int, frontend_port: int) -> int:
     print_deployment_status(status)
 
     all_ok = (
-        status['backend']['status'] == '✅' and
-        status['frontend']['status'] == '✅'
+        status['backend']['status'] == '✅' and status['frontend']['status'] == '✅'
     )
     return 0 if all_ok else 1
 
@@ -249,24 +280,28 @@ async def create_session(
 ) -> dict | None:
     """Create a new Team Mode session."""
     import httpx
-    
+
     url = f'http://{host}:{port}/api/v1/team/sessions'
     payload = {
         'task': task,
         'model': model,
         'max_iterations': max_iterations,
     }
-    
+
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(url, json=payload)
             if response.status_code == 200:
                 data = response.json()
-                print(f'{Colors.GREEN}✓ Session created:{Colors.RESET} {data["session_id"]}')
+                print(
+                    f'{Colors.GREEN}✓ Session created:{Colors.RESET} {data["session_id"]}'
+                )
                 print(f'  Mode: {data["execution_mode"]}, Model: {model}')
                 return data
             else:
-                print(f'{Colors.RED}✗ Failed to create session: {response.text}{Colors.RESET}')
+                print(
+                    f'{Colors.RED}✗ Failed to create session: {response.text}{Colors.RESET}'
+                )
                 return None
     except Exception as e:
         print(f'{Colors.RED}✗ Failed to create session: {e}{Colors.RESET}')
@@ -282,11 +317,19 @@ async def stream_session(
     verbose: bool = False,
 ) -> bool:
     """Connect to WebSocket and stream session events."""
-    import websockets
-
     # Clear proxy environment variables for localhost connections
     import os
-    for key in ['http_proxy', 'https_proxy', 'HTTP_PROXY', 'HTTPS_PROXY', 'all_proxy', 'ALL_PROXY']:
+
+    import websockets
+
+    for key in [
+        'http_proxy',
+        'https_proxy',
+        'HTTP_PROXY',
+        'HTTPS_PROXY',
+        'all_proxy',
+        'ALL_PROXY',
+    ]:
         os.environ.pop(key, None)
 
     uri = f'ws://{host}:{port}/api/v1/team/sessions/{session_id}/stream'
@@ -314,15 +357,21 @@ async def stream_session(
                         return True
                     elif event_type == 'interrupt':
                         if skip_clarification:
-                            print(f'  {Colors.YELLOW}→ Auto-skipping clarification...{Colors.RESET}')
+                            print(
+                                f'  {Colors.YELLOW}→ Auto-skipping clarification...{Colors.RESET}'
+                            )
                             await ws.send(json.dumps({'type': 'clarification:skip'}))
                         else:
                             # TODO: Interactive mode - prompt user for answers
-                            print(f'  {Colors.YELLOW}→ Skipping (interactive mode not implemented){Colors.RESET}')
+                            print(
+                                f'  {Colors.YELLOW}→ Skipping (interactive mode not implemented){Colors.RESET}'
+                            )
                             await ws.send(json.dumps({'type': 'clarification:skip'}))
 
                 except asyncio.TimeoutError:
-                    print(f'{Colors.YELLOW}\n⚠ Timeout after {timeout}s waiting for events{Colors.RESET}')
+                    print(
+                        f'{Colors.YELLOW}\n⚠ Timeout after {timeout}s waiting for events{Colors.RESET}'
+                    )
                     return False
 
     except Exception as e:
@@ -342,13 +391,19 @@ async def run_e2e_test(
     verbose: bool,
 ) -> int:
     """Run the full E2E test."""
-    print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}')
+    print(
+        f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}'
+    )
     print(f'{Colors.BOLD}  Team Mode E2E Test{Colors.RESET}')
-    print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}')
+    print(
+        f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}'
+    )
     print(f'  Host: {host}:{port}')
     print(f'  Model: {model}')
     print(f'  Task: {task[:80]}{"..." if len(task) > 80 else ""}')
-    print(f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}\n')
+    print(
+        f'{Colors.BOLD}═══════════════════════════════════════════════════════════{Colors.RESET}\n'
+    )
 
     # Step 1: Check health
     print(f'{Colors.BOLD}[1/3] Checking backend health...{Colors.RESET}')
@@ -382,12 +437,13 @@ def main() -> int:
     settings = load_user_settings()
 
     # Default model from settings or fallback
-    default_model = settings.get('llm_model', 'openai/qwen-plus')
+    # Priority: MiniMax-M2.5 > glm-5 > qwen3-coder-plus
+    default_model = settings.get('llm_model', 'openai/MiniMax-M2.5')
 
     parser = argparse.ArgumentParser(
         description='Team Mode CLI - E2E Test & Deployment Diagnostics',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog='''
+        epilog="""
 Examples:
   # Quick deployment status check
   poetry run python -m atoms_plus.team_mode.e2e_test status
@@ -395,21 +451,31 @@ Examples:
   # Full E2E test
   poetry run python -m atoms_plus.team_mode.e2e_test
   poetry run python -m atoms_plus.team_mode.e2e_test test --task "Create a todo app"
-  poetry run python -m atoms_plus.team_mode.e2e_test test --model openai/qwen-plus
-        ''',
+  poetry run python -m atoms_plus.team_mode.e2e_test test --model openai/MiniMax-M2.5
+        """,
     )
 
     # Common arguments
-    parser.add_argument('--host', default='localhost', help='Backend host (default: localhost)')
-    parser.add_argument('--port', type=int, default=3000, help='Backend port (default: 3000)')
-    parser.add_argument('--frontend-port', type=int, default=3002, help='Frontend port (default: 3002)')
+    parser.add_argument(
+        '--host', default='localhost', help='Backend host (default: localhost)'
+    )
+    parser.add_argument(
+        '--port', type=int, default=3000, help='Backend port (default: 3000)'
+    )
+    parser.add_argument(
+        '--frontend-port', type=int, default=3002, help='Frontend port (default: 3002)'
+    )
 
     # Subcommands
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
 
     # Status command
-    status_parser = subparsers.add_parser('status', help='Quick deployment status check')
-    status_parser.add_argument('-q', '--quiet', action='store_true', help='Minimal output')
+    status_parser = subparsers.add_parser(
+        'status', help='Quick deployment status check'
+    )
+    status_parser.add_argument(
+        '-q', '--quiet', action='store_true', help='Minimal output'
+    )
 
     # Test command (default)
     test_parser = subparsers.add_parser('test', help='Run full E2E test')
@@ -418,13 +484,24 @@ Examples:
         default='创建一个简单的 Python Hello World 脚本，打印 "Hello, World!"',
         help='Task description for Team Mode',
     )
-    test_parser.add_argument('--model', default=default_model, help=f'LLM model (default: {default_model})')
     test_parser.add_argument(
-        '--skip-clarification', action='store_true', default=True,
+        '--model', default=default_model, help=f'LLM model (default: {default_model})'
+    )
+    test_parser.add_argument(
+        '--skip-clarification',
+        action='store_true',
+        default=True,
         help='Auto-skip HITL clarification (default: True)',
     )
-    test_parser.add_argument('--timeout', type=int, default=300, help='WebSocket timeout in seconds (default: 300)')
-    test_parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+    test_parser.add_argument(
+        '--timeout',
+        type=int,
+        default=300,
+        help='WebSocket timeout in seconds (default: 300)',
+    )
+    test_parser.add_argument(
+        '-v', '--verbose', action='store_true', help='Verbose output'
+    )
 
     args = parser.parse_args()
 
@@ -453,4 +530,3 @@ Examples:
 
 if __name__ == '__main__':
     sys.exit(main())
-

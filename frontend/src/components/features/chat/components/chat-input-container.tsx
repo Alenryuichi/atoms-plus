@@ -63,19 +63,14 @@ export function ChatInputContainer({
     <div
       ref={chatContainerRef}
       className={cn(
-        // Atoms Plus: Premium glass input with amber glow on focus
-        "bg-black/40 backdrop-blur-sm",
+        // Atoms Plus: Clean airy input box - matching reference
+        "bg-white/[0.03] backdrop-blur-xl",
         "border border-white/10",
-        "box-border content-stretch flex flex-col items-start justify-center",
-        "p-4 pt-3 relative rounded-2xl w-full",
-        "transition-all duration-300 ease-out",
-        // Focus state: amber border + amber glow
-        "focus-within:border-amber-500/50",
-        "focus-within:shadow-[0_0_20px_rgba(212,168,85,0.15)]",
-        "focus-within:bg-black/50",
-        // Plan mode styling
-        conversationMode === "plan" &&
-          "border-purple-500/30 focus-within:border-purple-500/50 focus-within:shadow-[0_0_20px_rgba(168,85,247,0.15)]",
+        "flex flex-col items-start justify-center",
+        "p-2 px-3 relative rounded-2xl w-full",
+        "transition-all duration-300 ease-out shadow-sm",
+        // Focus state
+        "focus-within:border-white/20 focus-within:bg-white/[0.05] focus-within:shadow-md",
       )}
       onDragOver={(e) => onDragOver(e, disabled)}
       onDragLeave={(e) => onDragLeave(e, disabled)}
@@ -86,8 +81,7 @@ export function ChatInputContainer({
 
       <UploadedFiles />
 
-      {/* Wrapper so the slash menu anchors just above the input row,
-          not above the entire (possibly resized) container */}
+      {/* Wrapper so the slash menu anchors just above the input row */}
       <div className="relative w-full">
         {isSlashMenuOpen && onSlashSelect && (
           <SlashCommandMenu
@@ -112,10 +106,13 @@ export function ChatInputContainer({
         />
       </div>
 
-      <ChatInputActions
-        disabled={disabled}
-        handleResumeAgent={handleResumeAgent}
-      />
+      {/* Action Bar - moved inside or adjusted for layout */}
+      <div className="w-full flex items-center justify-between pb-1 px-1 mt-[-8px]">
+        <ChatInputActions
+          disabled={disabled}
+          handleResumeAgent={handleResumeAgent}
+        />
+      </div>
     </div>
   );
 }

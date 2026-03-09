@@ -138,8 +138,8 @@ export function ConversationTabs() {
   return (
     <div
       className={cn(
-        "relative w-full",
-        "flex flex-row justify-start lg:justify-end items-center gap-4.5",
+        "relative",
+        "flex flex-row justify-start items-center gap-1",
       )}
     >
       {visibleTabs.map(

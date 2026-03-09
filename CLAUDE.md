@@ -46,7 +46,7 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 #### 环境变量
 
 ```
-LLM_API_KEY=<your-api-key>
+LLM_API_KEY=sk-1d30db2d6c864ad5b12065aaf30a0efc
 LLM_BASE_URL=https://coding.dashscope.aliyuncs.com/v1
 LLM_MODEL=openai/MiniMax-M2.5
 LLM_MAX_OUTPUT_TOKENS=4096
@@ -65,16 +65,20 @@ WEB_HOST=0.0.0.0
 
 > **重要**: 所有模型在 LiteLLM 中需要加 `openai/` 前缀，因为 API 兼容 OpenAI 协议
 
-| 模型 | LiteLLM 格式 | 图片理解 |
-|------|-------------|---------|
-| qwen3.5-plus | `openai/qwen3.5-plus` | ✅ |
-| kimi-k2.5 | `openai/kimi-k2.5` | ✅ |
-| glm-5 | `openai/glm-5` | ❌ |
-| MiniMax-M2.5 | `openai/MiniMax-M2.5` | ❌ |
-| qwen3-max-2026-01-23 | `openai/qwen3-max-2026-01-23` | ❌ |
-| qwen3-coder-next | `openai/qwen3-coder-next` | ❌ |
-| qwen3-coder-plus | `openai/qwen3-coder-plus` | ❌ |
-| glm-4.7 | `openai/glm-4.7` | ❌ |
+**推荐优先级**: `MiniMax-M2.5` > `glm-5` > `qwen3-coder-plus`
+
+| 厂商 | 模型 | LiteLLM 格式 | 能力 | 推荐 |
+|------|------|-------------|------|------|
+| MiniMax | MiniMax-M2.5 | `openai/MiniMax-M2.5` | 文本生成、深度思考 | ⭐ 首选 |
+| 智谱 | glm-5 | `openai/glm-5` | 文本生成、深度思考 | ⭐ 次选 |
+| 千问 | qwen3-coder-plus | `openai/qwen3-coder-plus` | 文本生成 | ⭐ 备选 |
+| 千问 | qwen3.5-plus | `openai/qwen3.5-plus` | 文本生成、深度思考、视觉理解 | |
+| 千问 | qwen3-max-2026-01-23 | `openai/qwen3-max-2026-01-23` | 文本生成、深度思考 | |
+| 千问 | qwen3-coder-next | `openai/qwen3-coder-next` | 文本生成 | |
+| 智谱 | glm-4.7 | `openai/glm-4.7` | 文本生成、深度思考 | |
+| Kimi | kimi-k2.5 | `openai/kimi-k2.5` | 文本生成、深度思考、视觉理解 | |
+
+> **注意**: `atoms_plus/deep_research/search.py` 中 DashScope 搜索 API 内部固定使用 `qwen-plus`，这是搜索服务的内部模型，与上述 LLM 调用模型无关，无需修改。
 
 ### 数据库 (Supabase)
 
@@ -97,34 +101,6 @@ npx vercel deploy --prod --yes
 ### 后端部署 (Railway)
 
 当前使用 Railway 的 GitHub 集成自动部署。推送到 `main` 分支后自动触发。
-
-### 本地部署状态 (开发环境)
-
-| 组件 | 状态 | 详情 |
-|------|------|------|
-| **主服务** | ✅ | localhost:3000 (v0.3.0) |
-| **前端** | ✅ | localhost:3001 |
-| **Agent Servers** | ✅ | 动态端口 8000+ |
-| **沙盒目录** | ✅ | /tmp/openhands-sandboxes/ |
-| **Docker** | ✅ | Postgres (5432) / Redis (6379) |
-
-#### V1 进程架构
-
-```
-atoms_plus.atoms_server (主进程)
-        ↓
-   端口 3000 (FastAPI)
-        ↓
-┌─────────────────────────────────────────────────────┐
-│  N 个独立 Agent Server 进程 (V1 架构)               │
-├─────────────────────────────────────────────────────┤
-│  每个会话 = 1个 openhands.agent_server 进程         │
-│  端口: 8000 + offset (如 8003, 8004, 8005...)      │
-│  目录: /tmp/openhands-sandboxes/{sandbox_id}/      │
-└─────────────────────────────────────────────────────┘
-```
-
-**最佳实践**: 1 会话 = 1 Sandbox，Team Mode 应复用会话的 Sandbox 而非创建新的。
 
 ## ⚠️ V0 vs V1 架构 (重要)
 
@@ -204,10 +180,6 @@ atoms-plus/
 |------|------|------|------|
 | `/atoms-plus` | GET | ✅ | 版本信息 (v0.3.0) |
 | `/atoms-plus/health` | GET | ✅ | 健康检查 |
-| `/api/v1/team/` | GET | ✅ | Team Mode 信息 |
-| `/api/v1/team/sessions` | POST | ✅ | 创建 Team Mode 会话 |
-| `/api/v1/team/sessions/{id}` | GET | ✅ | 获取会话状态 |
-| `/api/v1/team/sessions/{id}/stream` | WS | ✅ | WebSocket 实时流 |
 | `/api/v1/scaffolding/templates` | GET | ✅ | 获取 4 个项目模板 |
 | `/api/v1/scaffolding/generate` | POST | ✅ | 生成项目 |
 | `/api/v1/roles/auto-detect` | POST | ✅ | 自动角色检测 |
@@ -262,50 +234,6 @@ atoms-plus/
 - OpenAI: gpt-4o, gpt-4o-mini, gpt-4-turbo
 - Google: gemini-2.0-flash, gemini-1.5-pro
 - Mistral: mistral-large-latest
-
-### ✅ Team Mode (LangGraph 1.0)
-
-**多代理协作** - 可见的多代理思考过程，实时流式输出：
-
-| 组件 | 文件 | 说明 |
-|------|------|------|
-| **State** | `atoms_plus/team_mode/state.py` | `TeamState` TypedDict for LangGraph |
-| **Graph** | `atoms_plus/team_mode/graph.py` | `StateGraph` with PM → Architect → Engineer |
-| **Router** | `atoms_plus/team_mode/router.py` | Conditional edge routing logic |
-| **Nodes** | `atoms_plus/team_mode/nodes/` | Agent implementations (base, pm, architect, engineer, clarification) |
-| **Clarification** | `atoms_plus/team_mode/clarification/` | ClarifyGPT-style HITL requirement clarification |
-| **API** | `atoms_plus/team_mode/api.py` | FastAPI + WebSocket endpoints |
-| **Store** | `frontend/src/stores/team-mode-store.ts` | Zustand state management |
-| **Components** | `frontend/src/components/features/team-mode/` | React UI components |
-| **Hooks** | `frontend/src/hooks/query/use-team-*.ts` | TanStack Query hooks |
-| **Persistence** | SQLite via `langgraph-checkpoint-sqlite` | Session recovery |
-
-**MVP 角色**: PM (需求分析) → Architect (架构设计) → Engineer (代码实现) → Architect (代码审核)
-
-**HITL Clarification (新功能)**:
-基于 ClarifyGPT 论文的需求澄清流程：
-- `pm_detect_ambiguity` - 生成3种代码解释，计算相似度，>40分触发澄清
-- `pm_await_clarification` - 使用 LangGraph `interrupt()` 暂停等待用户输入
-- `pm_refine_requirements` - 根据用户回答精炼需求
-
-**前端组件**:
-- `ClarificationPanel` - 显示问题和收集答案
-- `use-clarification-store.ts` - Zustand store 管理澄清状态
-- WebSocket 事件: `clarification:questions`, `clarification:answer`, `clarification:skip`
-
-**测试命令**: `poetry run pytest tests/unit/test_team_mode/ -v` (73 tests)
-
-**环境变量**: `TEAM_MODE_DB` - SQLite 数据库路径 (默认: `team_mode.db`)
-
-**API 端点**:
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/v1/team/` | GET | Team Mode 信息 |
-| `/api/v1/team/sessions` | POST | 创建会话 |
-| `/api/v1/team/sessions/{id}` | GET | 会话状态 |
-| `/api/v1/team/sessions/{id}/stream` | WS | WebSocket 流式输出 |
-| `/api/v1/team/sessions/saved` | GET | 列出已保存会话 |
-| `/api/v1/team/sessions/recover` | POST | 恢复已保存会话 |
 
 ### ✅ Orchestrator 后端
 
@@ -363,5 +291,4 @@ atoms-plus/
 2. **LLM API**: 当前使用阿里百炼 (qwen-plus)
 3. **Runtime**: 设置为 `local` 以避免需要 Docker-in-Docker
 4. **SPA 路由**: 某些 API 路径 (如 `/api/v1/roles`) 需要使用正确的子路径 (如 `/auto-detect`) 避免被前端 SPA fallback 拦截
-5. **国际化 (i18n)**: 当前前端只支持 **中文 (zh-CN)** 和 **英文 (en)**。其他语言 (ja, zh-TW, ko-KR, no, ar, de, fr, it, pt, es, tr, uk) 的翻译尚未完成，存在 114 个翻译 key 缺失。提交前端代码时需使用 `--no-verify` 跳过翻译完整性检查，或补充缺失的翻译。
 
