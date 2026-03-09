@@ -300,3 +300,38 @@ WS /api/v1/research/stream
 2. Add to `section_tasks` list in `_generate_final_report_sectioned()`
 3. Ensure prompt includes `{tech_stack}` placeholder for consistency
 
+## Team Mode Integration (🚧 WIP)
+
+### Current Status
+
+Deep Research is a **standalone API module**. Integration with Team Mode is planned:
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| REST API | ✅ Done | `atoms_plus/deep_research/api.py` |
+| WebSocket Stream | ✅ Done | `atoms_plus/deep_research/api.py` |
+| **Researcher Node** | 🚧 Skeleton | `atoms_plus/team_mode/nodes/researcher.py` |
+| State Fields | ✅ Added | `atoms_plus/team_mode/state.py` |
+| Graph Integration | ❌ TODO | `atoms_plus/team_mode/graph.py` |
+
+### Target Architecture
+
+```
+PM → Researcher → Architect → Engineer → Review → Handoff
+         │
+         └──→ deep_research_async()
+                    │
+                    └──→ state['research_report']
+                              │
+                              └──→ Injected into Architect prompt
+```
+
+### TODO Checklist
+
+- [ ] Implement `researcher_node()` with actual `deep_research_async()` call
+- [ ] Add progress streaming via WebSocket
+- [ ] Modify `architect_node()` to read `state['research_summary']`
+- [ ] Add `researcher` node to `graph.py` between PM and Architect
+- [ ] Add conditional edge: skip research for simple tasks
+- [ ] Add caching for repeated research queries
+- [ ] Frontend: Show research progress in Team Mode UI

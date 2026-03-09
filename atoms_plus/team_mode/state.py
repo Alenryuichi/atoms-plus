@@ -107,6 +107,12 @@ class TeamState(TypedDict):
     code: str | None
     review: str | None
 
+    # Deep Research results (from Researcher node)
+    # TODO: Enable when researcher_node is fully implemented
+    research_report: str | None  # Full markdown research report
+    research_sources: list[str] | None  # List of source URLs
+    research_summary: str | None  # Key findings for Architect injection
+
     # Iteration control
     iteration: int
     max_iterations: int
@@ -173,6 +179,10 @@ def create_initial_state(
         plan=None,
         code=None,
         review=None,
+        # Deep Research results (initially None)
+        research_report=None,
+        research_sources=None,
+        research_summary=None,
         iteration=0,
         max_iterations=max_iterations,
         session_id=session_id,

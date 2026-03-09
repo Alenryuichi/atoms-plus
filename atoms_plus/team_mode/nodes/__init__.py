@@ -10,6 +10,9 @@ MVP Nodes (Phase 1):
 - engineer_node: Code implementation
 - pm_node: Requirements and user stories
 
+Phase 2 Nodes (WIP):
+- researcher_node: Deep research integration (🚧 skeleton)
+
 Clarification Nodes (HITL):
 - pm_detect_ambiguity_node: Detect ambiguous requirements
 - pm_await_clarification_node: Wait for user input (HITL interrupt)
@@ -26,6 +29,7 @@ from atoms_plus.team_mode.nodes.architect import architect_node
 from atoms_plus.team_mode.nodes.engineer import engineer_node
 from atoms_plus.team_mode.nodes.handoff import handoff_to_openhands
 from atoms_plus.team_mode.nodes.pm import pm_node
+from atoms_plus.team_mode.nodes.researcher import researcher_node
 
 
 # Lazy imports for clarification nodes to avoid circular imports
@@ -69,6 +73,7 @@ __all__ = [
     'engineer_node',
     'handoff_to_openhands',
     'pm_node',
+    'researcher_node',  # Phase 2 - WIP
     'pm_detect_ambiguity_node',
     'pm_await_clarification_node',
     'pm_refine_requirements_node',
