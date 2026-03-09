@@ -190,7 +190,7 @@ test.describe("Full UI Flow - Agent Code Generation", () => {
   }) => {
     // Conditionally skip based on environment variable
     test.skip(!process.env.TEST_FULL_FLOW, "Set TEST_FULL_FLOW=1 to run");
-    test.setTimeout(420000); // 7 minutes for complete flow (LLM + sandbox init)
+    test.setTimeout(600000); // 10 minutes for complete flow (LLM + sandbox init)
 
     // Step 1: Verify local backend is running
     const healthResponse = await page.request.get(
@@ -278,14 +278,16 @@ test.describe("Full UI Flow - Agent Code Generation", () => {
         );
 
         try {
+          // Wait up to 5 minutes for code generation (LLM can be slow)
+          const codeGenTimeout = 300000;
           await Promise.race([
-            codeBlock.first().waitFor({ state: "visible", timeout: 180000 }),
-            fileCreated.first().waitFor({ state: "visible", timeout: 180000 }),
-            tsxFile.first().waitFor({ state: "visible", timeout: 180000 }),
-            fileTree.first().waitFor({ state: "visible", timeout: 180000 }),
+            codeBlock.first().waitFor({ state: "visible", timeout: codeGenTimeout }),
+            fileCreated.first().waitFor({ state: "visible", timeout: codeGenTimeout }),
+            tsxFile.first().waitFor({ state: "visible", timeout: codeGenTimeout }),
+            fileTree.first().waitFor({ state: "visible", timeout: codeGenTimeout }),
             agentCompleted
               .first()
-              .waitFor({ state: "visible", timeout: 180000 }),
+              .waitFor({ state: "visible", timeout: codeGenTimeout }),
           ]);
           return true;
         } catch {
