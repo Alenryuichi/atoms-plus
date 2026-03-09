@@ -7295,6 +7295,30 @@
     "es": "Actualmente no hay un plan para este repositorio",
     "tr": "Şu anda bu depo için bir plan yok"
   },
+  "PLANNER$EMPTY_TITLE": {
+    "en": "No Plan Created",
+    "zh-CN": "尚未创建计划"
+  },
+  "PLANNER$EMPTY_DESC": {
+    "en": "Create a plan to let AI complete complex tasks step by step",
+    "zh-CN": "创建计划让 AI 按步骤完成复杂任务"
+  },
+  "PLANNER$TIP_COMMAND": {
+    "en": "Help me create a development plan",
+    "zh-CN": "帮我制定开发计划"
+  },
+  "CHANGES$EMPTY_TITLE": {
+    "en": "No Code Changes",
+    "zh-CN": "暂无代码更改"
+  },
+  "CHANGES$EMPTY_DESC": {
+    "en": "Code diffs will appear here after AI modifies files",
+    "zh-CN": "AI 修改文件后，这里会显示变更对比"
+  },
+  "CHANGES$TIP_COMMAND": {
+    "en": "Modify App.tsx to add a button",
+    "zh-CN": "修改 App.tsx 添加按钮"
+  },
   "SIDEBAR$NAVIGATION_LABEL": {
     "en": "Sidebar navigation",
     "zh-CN": "侧边栏导航",
@@ -8847,6 +8871,18 @@
     "tr": "Henüz hiçbir sayfa yüklenmedi. OpenHands'e bir URL açmasını isteyin. Örnek: \"Open https://example.com\"",
     "uk": "Сторінка ще не завантажена. Попросіть OpenHands відкрити URL-адресу. Приклад: \"Open https://example.com\""
   },
+  "BROWSER$EMPTY_TITLE": {
+    "en": "No Page Loaded",
+    "zh-CN": "尚未加载页面"
+  },
+  "BROWSER$EMPTY_DESC": {
+    "en": "Ask AI to open a webpage and view it here",
+    "zh-CN": "让 AI 打开网页，截图会显示在这里"
+  },
+  "BROWSER$TIP_COMMAND": {
+    "en": "Open https://example.com",
+    "zh-CN": "打开 https://example.com"
+  },
   "USER$AVATAR_PLACEHOLDER": {
     "en": "user avatar placeholder",
     "ja": "ユーザーアバターのプレースホルダー",
@@ -9392,6 +9428,38 @@
     "tr": "Sunulan Uygulama",
     "de": "Bereitgestellte Anwendung",
     "uk": "Оброблений додаток"
+  },
+  "SERVED_APP$NO_SERVER_TITLE": {
+    "en": "No Application Running",
+    "zh-CN": "尚未运行应用"
+  },
+  "SERVED_APP$NO_SERVER_DESCRIPTION": {
+    "en": "Start a web server to preview your application here",
+    "zh-CN": "启动 Web 服务器后，可在这里实时预览应用效果"
+  },
+  "SERVED_APP$TIP_PREFIX": {
+    "en": "Try saying:",
+    "zh-CN": "试试说："
+  },
+  "SERVED_APP$TIP_COMMAND": {
+    "en": "\"start dev server\"",
+    "zh-CN": "\"启动开发服务器\""
+  },
+  "SERVED_APP$URL_INPUT": {
+    "en": "URL input",
+    "zh-CN": "URL 输入框"
+  },
+  "BUTTON$BACK": {
+    "en": "Back",
+    "zh-CN": "后退"
+  },
+  "BUTTON$FORWARD": {
+    "en": "Forward",
+    "zh-CN": "前进"
+  },
+  "BUTTON$COPY_URL": {
+    "en": "Copy URL",
+    "zh-CN": "复制链接"
   },
   "CONVERSATION$UNKNOWN": {
     "en": "unknown",
