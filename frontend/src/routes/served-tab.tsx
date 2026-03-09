@@ -1,11 +1,17 @@
-import React from "react";
-import { FaArrowRotateRight } from "react-icons/fa6";
-import { FaExternalLinkAlt, FaHome } from "react-icons/fa";
+import React, { useCallback, useEffect, useRef } from "react";
+import {
+  IconArrowLeft,
+  IconArrowRight,
+  IconRefresh,
+  IconExternalLink,
+  IconCopy,
+  IconServer,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useUnifiedActiveHost } from "#/hooks/query/use-unified-active-host";
-import { PathForm } from "#/components/features/served-host/path-form";
 import { I18nKey } from "#/i18n/declaration";
-import ServerProcessIcon from "#/icons/server-process.svg?react";
+import { cn } from "#/utils/utils";
+import { ToolbarButton } from "#/components/shared/toolbar-button";
 
 function ServedApp() {
   const { t } = useTranslation();
@@ -14,91 +20,166 @@ function ServedApp() {
   const [currentActiveHost, setCurrentActiveHost] = React.useState<
     string | null
   >(null);
-  const [path, setPath] = React.useState<string>("hello");
+  const [path, setPath] = React.useState<string>("");
+  const [copied, setCopied] = React.useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const formRef = React.useRef<HTMLFormElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const handleOnBlur = () => {
-    if (formRef.current) {
-      const formData = new FormData(formRef.current);
-      const urlInputValue = formData.get("url")?.toString();
-
-      if (urlInputValue) {
-        const url = new URL(urlInputValue);
-
-        setCurrentActiveHost(url.origin);
-        setPath(url.pathname);
-      }
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const url = new URL(e.target.value);
+      setCurrentActiveHost(url.origin);
+      setPath(url.pathname);
+    } catch {
+      // Invalid URL, ignore
     }
   };
 
-  const resetUrl = () => {
+  const resetUrl = useCallback(() => {
     setCurrentActiveHost(activeHost);
     setPath("");
-
-    if (formRef.current) {
-      formRef.current.reset();
-    }
-  };
-
-  React.useEffect(() => {
-    resetUrl();
   }, [activeHost]);
 
-  const fullUrl = `${currentActiveHost}/${path}`;
+  useEffect(() => {
+    resetUrl();
+  }, [resetUrl]);
 
+  // Cleanup timeout on unmount
+  useEffect(
+    () => () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+    },
+    [],
+  );
+
+  const fullUrl = currentActiveHost
+    ? `${currentActiveHost}${path ? `/${path}` : ""}`
+    : "";
+  const displayUrl = currentActiveHost
+    ? currentActiveHost.replace(/^https?:\/\//, "") + (path ? `/${path}` : "")
+    : "";
+
+  const copyUrl = useCallback(async () => {
+    if (fullUrl) {
+      await navigator.clipboard.writeText(fullUrl);
+      setCopied(true);
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
+    }
+  }, [fullUrl]);
+
+  // Empty state - no server running
   if (!currentActiveHost) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-full p-10">
-        <ServerProcessIcon width={113} height={113} color="#A1A1A1" />
-        <span className="text-[#8D95A9] text-[19px] font-normal leading-5">
-          {t(I18nKey.BROWSER$SERVER_MESSAGE)}
-        </span>
+        {/* Icon */}
+        <div className="w-20 h-20 rounded-2xl bg-neutral-800/50 border border-white/[0.06] flex items-center justify-center mb-6">
+          <IconServer className="w-10 h-10 text-neutral-500" stroke={1.5} />
+        </div>
+
+        {/* Text */}
+        <h3 className="text-lg font-medium text-white mb-2">
+          {t(I18nKey.SERVED_APP$NO_SERVER_TITLE)}
+        </h3>
+        <p className="text-sm text-neutral-500 mb-6 max-w-xs text-center">
+          {t(I18nKey.SERVED_APP$NO_SERVER_DESCRIPTION)}
+        </p>
+
+        {/* Quick tip */}
+        <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+          <span className="text-xs text-neutral-400" aria-hidden="true">
+            💡
+          </span>
+          <span className="text-xs text-neutral-400">
+            {t(I18nKey.SERVED_APP$TIP_PREFIX)}
+          </span>
+          <code className="text-xs text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+            {t(I18nKey.SERVED_APP$TIP_COMMAND)}
+          </code>
+        </div>
       </div>
     );
   }
 
+  // Active state - server running with browser-style toolbar
   return (
-    <div className="h-full w-full">
-      <div className="w-full p-2 flex items-center gap-4 border-b border-neutral-600">
-        <button
-          type="button"
+    <div className="h-full w-full flex flex-col">
+      {/* Browser-style toolbar */}
+      <div className="px-3 py-2 flex items-center gap-2 border-b border-white/10 bg-neutral-900">
+        {/* Navigation buttons group */}
+        <div className="flex items-center gap-1">
+          <ToolbarButton
+            onClick={() => {}}
+            disabled
+            aria-label={t(I18nKey.BUTTON$BACK)}
+          >
+            <IconArrowLeft className="w-4 h-4" />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => {}}
+            disabled
+            aria-label={t(I18nKey.BUTTON$FORWARD)}
+          >
+            <IconArrowRight className="w-4 h-4" />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => setRefreshKey((prev) => prev + 1)}
+            aria-label={t(I18nKey.BUTTON$REFRESH)}
+          >
+            <IconRefresh className="w-4 h-4" />
+          </ToolbarButton>
+        </div>
+
+        {/* URL bar */}
+        <div className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 border border-white/10">
+          {/* Connection status indicator */}
+          <div className="w-4 h-4 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
+          </div>
+          <input
+            ref={inputRef}
+            type="text"
+            value={displayUrl}
+            onChange={handleUrlChange}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                inputRef.current?.blur();
+              }
+            }}
+            className="flex-1 bg-transparent text-xs text-neutral-300 outline-none min-w-0"
+            aria-label={t(I18nKey.SERVED_APP$URL_INPUT)}
+          />
+          <ToolbarButton
+            onClick={copyUrl}
+            className="!w-6 !h-6"
+            aria-label={t(I18nKey.BUTTON$COPY_URL)}
+          >
+            <IconCopy
+              className={cn("w-3.5 h-3.5", copied && "text-green-400")}
+            />
+          </ToolbarButton>
+        </div>
+
+        {/* Open in new tab */}
+        <ToolbarButton
           onClick={() => window.open(fullUrl, "_blank")}
-          className="text-sm"
           aria-label={t(I18nKey.BUTTON$OPEN_IN_NEW_TAB)}
         >
-          <FaExternalLinkAlt className="w-4 h-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => setRefreshKey((prev) => prev + 1)}
-          className="text-sm"
-          aria-label={t(I18nKey.BUTTON$REFRESH)}
-        >
-          <FaArrowRotateRight className="w-4 h-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => resetUrl()}
-          className="text-sm"
-          aria-label={t(I18nKey.BUTTON$HOME)}
-        >
-          <FaHome className="w-4 h-4" />
-        </button>
-        <div className="w-full flex">
-          <PathForm
-            ref={formRef}
-            onBlur={handleOnBlur}
-            defaultValue={fullUrl}
-          />
-        </div>
+          <IconExternalLink className="w-4 h-4" />
+        </ToolbarButton>
       </div>
+
+      {/* iframe */}
       <iframe
         key={refreshKey}
         title={t(I18nKey.SERVED_APP$TITLE)}
         src={fullUrl}
-        className="w-full h-full custom-scrollbar-always"
+        className="w-full flex-1 custom-scrollbar-always"
       />
     </div>
   );
