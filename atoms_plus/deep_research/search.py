@@ -57,54 +57,54 @@ class SearchEngine(ABC):
 class TavilySearch(SearchEngine):
     """Tavily API search engine (recommended for English queries)."""
 
-    API_URL = 'https://api.tavily.com/search'
+    API_URL = "https://api.tavily.com/search"
 
     def __init__(self):
-        self.api_key = os.getenv('TAVILY_API_KEY')
+        self.api_key = os.getenv("TAVILY_API_KEY")
         if not self.api_key:
-            raise ValueError('TAVILY_API_KEY environment variable not set')
+            raise ValueError("TAVILY_API_KEY environment variable not set")
 
     @property
     def name(self) -> str:
-        return 'tavily'
+        return "tavily"
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
         """Execute search using Tavily API."""
-        logger.info(f'Tavily search: {query} (max_results={max_results})')
+        logger.info(f"Tavily search: {query} (max_results={max_results})")
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             try:
                 response = await client.post(
                     self.API_URL,
                     json={
-                        'api_key': self.api_key,
-                        'query': query,
-                        'max_results': max_results,
-                        'search_depth': 'basic',
+                        "api_key": self.api_key,
+                        "query": query,
+                        "max_results": max_results,
+                        "search_depth": "basic",
                     },
                 )
                 response.raise_for_status()
                 data = response.json()
 
                 results = []
-                for item in data.get('results', []):
+                for item in data.get("results", []):
                     results.append(
                         SearchResult(
-                            title=item.get('title', ''),
-                            url=item.get('url', ''),
-                            snippet=item.get('content', ''),
-                            score=item.get('score'),
+                            title=item.get("title", ""),
+                            url=item.get("url", ""),
+                            snippet=item.get("content", ""),
+                            score=item.get("score"),
                         )
                     )
 
-                logger.info(f'Tavily returned {len(results)} results')
+                logger.info(f"Tavily returned {len(results)} results")
                 return results
 
             except httpx.HTTPStatusError as e:
-                logger.error(f'Tavily API error: {e.response.status_code}')
+                logger.error(f"Tavily API error: {e.response.status_code}")
                 raise
             except Exception as e:
-                logger.error(f'Tavily search failed: {e}')
+                logger.error(f"Tavily search failed: {e}")
                 raise
 
 
@@ -117,40 +117,40 @@ class DashScopeSearch(SearchEngine):
     """DashScope WebSearch (better for Chinese queries)."""
 
     API_URL = (
-        'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation'
+        "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
     )
 
     def __init__(self):
-        self.api_key = os.getenv('DASHSCOPE_API_KEY')
+        self.api_key = os.getenv("DASHSCOPE_API_KEY")
         if not self.api_key:
-            raise ValueError('DASHSCOPE_API_KEY environment variable not set')
+            raise ValueError("DASHSCOPE_API_KEY environment variable not set")
 
     @property
     def name(self) -> str:
-        return 'dashscope'
+        return "dashscope"
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
         """Execute search using DashScope WebSearch plugin."""
-        logger.info(f'DashScope search: {query} (max_results={max_results})')
+        logger.info(f"DashScope search: {query} (max_results={max_results})")
 
         async with httpx.AsyncClient(timeout=60.0) as client:
             try:
                 response = await client.post(
                     self.API_URL,
                     headers={
-                        'Authorization': f'Bearer {self.api_key}',
-                        'Content-Type': 'application/json',
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
                     },
                     json={
-                        'model': 'qwen-plus',  # DashScope search uses qwen-plus internally
-                        'input': {
-                            'messages': [
-                                {'role': 'user', 'content': f'搜索并总结: {query}'}
+                        "model": "qwen-plus",  # DashScope search uses qwen-plus internally
+                        "input": {
+                            "messages": [
+                                {"role": "user", "content": f"搜索并总结: {query}"}
                             ]
                         },
-                        'parameters': {
-                            'result_format': 'message',
-                            'enable_search': True,
+                        "parameters": {
+                            "result_format": "message",
+                            "enable_search": True,
                         },
                     },
                 )
@@ -159,7 +159,7 @@ class DashScopeSearch(SearchEngine):
                 # Parse search results from response
                 return self._parse_response(data, max_results)
             except Exception as e:
-                logger.error(f'DashScope search failed: {e}')
+                logger.error(f"DashScope search failed: {e}")
                 raise
 
     def _parse_response(self, data: dict, max_results: int) -> list[SearchResult]:
@@ -167,40 +167,40 @@ class DashScopeSearch(SearchEngine):
         results = []
 
         # Extract web_search results if available
-        output = data.get('output', {})
-        choices = output.get('choices', [])
+        output = data.get("output", {})
+        choices = output.get("choices", [])
 
         if choices:
-            message = choices[0].get('message', {})
+            message = choices[0].get("message", {})
             # Check for tool_calls with web_search results
-            tool_calls = message.get('tool_calls', [])
+            tool_calls = message.get("tool_calls", [])
             for call in tool_calls:
-                if call.get('type') == 'web_search':
-                    search_results = call.get('search_results', [])
+                if call.get("type") == "web_search":
+                    search_results = call.get("search_results", [])
                     for item in search_results[:max_results]:
                         results.append(
                             SearchResult(
-                                title=item.get('title', ''),
-                                url=item.get('url', ''),
-                                snippet=item.get('snippet', item.get('content', '')),
+                                title=item.get("title", ""),
+                                url=item.get("url", ""),
+                                snippet=item.get("snippet", item.get("content", "")),
                             )
                         )
 
         # Fallback: create a single result from the text response
         if not results:
-            content = ''
+            content = ""
             if choices:
-                content = choices[0].get('message', {}).get('content', '')
+                content = choices[0].get("message", {}).get("content", "")
             if content:
                 results.append(
                     SearchResult(
-                        title=f'Search result for: {content[:50]}...',
-                        url='',
+                        title=f"Search result for: {content[:50]}...",
+                        url="",
                         snippet=content[:500],
                     )
                 )
 
-        logger.info(f'DashScope returned {len(results)} results')
+        logger.info(f"DashScope returned {len(results)} results")
         return results
 
 
@@ -209,7 +209,7 @@ class DashScopeSearch(SearchEngine):
 # =============================================================================
 
 
-def get_search_engine(engine: str = 'auto') -> SearchEngine:
+def get_search_engine(engine: str = "auto") -> SearchEngine:
     """Get a search engine instance based on preference.
 
     Args:
@@ -226,28 +226,28 @@ def get_search_engine(engine: str = 'auto') -> SearchEngine:
     """
     engine = engine.lower()
 
-    if engine == 'tavily':
+    if engine == "tavily":
         return TavilySearch()
-    elif engine == 'dashscope':
+    elif engine == "dashscope":
         return DashScopeSearch()
-    elif engine == 'auto':
+    elif engine == "auto":
         # Prefer Tavily if available, fallback to DashScope
-        if os.getenv('TAVILY_API_KEY'):
+        if os.getenv("TAVILY_API_KEY"):
             return TavilySearch()
-        elif os.getenv('DASHSCOPE_API_KEY'):
+        elif os.getenv("DASHSCOPE_API_KEY"):
             return DashScopeSearch()
         else:
             raise ValueError(
-                'No search engine configured. '
-                'Set TAVILY_API_KEY or DASHSCOPE_API_KEY environment variable.'
+                "No search engine configured. "
+                "Set TAVILY_API_KEY or DASHSCOPE_API_KEY environment variable."
             )
     else:
-        raise ValueError(f'Unknown search engine: {engine}')
+        raise ValueError(f"Unknown search engine: {engine}")
 
 
 __all__ = [
-    'SearchEngine',
-    'TavilySearch',
-    'DashScopeSearch',
-    'get_search_engine',
+    "SearchEngine",
+    "TavilySearch",
+    "DashScopeSearch",
+    "get_search_engine",
 ]

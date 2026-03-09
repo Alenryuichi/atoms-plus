@@ -20,9 +20,9 @@ class SearchEngine(str, Enum):
     支持的搜索引擎选项。
     """
 
-    TAVILY = 'tavily'  # Recommended for English queries
-    DASHSCOPE = 'dashscope'  # Better for Chinese queries
-    AUTO = 'auto'  # Automatically select based on availability
+    TAVILY = "tavily"  # Recommended for English queries
+    DASHSCOPE = "dashscope"  # Better for Chinese queries
+    AUTO = "auto"  # Automatically select based on availability
 
 
 class Language(str, Enum):
@@ -31,9 +31,9 @@ class Language(str, Enum):
     支持的报告语言。
     """
 
-    AUTO = 'auto'  # Auto-detect from query
-    EN = 'en'  # English
-    ZH = 'zh'  # Chinese
+    AUTO = "auto"  # Auto-detect from query
+    EN = "en"  # English
+    ZH = "zh"  # Chinese
 
 
 # =============================================================================
@@ -55,11 +55,11 @@ class ResearchRequest(BaseModel):
 
     model_config = ConfigDict(
         json_schema_extra={
-            'example': {
-                'query': '2025年AI Agent发展趋势',
-                'max_rounds': 2,
-                'search_engine': 'auto',
-                'language': 'auto',
+            "example": {
+                "query": "2025年AI Agent发展趋势",
+                "max_rounds": 2,
+                "search_engine": "auto",
+                "language": "auto",
             }
         }
     )
@@ -68,21 +68,21 @@ class ResearchRequest(BaseModel):
         ...,
         min_length=3,
         max_length=500,
-        description='Research topic or question / 研究主题或问题',
+        description="Research topic or question / 研究主题或问题",
     )
     max_rounds: int = Field(
         default=2,
         ge=1,
         le=5,
-        description='Maximum reflection rounds per section (1-5) / 每章节最大反思轮数',
+        description="Maximum reflection rounds per section (1-5) / 每章节最大反思轮数",
     )
     search_engine: SearchEngine = Field(
-        default=SearchEngine.AUTO, description='Search engine preference / 搜索引擎选择'
+        default=SearchEngine.AUTO, description="Search engine preference / 搜索引擎选择"
     )
     language: str = Field(
-        default='auto',
-        pattern='^(auto|en|zh)$',
-        description='Report language: auto/en/zh / 报告语言',
+        default="auto",
+        pattern="^(auto|en|zh)$",
+        description="Report language: auto/en/zh / 报告语言",
     )
 
 
@@ -97,13 +97,13 @@ class SectionResult(BaseModel):
     单个章节的研究结果。
     """
 
-    title: str = Field(..., description='Section title / 章节标题')
-    content: str = Field(..., description='Section content (Markdown) / 章节内容')
+    title: str = Field(..., description="Section title / 章节标题")
+    content: str = Field(..., description="Section content (Markdown) / 章节内容")
     sources: list[str] = Field(
-        default_factory=list, description='Source URLs used / 引用的来源 URL'
+        default_factory=list, description="Source URLs used / 引用的来源 URL"
     )
     search_queries: list[str] = Field(
-        default_factory=list, description='Search queries executed / 执行的搜索查询'
+        default_factory=list, description="Search queries executed / 执行的搜索查询"
     )
 
 
@@ -113,22 +113,22 @@ class ResearchResponse(BaseModel):
     完成的研究响应模型。
     """
 
-    session_id: str = Field(..., description='Unique session identifier / 唯一会话标识')
-    query: str = Field(..., description='Original research query / 原始研究主题')
+    session_id: str = Field(..., description="Unique session identifier / 唯一会话标识")
+    query: str = Field(..., description="Original research query / 原始研究主题")
     report: str = Field(
-        ..., description='Complete Markdown report / 完整 Markdown 报告'
+        ..., description="Complete Markdown report / 完整 Markdown 报告"
     )
     sections: list[SectionResult] = Field(
-        default_factory=list, description='Individual section results / 各章节结果'
+        default_factory=list, description="Individual section results / 各章节结果"
     )
     total_sources: int = Field(
-        default=0, ge=0, description='Total unique sources cited / 引用的唯一来源总数'
+        default=0, ge=0, description="Total unique sources cited / 引用的唯一来源总数"
     )
     execution_time: float = Field(
-        ..., ge=0, description='Total execution time in seconds / 总执行时间（秒）'
+        ..., ge=0, description="Total execution time in seconds / 总执行时间（秒）"
     )
     search_engine_used: str = Field(
-        ..., description='Search engine actually used / 实际使用的搜索引擎'
+        ..., description="Search engine actually used / 实际使用的搜索引擎"
     )
 
 
@@ -153,25 +153,25 @@ class ResearchProgress(BaseModel):
         - error: Error occurred
     """
 
-    event: str = Field(..., description='Event type / 事件类型')
-    session_id: str = Field(default='', description='Session identifier / 会话标识')
+    event: str = Field(..., description="Event type / 事件类型")
+    session_id: str = Field(default="", description="Session identifier / 会话标识")
     current_section: str | None = Field(
-        default=None, description='Current section being processed / 当前处理的章节'
+        default=None, description="Current section being processed / 当前处理的章节"
     )
     current_round: int | None = Field(
-        default=None, ge=0, description='Current reflection round / 当前反思轮次'
+        default=None, ge=0, description="Current reflection round / 当前反思轮次"
     )
     total_sections: int | None = Field(
-        default=None, ge=0, description='Total number of sections / 总章节数'
+        default=None, ge=0, description="Total number of sections / 总章节数"
     )
     message: str | None = Field(
-        default=None, description='Human-readable progress message / 可读的进度消息'
+        default=None, description="Human-readable progress message / 可读的进度消息"
     )
     progress: float = Field(
         default=0.0,
         ge=0.0,
         le=1.0,
-        description='Progress percentage (0.0-1.0) / 进度百分比',
+        description="Progress percentage (0.0-1.0) / 进度百分比",
     )
 
 
@@ -186,10 +186,10 @@ class ReportSection(BaseModel):
     报告结构中的章节定义。
     """
 
-    title: str = Field(..., description='Section title / 章节标题')
-    search_query: str = Field(..., description='Initial search query / 初始搜索查询')
+    title: str = Field(..., description="Section title / 章节标题")
+    search_query: str = Field(..., description="Initial search query / 初始搜索查询")
     description: str | None = Field(
-        default=None, description='Section description / 章节描述'
+        default=None, description="Section description / 章节描述"
     )
 
 
@@ -199,9 +199,9 @@ class ReportStructure(BaseModel):
     LLM 生成的报告结构。
     """
 
-    title: str = Field(..., description='Report title / 报告标题')
+    title: str = Field(..., description="Report title / 报告标题")
     sections: list[ReportSection] = Field(
-        default_factory=list, min_length=1, description='Report sections / 报告章节'
+        default_factory=list, min_length=1, description="Report sections / 报告章节"
     )
 
 
@@ -211,12 +211,12 @@ class SearchResult(BaseModel):
     搜索引擎返回的搜索结果。
     """
 
-    title: str = Field(..., description='Result title / 结果标题')
-    url: str = Field(..., description='Result URL / 结果链接')
-    snippet: str = Field(default='', description='Result snippet/content / 结果摘要')
+    title: str = Field(..., description="Result title / 结果标题")
+    url: str = Field(..., description="Result URL / 结果链接")
+    snippet: str = Field(default="", description="Result snippet/content / 结果摘要")
     score: float | None = Field(
         default=None,
         ge=0.0,
         le=1.0,
-        description='Relevance score (0.0-1.0) / 相关性分数',
+        description="Relevance score (0.0-1.0) / 相关性分数",
     )

@@ -9,6 +9,7 @@ Usage:
     # Test specific components
     poetry run python -m atoms_plus.deep_research.e2e_test search --engine tavily
     poetry run python -m atoms_plus.deep_research.e2e_test search --engine dashscope
+    poetry run python -m atoms_plus.deep_research.e2e_test rewrite --query "我要做一个电商网站"
     poetry run python -m atoms_plus.deep_research.e2e_test research --query "AI Agent trends"
 
     # Save report to file
@@ -21,6 +22,43 @@ import os
 import sys
 import time
 from pathlib import Path
+
+
+async def test_query_rewrite(query: str) -> bool:
+    """Test Query Rewrite functionality."""
+    from atoms_plus.deep_research.query_rewriter import rewrite_query
+
+    print(f"\n{'=' * 60}")
+    print(f"🔄 Testing Query Rewrite")
+    print(f"{'=' * 60}")
+    print(f"Input: {query}")
+
+    try:
+        start = time.time()
+        result = await rewrite_query(query)
+        elapsed = time.time() - start
+
+        print(f"\n✅ Query Rewrite completed in {elapsed:.2f}s")
+        print(f"\n📊 Intent Analysis:")
+        print(f"   Type: {result.intent.value}")
+        print(f"   Confidence: {result.intent_confidence:.2f}")
+        print(f"   Summary: {result.context_summary}")
+
+        print(f"\n📐 Research Dimensions ({len(result.research_dimensions)}):")
+        for i, dim in enumerate(result.research_dimensions, 1):
+            print(f"   [{i}] {dim}")
+
+        print(f"\n🔍 Search Queries ({len(result.search_queries)}):")
+        for i, q in enumerate(result.search_queries, 1):
+            print(f"   [{i}] {q}")
+
+        return True
+    except Exception as e:
+        print(f"❌ Query Rewrite failed: {e}")
+        import traceback
+
+        traceback.print_exc()
+        return False
 
 
 async def test_search_engine(engine: str, query: str) -> bool:
@@ -133,6 +171,12 @@ def main() -> int:
     )
     subparsers = parser.add_subparsers(dest="command", help="Test command")
 
+    # rewrite subcommand (Query Rewrite)
+    rewrite_parser = subparsers.add_parser("rewrite", help="Test Query Rewrite")
+    rewrite_parser.add_argument(
+        "--query", default="我要做一个电商网站", help="User query to rewrite"
+    )
+
     # search subcommand
     search_parser = subparsers.add_parser("search", help="Test search engine")
     search_parser.add_argument(
@@ -147,7 +191,9 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    if args.command == "search":
+    if args.command == "rewrite":
+        success = asyncio.run(test_query_rewrite(args.query))
+    elif args.command == "search":
         success = asyncio.run(test_search_engine(args.engine, args.query))
     elif args.command == "research":
         success = asyncio.run(test_research(args.query, args.output))

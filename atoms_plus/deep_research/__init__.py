@@ -35,25 +35,25 @@ from .search import SearchEngine as SearchEngineBase
 
 __all__ = [
     # Router
-    'router',
+    "router",
     # Main function
-    'deep_research_async',
+    "deep_research_async",
     # Enums
-    'SearchEngine',
-    'Language',
+    "SearchEngine",
+    "Language",
     # Request/Response
-    'ResearchRequest',
-    'ResearchResponse',
-    'SectionResult',
+    "ResearchRequest",
+    "ResearchResponse",
+    "SectionResult",
     # Progress
-    'ResearchProgress',
+    "ResearchProgress",
     # Internal structures
-    'ReportSection',
-    'ReportStructure',
-    'SearchResult',
+    "ReportSection",
+    "ReportStructure",
+    "SearchResult",
     # Search engines
-    'SearchEngineBase',
-    'TavilySearch',
-    'DashScopeSearch',
-    'get_search_engine',
+    "SearchEngineBase",
+    "TavilySearch",
+    "DashScopeSearch",
+    "get_search_engine",
 ]

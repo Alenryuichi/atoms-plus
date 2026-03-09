@@ -21,7 +21,7 @@ from atoms_plus.deep_research.research import deep_research_async
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=['Deep Research'])
+router = APIRouter(tags=["Deep Research"])
 
 
 # =============================================================================
@@ -29,7 +29,7 @@ router = APIRouter(tags=['Deep Research'])
 # =============================================================================
 
 
-@router.post('/research', response_model=ResearchResponse)
+@router.post("/research", response_model=ResearchResponse)
 async def execute_research(request: ResearchRequest) -> ResearchResponse:
     """Execute deep research on a topic.
 
@@ -42,7 +42,7 @@ async def execute_research(request: ResearchRequest) -> ResearchResponse:
     Returns:
         Complete research response with report and metadata
     """
-    logger.info(f'Research request: {request.query}')
+    logger.info(f"Research request: {request.query}")
 
     result = await deep_research_async(
         query=request.query,
@@ -52,8 +52,8 @@ async def execute_research(request: ResearchRequest) -> ResearchResponse:
     )
 
     logger.info(
-        f'Research complete: {result.session_id}, '
-        f'{len(result.report)} chars, {result.execution_time:.1f}s'
+        f"Research complete: {result.session_id}, "
+        f"{len(result.report)} chars, {result.execution_time:.1f}s"
     )
 
     return result
@@ -64,7 +64,7 @@ async def execute_research(request: ResearchRequest) -> ResearchResponse:
 # =============================================================================
 
 
-@router.websocket('/research/stream')
+@router.websocket("/research/stream")
 async def research_stream(websocket: WebSocket):
     """WebSocket endpoint for real-time research progress.
 
@@ -88,12 +88,12 @@ async def research_stream(websocket: WebSocket):
     Final message contains the complete report in the message field.
     """
     await websocket.accept()
-    logger.info('WebSocket connection accepted')
+    logger.info("WebSocket connection accepted")
 
     try:
         # Receive research request
         data = await websocket.receive_json()
-        logger.info(f'WebSocket request: {data}')
+        logger.info(f"WebSocket request: {data}")
 
         # Validate request
         try:
@@ -101,8 +101,8 @@ async def research_stream(websocket: WebSocket):
         except ValidationError as e:
             await websocket.send_json(
                 {
-                    'event': 'error',
-                    'message': f'Invalid request: {e.errors()}',
+                    "event": "error",
+                    "message": f"Invalid request: {e.errors()}",
                 }
             )
             await websocket.close()
@@ -124,26 +124,26 @@ async def research_stream(websocket: WebSocket):
         # Send final result
         await websocket.send_json(
             {
-                'event': 'result',
-                'session_id': result.session_id,
-                'report': result.report,
-                'total_sources': result.total_sources,
-                'execution_time': result.execution_time,
-                'search_engine_used': result.search_engine_used,
+                "event": "result",
+                "session_id": result.session_id,
+                "report": result.report,
+                "total_sources": result.total_sources,
+                "execution_time": result.execution_time,
+                "search_engine_used": result.search_engine_used,
             }
         )
 
-        logger.info(f'WebSocket research complete: {result.session_id}')
+        logger.info(f"WebSocket research complete: {result.session_id}")
 
     except WebSocketDisconnect:
-        logger.info('WebSocket disconnected by client')
+        logger.info("WebSocket disconnected by client")
     except Exception as e:
-        logger.error(f'WebSocket error: {e}')
+        logger.error(f"WebSocket error: {e}")
         try:
             await websocket.send_json(
                 {
-                    'event': 'error',
-                    'message': str(e),
+                    "event": "error",
+                    "message": str(e),
                 }
             )
         except Exception:
@@ -155,4 +155,4 @@ async def research_stream(websocket: WebSocket):
             pass
 
 
-__all__ = ['router']
+__all__ = ["router"]
