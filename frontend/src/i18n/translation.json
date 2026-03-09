@@ -14465,6 +14465,22 @@
     "de": "Warten auf Aufgabe.",
     "uk": "Очікує завдання."
   },
+  "AGENT_STATUS$THINKING": {
+    "en": "Thinking",
+    "ja": "考え中",
+    "zh-CN": "思考中",
+    "zh-TW": "思考中",
+    "ko-KR": "생각 중",
+    "no": "Tenker",
+    "it": "Pensando",
+    "pt": "Pensando",
+    "es": "Pensando",
+    "ar": "يفكر",
+    "fr": "Réflexion",
+    "tr": "Düşünüyor",
+    "de": "Denkt nach",
+    "uk": "Думає"
+  },
   "BUTTON$DELETE_CONVERSATION": {
     "en": "Delete Conversation",
     "uk": "Видалити розмову",
