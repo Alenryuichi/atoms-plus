@@ -205,21 +205,23 @@ export default function MainApp() {
 
   // Determine if we should redirect to login based on auth mode
   // Home page should be publicly accessible to show atoms.dev style landing page
+  // IMPORTANT: Don't redirect when auth status is undefined (still loading/not yet fetched)
   const shouldRedirectToLogin = useSupabaseAuthFlow
     ? // Supabase auth flow: redirect if not authenticated and not loading, except for home page
       !effectiveIsLoading &&
-      !effectiveIsAuthed &&
+      effectiveIsAuthed === false && // Explicitly check for false, not undefined
       !isOnIntermediatePage &&
       !isHomePage
-    : // Original SAAS flow
-      config.isLoading ||
-      isAuthLoading ||
-      (!isAuthed &&
-        !isAuthError &&
-        !isOnIntermediatePage &&
-        !isHomePage &&
-        config.data?.app_mode === "saas" &&
-        !loginMethodExists);
+    : // Original SAAS flow - only redirect when auth is explicitly determined
+      // Don't redirect while config is loading or auth status is undefined
+      !config.isLoading &&
+      !isAuthLoading &&
+      isAuthed === false && // Explicitly check for false, not undefined
+      !isAuthError &&
+      !isOnIntermediatePage &&
+      !isHomePage &&
+      config.data?.app_mode === "saas" &&
+      !loginMethodExists;
 
   React.useEffect(() => {
     if (shouldRedirectToLogin) {

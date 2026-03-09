@@ -29,7 +29,7 @@ export const useActiveConversation = () => {
   }, [
     conversationId,
     userConversation.isFetched,
-    userConversation?.data?.status,
+    userConversation.data, // Include full data object to ensure URL and session_api_key are set
   ]);
   return userConversation;
 };
