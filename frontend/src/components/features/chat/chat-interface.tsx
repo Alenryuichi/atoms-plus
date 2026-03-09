@@ -35,7 +35,7 @@ import { useTaskPolling } from "#/hooks/query/use-task-polling";
 import { useConversationWebSocket } from "#/contexts/conversation-websocket-context";
 import ChatStatusIndicator from "./chat-status-indicator";
 import { getStatusColor, getStatusText } from "#/utils/utils";
-import { AutoRoleIndicator } from "#/components/features/auto-role";
+
 import { RuntimeBootstrapProgress } from "./runtime-bootstrap-progress";
 import type { RuntimeStatus } from "#/types/runtime-status";
 
@@ -331,7 +331,6 @@ export function ChatInterface() {
           {/* Status Bar */}
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
-              <AutoRoleIndicator showDetails={false} />
               {isStartingStatus && (
                 <ChatStatusIndicator
                   statusColor={serverStatusColor}

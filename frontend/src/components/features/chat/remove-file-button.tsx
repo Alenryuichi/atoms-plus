@@ -1,4 +1,4 @@
-import CloseIcon from "#/icons/u-close.svg?react";
+import { IconX } from "@tabler/icons-react";
 import { cn, isMobileDevice } from "#/utils/utils";
 
 interface RemoveFileButtonProps {
@@ -13,11 +13,12 @@ export function RemoveFileButton({ onClick }: RemoveFileButtonProps) {
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-4 h-4 rounded-full items-center justify-center bg-[#25272D] hover:bg-[#A1A1A1] cursor-pointer absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
+        "w-7 h-7 rounded-md bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center text-red-400 transition-all",
+        "opacity-0 group-hover:opacity-100",
         isMobile && "opacity-100",
       )}
     >
-      <CloseIcon width={10} height={10} color="#ffffff" />
+      <IconX size={14} stroke={2} />
     </button>
   );
 }
