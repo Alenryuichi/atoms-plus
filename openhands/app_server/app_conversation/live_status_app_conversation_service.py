@@ -918,10 +918,11 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
     ) -> str | None:
         """Inject Vibe Coding instructions for mandatory web app generation.
 
-        This method uses LLM-based role detection to determine:
+        This method uses LLM-based role detection and project graph generation:
         1. Whether this is a web app development task
         2. What role is most suitable
-        3. What mandatory instructions to inject
+        3. Generate project graph for structured code generation (MiroFish-inspired)
+        4. What mandatory instructions to inject
 
         Args:
             system_message_suffix: Existing system message suffix
@@ -972,10 +973,29 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
                     f'web_app={is_web_app_task}, confidence={detection.confidence:.2f}'
                 )
 
-            # Generate vibe coding instructions
+            # Generate project graph for web app tasks (MiroFish-inspired)
+            project_graph = None
+            if is_web_app_task:
+                try:
+                    from atoms_plus.project_graph import generate_project_graph
+
+                    project_graph = await generate_project_graph(user_text)
+                    if project_graph:
+                        _logger.info(
+                            f'[VibeCoding] Project graph generated: {project_graph.name}, '
+                            f'{len(project_graph.entities)} entities, '
+                            f'{len(project_graph.features)} features'
+                        )
+                except ImportError:
+                    _logger.debug('[VibeCoding] project_graph module not available')
+                except Exception as e:
+                    _logger.warning(f'[VibeCoding] Project graph generation failed: {e}')
+
+            # Generate vibe coding instructions with project graph
             instructions = generate_vibe_coding_instructions(
                 role_id=role_id,
                 is_web_app_task=is_web_app_task,
+                project_graph=project_graph,
             )
 
             # Combine with existing suffix
@@ -984,7 +1004,10 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
             else:
                 combined = instructions
 
-            _logger.info(f'[VibeCoding] Injected instructions ({len(combined)} chars)')
+            _logger.info(
+                f'[VibeCoding] Injected instructions ({len(combined)} chars), '
+                f'graph={project_graph is not None}'
+            )
             return combined
 
         except ImportError as e:
