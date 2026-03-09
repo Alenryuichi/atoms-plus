@@ -138,6 +138,19 @@ export function ChatInterface() {
     (isV1Conversation && !showV1Messages);
   const isChatLoading = isHistoryLoading && !isTask;
 
+  // P0 Fix: Detect transition state from task to conversation
+  // This happens when:
+  // - We just navigated from task-xxx to real conversation URL (!isTask)
+  // - No events have arrived yet (!userEventsExist)
+  // - We have an optimistic user message (user just submitted from home page)
+  // - WebSocket is still connecting or loading history
+  const isTransitioningFromTask =
+    !isTask &&
+    !userEventsExist &&
+    !!optimisticUserMessage &&
+    (conversationWebSocket?.isLoadingHistory ||
+      conversationWebSocket?.connectionState !== "OPEN");
+
   const handleSendMessage = async (
     content: string,
     originalImages: File[],
@@ -266,6 +279,16 @@ export function ChatInterface() {
                 taskStatus={taskStatus}
               />
             )}
+
+          {/* P0 Fix: Show transition state when navigating from task to conversation */}
+          {/* This bridges the gap between task completion and WebSocket connection */}
+          {isTransitioningFromTask && (
+            <RuntimeBootstrapProgress
+              runtimeStatus={conversation?.runtime_status as RuntimeStatus}
+              userMessage={optimisticUserMessage || undefined}
+              taskStatus="READY"
+            />
+          )}
 
           {(!isLoadingMessages || v0Events.length > 0) && v0UserEventsExist && (
             <V0Messages

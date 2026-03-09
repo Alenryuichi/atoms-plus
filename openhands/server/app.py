@@ -68,7 +68,68 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
 
 
-lifespans = [_lifespan, mcp_app.lifespan]
+@asynccontextmanager
+async def _atoms_plus_lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Atoms Plus lifespan: pre-warm sandbox pool for faster startup."""
+    import asyncio
+    import os
+
+    runtime = os.environ.get('RUNTIME', 'docker')
+    if runtime == 'local':
+        try:
+            from openhands.app_server.sandbox.process_sandbox_service import (
+                POOL_ENABLED,
+            )
+
+            if POOL_ENABLED:
+                print('🔥 Atoms Plus: Starting sandbox pool pre-warming...')
+                # Delay import to avoid circular dependencies
+                asyncio.create_task(_do_pool_warmup())
+        except ImportError:
+            pass
+    yield
+
+
+async def _do_pool_warmup():
+    """Background task to warm up the sandbox pool."""
+    import sys
+
+    import httpx
+
+    from openhands.app_server.sandbox.preset_sandbox_spec_service import (
+        PresetSandboxSpecService,
+    )
+    from openhands.app_server.sandbox.process_sandbox_service import (
+        ProcessSandboxService,
+    )
+    from openhands.app_server.sandbox.process_sandbox_spec_service import (
+        get_default_sandbox_specs,
+    )
+
+    try:
+        sandbox_spec_service = PresetSandboxSpecService(
+            specs=get_default_sandbox_specs()
+        )
+        async with httpx.AsyncClient() as client:
+            service = ProcessSandboxService(
+                user_id=None,
+                sandbox_spec_service=sandbox_spec_service,
+                base_working_dir='/tmp/openhands-sandboxes',
+                base_port=8000,
+                python_executable=sys.executable,
+                agent_server_module='openhands.agent_server',
+                health_check_path='/alive',
+                httpx_client=client,
+                exposed_url_pattern='/runtime/{port}',
+            )
+
+            warmed = await service.warm_pool()
+            print(f'✅ Sandbox pool pre-warming complete: {warmed} sandboxes ready')
+    except Exception as e:
+        print(f'⚠️ Failed to pre-warm sandbox pool: {e}')
+
+
+lifespans = [_lifespan, mcp_app.lifespan, _atoms_plus_lifespan]
 app_lifespan_ = get_app_lifespan_service()
 if app_lifespan_:
     lifespans.append(app_lifespan_.lifespan)

@@ -14,6 +14,7 @@ Atoms Plus Server - 基于 OpenHands 的扩展服务器
     uvicorn atoms_plus.atoms_server:app --reload --port 3000
 """
 
+import logging
 import os
 import sys
 
@@ -22,16 +23,18 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv()
 
+_logger = logging.getLogger(__name__)
+
 # 导入 Atoms Plus 扩展路由
-from atoms_plus.race_mode.api import router as race_router
-from atoms_plus.roles.api import router as roles_router
-from atoms_plus.scaffolding.api import router as scaffolding_router
-from atoms_plus.team_mode.api import router as team_router
-from openhands.server.app import app as base_app
+from atoms_plus.race_mode.api import router as race_router  # noqa: E402
+from atoms_plus.roles.api import router as roles_router  # noqa: E402
+from atoms_plus.scaffolding.api import router as scaffolding_router  # noqa: E402
+from atoms_plus.team_mode.api import router as team_router  # noqa: E402
+from openhands.server.app import app as base_app  # noqa: E402
 
 # ==================== 注册扩展路由 ====================
 # 注意：路由必须在导入 listen.py 之前注册，因为 listen.py 会包装 base_app
@@ -91,11 +94,36 @@ def atoms_plus_info():
 
 @base_app.get('/atoms-plus/health')
 def atoms_plus_health():
-    """健康检查端点"""
-    return {'status': 'ok', 'service': 'atoms-plus'}
+    """健康检查端点 - 包含 RUNTIME 信息供 CLI 验证"""
+    runtime = os.environ.get('RUNTIME', 'docker')
+    # Include pool status if available
+    pool_info = {}
+    try:
+        from openhands.app_server.sandbox.process_sandbox_service import (
+            POOL_ENABLED,
+            POOL_SIZE,
+            _warm_pool,
+        )
+
+        pool_info = {
+            'pool_enabled': POOL_ENABLED,
+            'pool_size': POOL_SIZE,
+            'pool_ready': len(_warm_pool),
+        }
+    except ImportError:
+        pass
+
+    return {
+        'status': 'ok',
+        'service': 'atoms-plus',
+        'runtime': runtime,
+        'runtime_ok': runtime == 'local',
+        **pool_info,
+    }
 
 
 # ==================== 应用导出 ====================
+# Note: Agent Pool Pre-warming is handled in openhands/server/app.py via _atoms_plus_lifespan
 
 # 导入 listen.py 中完整配置的 app (包含 CORS middleware + socketio)
 # 这样所有请求都会经过正确的 middleware 链

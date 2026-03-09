@@ -15,7 +15,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-from typing import Optional
 
 import httpx
 from fastapi import (
@@ -76,6 +75,7 @@ async def _forward_request(request: Request, port: int, path: str) -> StreamingR
         ):
             headers[key] = value
 
+    # Use longer timeout for LLM operations that may take 2+ minutes
     async with httpx.AsyncClient() as client:
         try:
             response = await client.request(
@@ -83,7 +83,7 @@ async def _forward_request(request: Request, port: int, path: str) -> StreamingR
                 url=target_url,
                 headers=headers,
                 content=body,
-                timeout=60.0,
+                timeout=180.0,  # 3 minutes for long LLM operations
             )
 
             # Stream the response back
@@ -110,9 +110,7 @@ async def _forward_request(request: Request, port: int, path: str) -> StreamingR
             )
 
 
-async def _execute_bash_command(
-    port: int, command: str, headers: dict
-) -> Optional[dict]:
+async def _execute_bash_command(port: int, command: str, headers: dict) -> dict | None:
     """Execute a bash command on the agent server and return the result."""
     target_url = f'http://localhost:{port}/api/bash/execute_bash_command'
     async with httpx.AsyncClient() as client:
@@ -131,9 +129,7 @@ async def _execute_bash_command(
             return None
 
 
-async def _list_files_via_bash(
-    port: int, path: Optional[str], headers: dict
-) -> list[str]:
+async def _list_files_via_bash(port: int, path: str | None, headers: dict) -> list[str]:
     """List files using bash command on the agent server.
 
     Uses `find` command to recursively list files and directories.
@@ -182,7 +178,7 @@ async def _list_files_via_bash(
 
 async def _read_file_via_download(
     port: int, file_path: str, headers: dict
-) -> Optional[str]:
+) -> str | None:
     """Read a file using the agent server's download API.
 
     The agent server expects absolute paths for file download.
@@ -241,7 +237,7 @@ async def list_files(
     request: Request,
     port: int,
     conversation_id: str,
-    path: Optional[str] = Query(None),
+    path: str | None = Query(None),
 ) -> JSONResponse:
     """List files in the workspace for a V1 conversation.
 
@@ -316,7 +312,15 @@ async def proxy_websocket(websocket: WebSocket, port: int, conversation_id: str)
             # Explicitly disable proxy to avoid SOCKS proxy issues on localhost
             import websockets
 
-            async with websockets.connect(target_url, proxy=None) as target_ws:
+            # Increase timeouts for slow Agent Server startup during LLM operations
+            # Default open_timeout=10s is too short when LLM is processing
+            async with websockets.connect(
+                target_url,
+                proxy=None,
+                open_timeout=60,  # 60s for WebSocket handshake (LLM can be slow)
+                ping_timeout=60,  # 60s for ping/pong
+                close_timeout=10,  # 10s for graceful close
+            ) as target_ws:
                 # Create tasks for bidirectional forwarding
                 async def forward_client_to_server():
                     try:
