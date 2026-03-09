@@ -28,6 +28,10 @@ AGENT_SERVER = 'AGENT_SERVER'
 VSCODE = 'VSCODE'
 WORKER_1 = 'WORKER_1'
 WORKER_2 = 'WORKER_2'
+# Additional worker ports for common dev server defaults (Vite, Next.js, etc.)
+WORKER_3 = 'WORKER_3'
+WORKER_4 = 'WORKER_4'
+WORKER_5 = 'WORKER_5'
 
 
 class SandboxInfo(BaseModel):

@@ -51,7 +51,7 @@ interface TeamModeState {
 }
 
 const initialState = {
-  isEnabled: true, // Default to enabled for Team Mode experience
+  isEnabled: false, // Default to disabled - Team Mode requires explicit activation
   sessionId: null,
   status: null,
   currentAgent: null,

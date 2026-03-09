@@ -249,11 +249,28 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
 
             # Atoms Plus: Inject vibe coding instructions for mandatory web app generation
             # This uses LLM-based role detection and generates strong directives
-            system_message_suffix = await self._inject_vibe_coding_instructions(
-                request.system_message_suffix,
-                request.initial_message,
-                request.agent_role,
-            )
+            # Wrap in timeout to prevent blocking conversation startup
+            try:
+                system_message_suffix = await asyncio.wait_for(
+                    self._inject_vibe_coding_instructions(
+                        request.system_message_suffix,
+                        request.initial_message,
+                        request.agent_role,
+                    ),
+                    timeout=30.0,  # 30 second timeout for LLM calls
+                )
+            except asyncio.TimeoutError:
+                _logger.warning(
+                    '[VibeCoding] Instruction injection timed out after 30s, '
+                    'continuing without vibe coding instructions'
+                )
+                system_message_suffix = request.system_message_suffix
+            except Exception as e:
+                _logger.warning(
+                    f'[VibeCoding] Instruction injection failed: {e}, '
+                    'continuing without vibe coding instructions'
+                )
+                system_message_suffix = request.system_message_suffix
 
             # Build the start request
             start_conversation_request = (

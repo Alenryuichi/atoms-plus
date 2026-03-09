@@ -165,7 +165,23 @@ function PreviewPanelComponent(
         },
       };
     }
+
     const fileName = getSandpackFileName(selectedFile);
+    const ext = selectedFile.split(".").pop()?.toLowerCase();
+
+    // For HTML files: Sandpack static template requires /index.html as entry point
+    // If the selected file is not index.html, we need to:
+    // 1. Include the original file with its original name
+    // 2. Create an index.html that redirects/embeds the content
+    if ((ext === "html" || ext === "htm") && fileName !== "/index.html") {
+      return {
+        // Use the file content directly as index.html for static template
+        "/index.html": { code: fileContent },
+        // Also keep the original file name for reference
+        [fileName]: { code: fileContent },
+      };
+    }
+
     return { [fileName]: { code: fileContent } };
   }, [fileContent, selectedFile]);
 
