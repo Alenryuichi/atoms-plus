@@ -55,26 +55,30 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 
-async def _call_llm(prompt: str) -> str:
+async def _call_llm(prompt: str, timeout: int = 120) -> str:
     """Call LLM API using litellm.
 
     Uses environment variables:
         - LLM_API_KEY: API key
         - LLM_BASE_URL: API base URL
         - LLM_MODEL: Model name (e.g., openai/MiniMax-M2.5)
+
+    Args:
+        prompt: The prompt to send to the LLM
+        timeout: Request timeout in seconds (default: 120, use 600 for long reports)
     """
     model = os.getenv("LLM_MODEL", "openai/MiniMax-M2.5")
     api_key = os.getenv("LLM_API_KEY")
     api_base = os.getenv("LLM_BASE_URL")
 
-    logger.debug(f"Calling LLM: {model}")
+    logger.debug(f"Calling LLM: {model}, timeout: {timeout}s")
 
     response = await litellm.acompletion(
         model=model,
         messages=[{"role": "user", "content": prompt}],
         api_key=api_key,
         api_base=api_base,
-        timeout=120,
+        timeout=timeout,
     )
 
     content = response.choices[0].message.content
@@ -199,7 +203,8 @@ async def _generate_final_report(
             sections_content=sections_content,
             sources=sources,
         )
-    return await _call_llm(prompt)
+    # Use longer timeout for final report (large prompt + long output)
+    return await _call_llm(prompt, timeout=600)
 
 
 # =============================================================================
