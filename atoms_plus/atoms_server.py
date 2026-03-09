@@ -22,19 +22,24 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv()
 
 # 导入 Atoms Plus 扩展路由
-from atoms_plus.race_mode.api import router as race_router
-from atoms_plus.roles.api import router as roles_router
-from atoms_plus.scaffolding.api import router as scaffolding_router
-from atoms_plus.team_mode.api import router as team_router
-from openhands.server.app import app as base_app
+from atoms_plus.deep_research.api import router as deep_research_router  # noqa: E402
+from atoms_plus.race_mode.api import router as race_router  # noqa: E402
+from atoms_plus.roles.api import router as roles_router  # noqa: E402
+from atoms_plus.scaffolding.api import router as scaffolding_router  # noqa: E402
+from atoms_plus.team_mode.api import router as team_router  # noqa: E402
+from openhands.server.app import app as base_app  # noqa: E402
 
 # ==================== 注册扩展路由 ====================
 # 注意：路由必须在导入 listen.py 之前注册，因为 listen.py 会包装 base_app
+
+# Deep Research API - 深度研究
+# 路由前缀: /api/v1/research, /api/v1/research/stream
+base_app.include_router(deep_research_router, prefix='/api/v1')
 
 # Race Mode API - 多模型竞速对比
 # 路由前缀: /api/v1/race/*
@@ -64,6 +69,12 @@ def atoms_plus_info():
         'version': '0.3.0',
         'description': 'OpenHands 扩展层 - 复刻 Atoms.dev 功能',
         'features': [
+            {
+                'name': 'Deep Research',
+                'path': '/api/v1/research',
+                'description': '深度研究 - 多轮搜索与反思生成研究报告',
+                'status': 'beta',
+            },
             {
                 'name': 'Team Mode',
                 'path': '/api/v1/team',
