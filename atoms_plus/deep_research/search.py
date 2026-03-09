@@ -114,11 +114,13 @@ class TavilySearch(SearchEngine):
 
 
 class DashScopeSearch(SearchEngine):
-    """DashScope WebSearch (better for Chinese queries)."""
+    """DashScope WebSearch (better for Chinese queries).
 
-    API_URL = (
-        "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
-    )
+    Uses the OpenAI-compatible endpoint with enable_search=True.
+    """
+
+    # Use OpenAI-compatible endpoint for enable_search support
+    API_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
 
     def __init__(self):
         self.api_key = os.getenv("DASHSCOPE_API_KEY")
@@ -153,16 +155,12 @@ class DashScopeSearch(SearchEngine):
                             "Content-Type": "application/json",
                         },
                         json={
-                            "model": "qwen-plus",  # DashScope search uses qwen-plus internally
-                            "input": {
-                                "messages": [
-                                    {"role": "user", "content": f"搜索并总结: {query}"}
-                                ]
-                            },
-                            "parameters": {
-                                "result_format": "message",
-                                "enable_search": True,
-                            },
+                            # Use OpenAI-compatible format
+                            "model": "qwen-plus",
+                            "messages": [
+                                {"role": "user", "content": f"搜索并总结: {query}"}
+                            ],
+                            "enable_search": True,
                         },
                     )
                     response.raise_for_status()
@@ -192,42 +190,50 @@ class DashScopeSearch(SearchEngine):
         raise last_error  # type: ignore[misc]
 
     def _parse_response(self, data: dict, max_results: int) -> list[SearchResult]:
-        """Parse DashScope response to extract search results."""
+        """Parse DashScope response to extract search results.
+
+        DashScope enable_search mode returns synthesized content, not structured
+        search results with URLs. We create a SearchResult with the content
+        and a placeholder source attribution.
+        """
+        import re
+
         results = []
 
-        # Extract web_search results if available
-        output = data.get("output", {})
-        choices = output.get("choices", [])
+        # Handle both old format (output.choices) and OpenAI format (choices)
+        choices = data.get("choices", []) or data.get("output", {}).get("choices", [])
 
         if choices:
             message = choices[0].get("message", {})
-            # Check for tool_calls with web_search results
-            tool_calls = message.get("tool_calls", [])
-            for call in tool_calls:
-                if call.get("type") == "web_search":
-                    search_results = call.get("search_results", [])
-                    for item in search_results[:max_results]:
+            content = message.get("content", "")
+
+            if content:
+                # Extract any URLs mentioned in the content
+                url_pattern = r"https?://[^\s<>\"'\)\]，。、]+"
+                found_urls = re.findall(url_pattern, content)
+
+                if found_urls:
+                    # Create results from found URLs
+                    for url in found_urls[:max_results]:
+                        # Clean URL (remove trailing punctuation)
+                        url = url.rstrip(".,;:!?)")
                         results.append(
                             SearchResult(
-                                title=item.get("title", ""),
-                                url=item.get("url", ""),
-                                snippet=item.get("snippet", item.get("content", "")),
+                                title=f"Source: {url[:50]}...",
+                                url=url,
+                                snippet=content[:300],
                             )
                         )
-
-        # Fallback: create a single result from the text response
-        if not results:
-            content = ""
-            if choices:
-                content = choices[0].get("message", {}).get("content", "")
-            if content:
-                results.append(
-                    SearchResult(
-                        title=f"Search result for: {content[:50]}...",
-                        url="",
-                        snippet=content[:500],
+                else:
+                    # No URLs found - DashScope synthesized without citing sources
+                    # Create a result with knowledge base attribution
+                    results.append(
+                        SearchResult(
+                            title="DashScope Knowledge Base Search",
+                            url="https://dashscope.aliyuncs.com",
+                            snippet=content[:500],
+                        )
                     )
-                )
 
         logger.info(f"DashScope returned {len(results)} results")
         return results
