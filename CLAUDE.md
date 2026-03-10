@@ -59,6 +59,7 @@ OH_ENABLE_BROWSER=false
 OH_PERSISTENCE_DIR=/.openhands
 OH_DISABLE_MCP=true
 WEB_HOST=0.0.0.0
+OH_SANDBOX_EXPOSED_URL_PATTERN=https://openhands-production-c7c2.up.railway.app/runtime/{port}
 ```
 
 #### 阿里百炼 Coding API 可用模型
