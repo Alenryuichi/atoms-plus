@@ -103,6 +103,8 @@ FUNCTION_CALLING_PATTERNS: list[str] = [
     'qwen-max*',
     'qwen2.5*',
     'qwen3*',
+    # MiniMax (via DashScope Coding API or direct API)
+    'minimax-m2.5*',
 ]
 
 REASONING_EFFORT_PATTERNS: list[str] = [
