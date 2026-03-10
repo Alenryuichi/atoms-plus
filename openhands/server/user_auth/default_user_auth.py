@@ -64,6 +64,14 @@ class DefaultUserAuth(UserAuth):
         # Merge config.toml settings with stored settings
         if settings:
             settings = settings.merge_with_config_settings()
+        else:
+            # Fallback to config-based settings (reads LLM_API_KEY from env vars)
+            # This enables new users to use system-provided API key without manual configuration
+            from openhands.storage.data_models.settings import (
+                Settings as DataModelSettings,
+            )
+
+            settings = DataModelSettings.from_config()
 
         self._settings = settings
         return settings
