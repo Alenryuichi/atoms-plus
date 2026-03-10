@@ -19,30 +19,47 @@ triggers:
 
 # TypeScript Validation Guide
 
-**CRITICAL: Always validate TypeScript code before starting dev servers.**
+**Use `vite-plugin-checker` for real-time TypeScript error detection.**
 
-## Pre-Flight Checklist
-
-Before running `npm run dev`, ALWAYS run build first:
+## Setup: vite-plugin-checker (REQUIRED for Vite projects)
 
 ```bash
-# 1. Run build to catch ALL errors
-npm run build
-
-# 2. If build fails, FIX THE ERRORS!
-# 3. Only start dev server after build succeeds
-npm run dev -- --host 0.0.0.0 --port 8011
+npm install -D vite-plugin-checker
 ```
 
-**⚠️ CRITICAL: Why `npm run build` instead of `tsc --noEmit`?**
+```typescript
+// vite.config.ts
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import checker from 'vite-plugin-checker'
 
-| Command | Catches TypeScript Errors | Catches ESM Errors | Fails Fast |
-|---------|--------------------------|-------------------|------------|
-| `tsc --noEmit` | ✅ | ❌ | ✅ |
-| `npm run dev` | ❌ | ❌ (only in browser) | ❌ |
-| `npm run build` | ✅ | ✅ | ✅ |
+export default defineConfig({
+  plugins: [
+    react(),
+    checker({
+      typescript: true,  // Real-time type checking
+      overlay: true,     // Show errors in browser
+      terminal: true,    // Show errors in terminal (Agent can see!)
+    }),
+  ],
+})
+```
 
-Agent cannot see browser console errors, so `npm run build` is the only reliable way to catch ALL errors before starting dev server.
+## Why vite-plugin-checker?
+
+| Without Plugin | With Plugin |
+|----------------|-------------|
+| `npm run dev` starts successfully even with errors | Errors appear in **terminal** immediately |
+| Errors only in browser console (Agent can't see) | Agent sees errors and can fix them |
+| Need `npm run build` before every dev run | Real-time feedback during development |
+
+## Workflow
+
+```bash
+npm install
+npm run dev -- --host 0.0.0.0
+# If errors appear in terminal → fix them → dev server auto-reloads
+```
 
 ## Common Export Patterns
 
@@ -120,22 +137,9 @@ import Post from '../models/Post';      // ✅ Correct default import
 
 3. **Hot Reload**: If types don't update, restart dev server
 
-## Validation Script
+## Summary
 
-Add to `package.json`:
-
-```json
-{
-  "scripts": {
-    "typecheck": "tsc --noEmit",
-    "dev:safe": "npm run typecheck && npm run dev"
-  }
-}
-```
-
-Then use:
-
-```bash
-npm run dev:safe -- --host 0.0.0.0 --port 5173
-```
-
+With `vite-plugin-checker`:
+1. **No need for `npm run build` before dev** - errors show in real-time
+2. **Agent can see errors** - they appear in terminal output
+3. **Auto-reload on fix** - dev server updates when you fix errors

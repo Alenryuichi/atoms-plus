@@ -35,15 +35,16 @@ INFER from context (use defaults if not specified):
 
 **Do NOT over-ask.** "Todo app" implies: add, delete, mark complete. Start building.
 
-### Step 2: Create Project
+### Step 2: Create Project with Type Checking
 
-Use Vite for the fastest setup:
+Use Vite with `vite-plugin-checker` for real-time error detection:
 
 ```bash
 npm create vite@latest my-app -- --template react-ts --no-interactive
 cd my-app
 
-npm install -D tailwindcss postcss autoprefixer
+# Install dependencies including vite-plugin-checker for real-time type checking
+npm install -D tailwindcss postcss autoprefixer vite-plugin-checker
 npx tailwindcss init -p
 
 cat > tailwind.config.js << 'EOF'
@@ -61,6 +62,30 @@ cat > src/index.css << 'EOF'
 @tailwind utilities;
 EOF
 ```
+
+**Configure vite-plugin-checker** in `vite.config.ts`:
+
+```typescript
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import checker from 'vite-plugin-checker'
+
+export default defineConfig({
+  plugins: [
+    react(),
+    checker({
+      typescript: true,  // Real-time TypeScript checking
+      overlay: true,     // Show errors in browser overlay
+      terminal: true,    // Show errors in terminal (Agent can see this!)
+    }),
+  ],
+})
+```
+
+**Why vite-plugin-checker is required:**
+- Vite's default dev server does NOT check TypeScript errors
+- Errors would only appear in browser console (Agent cannot see!)
+- This plugin shows errors in **terminal output** so Agent can fix them
 
 ### Step 3: Implement Features
 
@@ -126,60 +151,30 @@ export default function App() {
 }
 ```
 
-### Step 4: Install & Build (MANDATORY)
-
-⚠️ **CRITICAL - MUST BUILD BEFORE DEV SERVER**:
-
-Vite's dev server does NOT catch TypeScript/ESM errors. You MUST run build first!
+### Step 4: Install & Run Dev Server
 
 ```bash
 npm install
-
-# MANDATORY: Run build to catch all errors
-npm run build
-
-# If build fails, FIX THE ERRORS before proceeding!
-# Common errors:
-# - "does not provide an export named 'X'" → Add `export` keyword
-# - "Module has no exported member 'X'" → Check export/import syntax
+npm run dev -- --host 0.0.0.0
 ```
 
-**WHY THIS IS REQUIRED:**
-- `npm run dev` will START SUCCESSFULLY even with broken code
-- Errors only appear in browser console (Agent cannot see this!)
-- `npm run build` will FAIL FAST and show exact error location
+**With `vite-plugin-checker` configured:**
+- TypeScript errors appear in **terminal output** (Agent can see and fix!)
+- Errors also show in browser overlay
+- No need for separate `npm run build` step
 
-### Step 5: Run Dev Server (only after build succeeds)
+**If you see TypeScript errors in terminal:**
+1. Stop the dev server (Ctrl+C)
+2. Fix the errors (common: missing `export` keyword)
+3. Restart `npm run dev -- --host 0.0.0.0`
 
-⚠️ **CRITICAL - MUST FOLLOW EXACTLY**:
-
-The dev server **MUST** run on **port 8011** for the app to appear in the "Application" tab.
-
-```bash
-npm run dev -- --port 8011 --host 0.0.0.0
-```
-
-**⛔ NEVER DO THIS** (will break "Application" tab):
-- ❌ `npm run dev` (wrong - uses port 5173, not visible in UI)
-- ❌ `npm run dev -- --host 0.0.0.0` (wrong - missing --port 8011)
-- ❌ `npm run dev > server.log &` (wrong - no port specified)
-
-**✅ ALWAYS DO THIS**:
-```bash
-npm run dev -- --port 8011 --host 0.0.0.0
-```
-
-The `--port 8011` and `--host 0.0.0.0` flags are both **REQUIRED**. Without them, the user cannot see the app.
-
-For Vite projects, this ensures the dev server is accessible via the runtime proxy at `/runtime/8011/`.
-
-### Step 6: Report Results
+### Step 5: Report Results
 
 ```
 ✅ App created successfully!
 
 📁 Location: /workspace/my-app
-🚀 Dev server: http://localhost:8011 (visible in "Application" tab)
+🚀 Dev server running (visible in "App" tab)
 
 Features implemented:
 - ✅ Add tasks
@@ -187,7 +182,7 @@ Features implemented:
 - ✅ Delete tasks
 
 Next steps:
-- View app in the "Application" tab
+- View app in the "App" tab
 - Customize styling
 - Add persistence (localStorage or Supabase)
 ```

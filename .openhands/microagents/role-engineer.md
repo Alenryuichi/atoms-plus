@@ -105,25 +105,24 @@ As the Software Engineer, you are responsible for:
    export * from './User';
    ```
 
-### Validation Before Starting Dev Server
+### Real-time Type Checking with vite-plugin-checker
 
-**ALWAYS run `npm run build` before `npm run dev`:**
+When creating Vite projects, **ALWAYS include `vite-plugin-checker`**:
 
-```bash
-# Step 1: Build to catch ALL errors (TypeScript + ESM)
-npm run build
+```typescript
+// vite.config.ts
+import checker from 'vite-plugin-checker'
 
-# Step 2: Only start dev server if build succeeds
-npm run dev -- --host 0.0.0.0 --port 8011
+export default {
+  plugins: [
+    checker({ typescript: true })  // Shows errors in terminal!
+  ],
+}
 ```
 
-**⚠️ WHY `npm run build` instead of `tsc --noEmit`:**
-- `npm run dev` does NOT fail on TypeScript/ESM errors
-- Vite dev server starts successfully even with broken code
-- Errors only appear in browser (Agent cannot see browser console!)
-- `npm run build` catches ALL errors before runtime
+This ensures TypeScript errors appear in **terminal output** where Agent can see and fix them.
 
-### Common Export Errors to Avoid
+### Common Export Errors
 
 | Error | Cause | Fix |
 |-------|-------|-----|
