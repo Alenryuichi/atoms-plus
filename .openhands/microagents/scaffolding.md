@@ -126,14 +126,30 @@ export default function App() {
 }
 ```
 
-### Step 4: Install & Run
+### Step 4: Install & Validate
+
+⚠️ **CRITICAL - TypeScript Validation Before Running**:
+
+```bash
+npm install
+
+# ALWAYS run type check first!
+npx tsc --noEmit
+
+# If there are errors, fix them before proceeding!
+```
+
+**Common errors to watch for:**
+- `does not provide an export named 'X'` → Add `export` keyword to interface/type
+- `Module has no exported member 'X'` → Check export syntax
+
+### Step 5: Run Dev Server
 
 ⚠️ **CRITICAL - MUST FOLLOW EXACTLY**:
 
 The dev server **MUST** run on **port 8011** for the app to appear in the "Application" tab.
 
 ```bash
-npm install
 npm run dev -- --port 8011 --host 0.0.0.0
 ```
 
@@ -151,7 +167,7 @@ The `--port 8011` and `--host 0.0.0.0` flags are both **REQUIRED**. Without them
 
 For Vite projects, this ensures the dev server is accessible via the runtime proxy at `/runtime/8011/`.
 
-### Step 5: Report Results
+### Step 6: Report Results
 
 ```
 ✅ App created successfully!

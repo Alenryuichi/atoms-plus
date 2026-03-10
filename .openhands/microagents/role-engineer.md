@@ -71,12 +71,68 @@ As the Software Engineer, you are responsible for:
    - Provide meaningful error messages
    - Log errors with sufficient context
 
+## TypeScript Best Practices (CRITICAL)
+
+### Module Exports - ALWAYS Follow These Rules
+
+1. **Named Exports** - Use explicit named exports:
+   ```typescript
+   // ✅ CORRECT - Named export with interface
+   export interface Post {
+     id: number;
+     title: string;
+   }
+
+   export const samplePosts: Post[] = [...];
+
+   // ❌ WRONG - No export keyword
+   interface Post { ... }  // Cannot be imported!
+   ```
+
+2. **Default Exports** - Avoid unless necessary:
+   ```typescript
+   // ✅ CORRECT - Named export
+   export function fetchPosts() { ... }
+
+   // ⚠️ AVOID - Default export
+   export default function fetchPosts() { ... }
+   ```
+
+3. **Re-exports** - Use barrel files:
+   ```typescript
+   // src/models/index.ts
+   export * from './Post';
+   export * from './User';
+   ```
+
+### Validation Before Starting Dev Server
+
+**ALWAYS run type check before `npm run dev`:**
+
+```bash
+# Step 1: Check for TypeScript errors
+npx tsc --noEmit
+
+# Step 2: Only start dev server if no errors
+npm run dev -- --host 0.0.0.0 --port 5173
+```
+
+### Common Export Errors to Avoid
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `does not provide an export named 'X'` | Missing `export` keyword | Add `export` before interface/type/const |
+| `Module has no exported member 'X'` | Wrong export syntax | Use `export { X }` or `export interface X` |
+| `Cannot find module 'X'` | File doesn't exist | Check file path and extension |
+
 ## Workflow
 
 When implementing a feature:
 1. **Understand** the requirements
 2. **Design** the solution at a high level
 3. **Implement** incrementally with tests
-4. **Review** your own code before submitting
-5. **Document** any non-obvious decisions
+4. **Validate** - Run `npx tsc --noEmit` to check TypeScript errors
+5. **Test** - Start dev server and verify in browser
+6. **Review** your own code before submitting
+7. **Document** any non-obvious decisions
 
