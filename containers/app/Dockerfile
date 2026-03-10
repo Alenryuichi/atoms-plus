@@ -60,7 +60,7 @@ RUN mkdir -p $FILE_STORE_PATH
 RUN mkdir -p $WORKSPACE_BASE
 
 # CACHE_BUST: Change this value to force rebuild of apt-get layer
-ARG CACHE_BUST_APT=2026-03-10-preinstall-create-tools
+ARG CACHE_BUST_APT=2026-03-10-npm-yes-config
 # Install Node.js 22 LTS for ProcessSandboxService (RUNTIME=local)
 # Required for: npm create, npx, and other frontend dev commands
 RUN apt-get update -y \
@@ -78,11 +78,11 @@ RUN apt-get update -y \
         libxfixes3 libxrandr2 libgbm1 libasound2 libpango-1.0-0 \
         libcairo2 libatspi2.0-0 libwayland-client0 \
     && rm -rf /var/lib/apt/lists/* \
-    # Pre-install common create-* tools to skip "Ok to proceed?" prompt
-    && npm install -g create-vite@latest create-next-app@latest create-vue@latest nuxi@latest \
+    # Configure npm to auto-confirm all prompts (skip "Ok to proceed?")
+    && npm config set yes true \
     # Verify installations
     && node --version && npm --version \
-    && echo "Installed: create-vite, create-next-app, create-vue, nuxi"
+    && echo "npm config yes=true (auto-confirm enabled)"
 
 # Default is 1000, but OSX is often 501
 RUN sed -i 's/^UID_MIN.*/UID_MIN 499/' /etc/login.defs
