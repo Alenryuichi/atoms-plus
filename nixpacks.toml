@@ -1,0 +1,18 @@
+# Nixpacks 配置 - 添加 Node.js 支持
+# ProcessSandboxService 需要 Node.js 来执行前端开发命令 (npm create, npx, etc.)
+
+[phases.setup]
+# 安装 Python 和 Node.js
+nixPkgs = ["python312", "nodejs_22", "git", "curl", "bash"]
+
+[phases.install]
+# Python 依赖安装
+cmds = ["pip install poetry", "poetry config virtualenvs.create false", "poetry install --only main --no-interaction"]
+
+[phases.build]
+# 无需构建步骤
+
+[start]
+# 由 railway.toml 的 startCommand 覆盖
+cmd = "uvicorn atoms_plus.atoms_server:app --host 0.0.0.0 --port ${PORT:-8080}"
+

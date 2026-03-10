@@ -4,6 +4,8 @@
 
 [build]
 builder = "NIXPACKS"
+# 安装 Node.js 22 LTS 用于沙盒内的前端开发命令 (npm, npx, etc.)
+nixpacksConfigPath = "nixpacks.toml"
 
 [deploy]
 # 使用 Atoms Plus Server 入口点
