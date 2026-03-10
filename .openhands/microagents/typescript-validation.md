@@ -23,16 +23,26 @@ triggers:
 
 ## Pre-Flight Checklist
 
-Before running `npm run dev`, ALWAYS:
+Before running `npm run dev`, ALWAYS run build first:
 
 ```bash
-# 1. Check TypeScript errors
-npx tsc --noEmit
+# 1. Run build to catch ALL errors
+npm run build
 
-# 2. If errors exist, fix them first!
-# 3. Only then start the dev server
-npm run dev -- --host 0.0.0.0 --port 5173
+# 2. If build fails, FIX THE ERRORS!
+# 3. Only start dev server after build succeeds
+npm run dev -- --host 0.0.0.0 --port 8011
 ```
+
+**⚠️ CRITICAL: Why `npm run build` instead of `tsc --noEmit`?**
+
+| Command | Catches TypeScript Errors | Catches ESM Errors | Fails Fast |
+|---------|--------------------------|-------------------|------------|
+| `tsc --noEmit` | ✅ | ❌ | ✅ |
+| `npm run dev` | ❌ | ❌ (only in browser) | ❌ |
+| `npm run build` | ✅ | ✅ | ✅ |
+
+Agent cannot see browser console errors, so `npm run build` is the only reliable way to catch ALL errors before starting dev server.
 
 ## Common Export Patterns
 

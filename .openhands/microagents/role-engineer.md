@@ -107,15 +107,21 @@ As the Software Engineer, you are responsible for:
 
 ### Validation Before Starting Dev Server
 
-**ALWAYS run type check before `npm run dev`:**
+**ALWAYS run `npm run build` before `npm run dev`:**
 
 ```bash
-# Step 1: Check for TypeScript errors
-npx tsc --noEmit
+# Step 1: Build to catch ALL errors (TypeScript + ESM)
+npm run build
 
-# Step 2: Only start dev server if no errors
-npm run dev -- --host 0.0.0.0 --port 5173
+# Step 2: Only start dev server if build succeeds
+npm run dev -- --host 0.0.0.0 --port 8011
 ```
+
+**⚠️ WHY `npm run build` instead of `tsc --noEmit`:**
+- `npm run dev` does NOT fail on TypeScript/ESM errors
+- Vite dev server starts successfully even with broken code
+- Errors only appear in browser (Agent cannot see browser console!)
+- `npm run build` catches ALL errors before runtime
 
 ### Common Export Errors to Avoid
 

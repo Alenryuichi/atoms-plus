@@ -126,24 +126,30 @@ export default function App() {
 }
 ```
 
-### Step 4: Install & Validate
+### Step 4: Install & Build (MANDATORY)
 
-⚠️ **CRITICAL - TypeScript Validation Before Running**:
+⚠️ **CRITICAL - MUST BUILD BEFORE DEV SERVER**:
+
+Vite's dev server does NOT catch TypeScript/ESM errors. You MUST run build first!
 
 ```bash
 npm install
 
-# ALWAYS run type check first!
-npx tsc --noEmit
+# MANDATORY: Run build to catch all errors
+npm run build
 
-# If there are errors, fix them before proceeding!
+# If build fails, FIX THE ERRORS before proceeding!
+# Common errors:
+# - "does not provide an export named 'X'" → Add `export` keyword
+# - "Module has no exported member 'X'" → Check export/import syntax
 ```
 
-**Common errors to watch for:**
-- `does not provide an export named 'X'` → Add `export` keyword to interface/type
-- `Module has no exported member 'X'` → Check export syntax
+**WHY THIS IS REQUIRED:**
+- `npm run dev` will START SUCCESSFULLY even with broken code
+- Errors only appear in browser console (Agent cannot see this!)
+- `npm run build` will FAIL FAST and show exact error location
 
-### Step 5: Run Dev Server
+### Step 5: Run Dev Server (only after build succeeds)
 
 ⚠️ **CRITICAL - MUST FOLLOW EXACTLY**:
 
