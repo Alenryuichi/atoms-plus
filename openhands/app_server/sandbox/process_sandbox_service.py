@@ -37,6 +37,14 @@ from openhands.app_server.sandbox.sandbox_models import (
     WORKER_10,
     WORKER_11,
     WORKER_12,
+    WORKER_13,
+    WORKER_14,
+    WORKER_15,
+    WORKER_16,
+    WORKER_17,
+    WORKER_18,
+    WORKER_19,
+    WORKER_20,
     ExposedUrl,
     SandboxInfo,
     SandboxPage,
@@ -70,6 +78,15 @@ WORKER_9_PORT = 5178  # Vite fallback 5
 WORKER_10_PORT = 5179  # Vite fallback 6
 WORKER_11_PORT = 5180  # Vite fallback 7
 WORKER_12_PORT = 3001  # Next.js fallback
+# Additional common ports that AI models often use
+WORKER_13_PORT = 3002  # Next.js fallback 2
+WORKER_14_PORT = 3456  # Common custom port (used by some AI)
+WORKER_15_PORT = 4000  # Common backend port
+WORKER_16_PORT = 4173  # Vite preview mode
+WORKER_17_PORT = 8000  # Python/Django default
+WORKER_18_PORT = 8080  # Common HTTP alt port
+WORKER_19_PORT = 8888  # Jupyter/common dev port
+WORKER_20_PORT = 9000  # Common alternative port
 
 
 class ProcessInfo(BaseModel):
@@ -386,6 +403,7 @@ class ProcessSandboxService(SandboxService):
                     # Include both explicit ports (8011, 8012) and common dev server defaults
                     # (5173-5180, 3000-3001) so users don't need to specify --port explicitly.
                     # Extended Vite fallback ports handle port drift when ports are occupied.
+                    # Additional ports (13-20) cover common custom ports used by AI models.
                     worker_ports = [
                         (WORKER_1, WORKER_1_PORT),
                         (WORKER_2, WORKER_2_PORT),
@@ -399,6 +417,14 @@ class ProcessSandboxService(SandboxService):
                         (WORKER_10, WORKER_10_PORT),
                         (WORKER_11, WORKER_11_PORT),
                         (WORKER_12, WORKER_12_PORT),
+                        (WORKER_13, WORKER_13_PORT),
+                        (WORKER_14, WORKER_14_PORT),
+                        (WORKER_15, WORKER_15_PORT),
+                        (WORKER_16, WORKER_16_PORT),
+                        (WORKER_17, WORKER_17_PORT),
+                        (WORKER_18, WORKER_18_PORT),
+                        (WORKER_19, WORKER_19_PORT),
+                        (WORKER_20, WORKER_20_PORT),
                     ]
 
                     exposed_urls = [
