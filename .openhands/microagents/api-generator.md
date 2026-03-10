@@ -9,6 +9,12 @@ triggers:
 - add endpoint
 - rest api
 - api route
+- 创建api
+- 创建接口
+- 接口
+- 端点
+- api接口
+- 后端接口
 ---
 
 # API Generator

@@ -7,6 +7,11 @@ triggers:
 - documentation
 - docs
 - document
+- 文档
+- 写文档
+- 编写文档
+- readme
+- 说明文档
 ---
 
 # Documentation Guidelines

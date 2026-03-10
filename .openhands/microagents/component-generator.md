@@ -9,6 +9,11 @@ triggers:
 - make component
 - build component
 - add component
+- 创建组件
+- 生成组件
+- 写组件
+- 添加组件
+- 新建组件
 ---
 
 # Component Generator

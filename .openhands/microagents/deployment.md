@@ -10,6 +10,11 @@ triggers:
 - netlify
 - publish
 - go live
+- 部署
+- 发布
+- 上线
+- 发布上线
+- 部署到
 ---
 
 # Deployment Assistant

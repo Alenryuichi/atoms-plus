@@ -10,6 +10,11 @@ triggers:
 - primevue
 - radix
 - design system
+- ui库
+- 组件库
+- 设计系统
+- ui组件
+- 界面库
 ---
 
 # UI Library Setup

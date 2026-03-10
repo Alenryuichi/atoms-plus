@@ -10,6 +10,12 @@ triggers:
 - login
 - signup
 - user authentication
+- 数据库
+- 认证
+- 登录
+- 注册
+- 用户认证
+- 用户登录
 ---
 
 # Supabase Integration
