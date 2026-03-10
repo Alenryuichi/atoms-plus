@@ -56,6 +56,8 @@ ENV SANDBOX_USER_ID=0
 ENV FILE_STORE=local
 ENV FILE_STORE_PATH=/.openhands
 ENV INIT_GIT_IN_EMPTY_WORKSPACE=1
+# CI=true makes most CLI tools (create-vite, create-next-app, etc.) run non-interactively
+ENV CI=true
 RUN mkdir -p $FILE_STORE_PATH
 RUN mkdir -p $WORKSPACE_BASE
 
