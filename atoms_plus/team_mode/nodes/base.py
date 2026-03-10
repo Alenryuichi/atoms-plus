@@ -46,21 +46,26 @@ def _load_user_settings() -> dict[str, Any]:
             current_mtime = settings_path.stat().st_mtime
 
             # Use cache if valid and file hasn't changed
-            if _settings_cache is not None and current_mtime == _settings_mtime:
-                return _settings_cache
+            cached = _settings_cache
+            if cached is not None and current_mtime == _settings_mtime:
+                return cached
 
             # Load fresh settings
             with open(settings_path) as f:
-                _settings_cache = json.load(f)
+                loaded: dict[str, Any] = json.load(f)
+                _settings_cache = loaded
                 _settings_mtime = current_mtime
                 logger.info('[Base] Loaded settings from ~/.openhands/settings.json')
-                return _settings_cache
+                return loaded
         except Exception as e:
             logger.warning(f'[Base] Failed to load settings.json: {e}')
+            _settings_cache = {}
+            _settings_mtime = 0.0
+            return {}
 
     _settings_cache = {}
     _settings_mtime = 0.0
-    return _settings_cache
+    return {}
 
 
 def _ensure_model_prefix(model: str, api_base: str) -> str:

@@ -32,6 +32,14 @@ WORKER_2 = 'WORKER_2'
 WORKER_3 = 'WORKER_3'
 WORKER_4 = 'WORKER_4'
 WORKER_5 = 'WORKER_5'
+# Extended worker ports for Vite port drift (5175-5180) and Next.js fallback
+WORKER_6 = 'WORKER_6'
+WORKER_7 = 'WORKER_7'
+WORKER_8 = 'WORKER_8'
+WORKER_9 = 'WORKER_9'
+WORKER_10 = 'WORKER_10'
+WORKER_11 = 'WORKER_11'
+WORKER_12 = 'WORKER_12'
 
 
 class SandboxInfo(BaseModel):

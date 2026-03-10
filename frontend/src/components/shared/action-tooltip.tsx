@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { IconCheck, IconX } from "@tabler/icons-react";
 import {
   Tooltip,
   TooltipContent,
@@ -39,14 +40,19 @@ export function ActionTooltip({ type, onClick }: ActionTooltipProps) {
             type="button"
             aria-label={ariaLabel}
             className={cn(
-              "rounded px-2 h-6.5 text-sm font-medium leading-5 cursor-pointer hover:opacity-80",
+              "flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg transition-colors shadow-sm font-medium",
               type === "confirm"
-                ? "bg-tertiary text-white"
-                : "bg-white text-[#0D0F11]",
+                ? "bg-emerald-500 hover:bg-emerald-400 text-white"
+                : "bg-neutral-800 hover:bg-neutral-700 text-white/80 hover:text-white",
             )}
             onClick={onClick}
           >
-            {buttonLabel}
+            {isConfirm ? (
+              <IconCheck size={16} stroke={2.5} />
+            ) : (
+              <IconX size={16} stroke={2} />
+            )}
+            <span className="text-sm">{buttonLabel}</span>
           </button>
         </TooltipTrigger>
         <TooltipContent>{content}</TooltipContent>

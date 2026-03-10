@@ -30,6 +30,13 @@ from openhands.app_server.sandbox.sandbox_models import (
     WORKER_3,
     WORKER_4,
     WORKER_5,
+    WORKER_6,
+    WORKER_7,
+    WORKER_8,
+    WORKER_9,
+    WORKER_10,
+    WORKER_11,
+    WORKER_12,
     ExposedUrl,
     SandboxInfo,
     SandboxPage,
@@ -52,8 +59,17 @@ WORKER_2_PORT = 8012
 # Additional common dev server ports (Vite defaults to 5173, Next.js to 3000)
 # These are auto-detected so users don't need to specify --port explicitly
 WORKER_3_PORT = 5173  # Vite default
-WORKER_4_PORT = 5174  # Vite fallback
+WORKER_4_PORT = 5174  # Vite fallback 1
 WORKER_5_PORT = 3000  # Next.js / Create React App default
+# Extended Vite fallback ports (5175-5180) to handle port drift when multiple
+# dev servers or previous processes occupy lower ports
+WORKER_6_PORT = 5175  # Vite fallback 2
+WORKER_7_PORT = 5176  # Vite fallback 3
+WORKER_8_PORT = 5177  # Vite fallback 4
+WORKER_9_PORT = 5178  # Vite fallback 5
+WORKER_10_PORT = 5179  # Vite fallback 6
+WORKER_11_PORT = 5180  # Vite fallback 7
+WORKER_12_PORT = 3001  # Next.js fallback
 
 
 class ProcessInfo(BaseModel):
@@ -72,6 +88,17 @@ class ProcessInfo(BaseModel):
 
 # Global store
 _processes: dict[str, ProcessInfo] = {}
+
+# Pre-warmed sandbox pool for instant allocation
+# Each entry is (sandbox_id, ProcessInfo) ready to be assigned
+_warm_pool: list[tuple[str, ProcessInfo]] = []
+_pool_lock = asyncio.Lock()
+
+# Pool configuration (can be overridden via environment variables)
+POOL_SIZE = int(os.getenv('OH_SANDBOX_POOL_SIZE', '1'))
+POOL_ENABLED = os.getenv('OH_SANDBOX_POOL_ENABLED', 'true').lower() == 'true'
+
+_logger.info(f'Agent Pool config: enabled={POOL_ENABLED}, size={POOL_SIZE}')
 
 
 @dataclass
@@ -197,12 +224,19 @@ class ProcessSandboxService(SandboxService):
         # for web applications (npm run dev, etc.). These match the ports exposed via
         # WORKER_* URLs in the sandbox's exposed_urls.
         # WORKER_1 (8011) is the recommended port for dev servers.
-        # WORKER_3-5 are common defaults that are auto-detected by the frontend.
+        # WORKER_3-12 cover common dev server defaults and Vite port drift scenarios.
         env[WORKER_1] = str(WORKER_1_PORT)
         env[WORKER_2] = str(WORKER_2_PORT)
         env[WORKER_3] = str(WORKER_3_PORT)
         env[WORKER_4] = str(WORKER_4_PORT)
         env[WORKER_5] = str(WORKER_5_PORT)
+        env[WORKER_6] = str(WORKER_6_PORT)
+        env[WORKER_7] = str(WORKER_7_PORT)
+        env[WORKER_8] = str(WORKER_8_PORT)
+        env[WORKER_9] = str(WORKER_9_PORT)
+        env[WORKER_10] = str(WORKER_10_PORT)
+        env[WORKER_11] = str(WORKER_11_PORT)
+        env[WORKER_12] = str(WORKER_12_PORT)
 
         # Prepare command arguments
         cmd = [
@@ -350,13 +384,21 @@ class ProcessSandboxService(SandboxService):
                     )
                     # Build WORKER URLs using the same pattern
                     # Include both explicit ports (8011, 8012) and common dev server defaults
-                    # (5173, 5174, 3000) so users don't need to specify --port explicitly
+                    # (5173-5180, 3000-3001) so users don't need to specify --port explicitly.
+                    # Extended Vite fallback ports handle port drift when ports are occupied.
                     worker_ports = [
                         (WORKER_1, WORKER_1_PORT),
                         (WORKER_2, WORKER_2_PORT),
                         (WORKER_3, WORKER_3_PORT),
                         (WORKER_4, WORKER_4_PORT),
                         (WORKER_5, WORKER_5_PORT),
+                        (WORKER_6, WORKER_6_PORT),
+                        (WORKER_7, WORKER_7_PORT),
+                        (WORKER_8, WORKER_8_PORT),
+                        (WORKER_9, WORKER_9_PORT),
+                        (WORKER_10, WORKER_10_PORT),
+                        (WORKER_11, WORKER_11_PORT),
+                        (WORKER_12, WORKER_12_PORT),
                     ]
 
                     exposed_urls = [
@@ -488,7 +530,32 @@ class ProcessSandboxService(SandboxService):
     async def start_sandbox(
         self, sandbox_spec_id: str | None = None, sandbox_id: str | None = None
     ) -> SandboxInfo:
-        """Start a new sandbox."""
+        """Start a new sandbox.
+
+        If pre-warming is enabled and a warm sandbox is available, it will be
+        used immediately (~0s startup). Otherwise, a new sandbox will be created
+        (~5s startup).
+        """
+        global _warm_pool
+
+        # Try to get a pre-warmed sandbox from the pool
+        if POOL_ENABLED and sandbox_id is None:
+            async with _pool_lock:
+                if _warm_pool:
+                    pool_sandbox_id, pool_process_info = _warm_pool.pop(0)
+                    _logger.info(
+                        f'Using pre-warmed sandbox {pool_sandbox_id} from pool '
+                        f'(pool size now: {len(_warm_pool)})'
+                    )
+                    # Register in the main process dict
+                    _processes[pool_sandbox_id] = pool_process_info
+                    # Schedule pool replenishment in the background
+                    asyncio.create_task(self._replenish_pool())
+                    return await self._process_to_sandbox_info(
+                        pool_sandbox_id, pool_process_info
+                    )
+
+        # No pre-warmed sandbox available, create a new one
         # Get sandbox spec
         if sandbox_spec_id is None:
             sandbox_spec = await self.sandbox_spec_service.get_default_sandbox_spec()
@@ -540,6 +607,104 @@ class ProcessSandboxService(SandboxService):
             raise SandboxError('Agent Server Failed to start properly')
 
         return await self._process_to_sandbox_info(sandbox_id, process_info)
+
+    async def _replenish_pool(self) -> None:
+        """Replenish the warm pool after a sandbox was taken."""
+        global _warm_pool
+
+        async with _pool_lock:
+            current_size = len(_warm_pool)
+            if current_size >= POOL_SIZE:
+                return
+
+        _logger.info(
+            f'Replenishing warm pool (current: {current_size}, target: {POOL_SIZE})'
+        )
+
+        try:
+            # Pre-warm a new sandbox
+            sandbox_id, process_info = await self._prewarm_sandbox()
+
+            async with _pool_lock:
+                _warm_pool.append((sandbox_id, process_info))
+                _logger.info(
+                    f'Added pre-warmed sandbox {sandbox_id} to pool '
+                    f'(pool size now: {len(_warm_pool)})'
+                )
+        except Exception as e:
+            _logger.warning(f'Failed to replenish warm pool: {e}')
+
+    async def _prewarm_sandbox(self) -> tuple[str, ProcessInfo]:
+        """Pre-warm a single sandbox (directory + agent process + wait for ready)."""
+        # Get default sandbox spec
+        sandbox_spec = await self.sandbox_spec_service.get_default_sandbox_spec()
+
+        # Generate unique sandbox ID and session API key
+        sandbox_id = base62.encodebytes(os.urandom(16))
+        session_api_key = base62.encodebytes(os.urandom(32))
+
+        # Find available port
+        port = self._find_unused_port()
+
+        # Create sandbox directory
+        working_dir = self._create_sandbox_directory(sandbox_id)
+
+        # Start the agent process
+        process = await self._start_agent_process(
+            sandbox_id=sandbox_id,
+            port=port,
+            working_dir=working_dir,
+            session_api_key=session_api_key,
+            sandbox_spec=sandbox_spec,
+        )
+
+        # Create process info
+        process_info = ProcessInfo(
+            pid=process.pid,
+            port=port,
+            user_id=self.user_id,
+            working_dir=working_dir,
+            session_api_key=session_api_key,
+            created_at=utc_now(),
+            sandbox_spec_id=sandbox_spec.id,
+        )
+
+        # Wait for server to be ready
+        if not await self._wait_for_server_ready(port, process=process):
+            # Clean up if server didn't start properly
+            try:
+                process.terminate()
+                process.wait(timeout=5)
+            except Exception:
+                pass
+            raise SandboxError('Pre-warmed agent server failed to start')
+
+        _logger.info(f'Pre-warmed sandbox {sandbox_id} is ready on port {port}')
+        return sandbox_id, process_info
+
+    async def warm_pool(self) -> int:
+        """Initialize the warm pool at startup. Returns number of sandboxes pre-warmed."""
+        global _warm_pool
+
+        if not POOL_ENABLED:
+            _logger.info('Sandbox pool pre-warming is disabled')
+            return 0
+
+        _logger.info(f'Starting sandbox pool pre-warming (target size: {POOL_SIZE})')
+
+        warmed = 0
+        for i in range(POOL_SIZE):
+            try:
+                sandbox_id, process_info = await self._prewarm_sandbox()
+                async with _pool_lock:
+                    _warm_pool.append((sandbox_id, process_info))
+                warmed += 1
+                _logger.info(f'Pre-warmed sandbox {i + 1}/{POOL_SIZE}: {sandbox_id}')
+            except Exception as e:
+                _logger.warning(f'Failed to pre-warm sandbox {i + 1}/{POOL_SIZE}: {e}')
+
+        _logger.info(f'Sandbox pool pre-warming complete: {warmed}/{POOL_SIZE} ready')
+        return warmed
 
     async def resume_sandbox(self, sandbox_id: str) -> bool:
         """Resume a paused sandbox."""

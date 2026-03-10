@@ -56,20 +56,35 @@ ENV SANDBOX_USER_ID=0
 ENV FILE_STORE=local
 ENV FILE_STORE_PATH=/.openhands
 ENV INIT_GIT_IN_EMPTY_WORKSPACE=1
+# CI=true makes most CLI tools (create-vite, create-next-app, etc.) run non-interactively
+ENV CI=true
 RUN mkdir -p $FILE_STORE_PATH
 RUN mkdir -p $WORKSPACE_BASE
 
 # CACHE_BUST: Change this value to force rebuild of apt-get layer
-ARG CACHE_BUST_APT=2026-03-04-add-git
+ARG CACHE_BUST_APT=2026-03-10-npm-yes-config
+# Install Node.js 22 LTS for ProcessSandboxService (RUNTIME=local)
+# Required for: npm create, npx, and other frontend dev commands
 RUN apt-get update -y \
-    && apt-get install -y curl ssh sudo tmux git \
+    && apt-get install -y curl ssh sudo tmux git ca-certificates gnupg \
+    # Install Node.js 22 LTS from NodeSource
+    && mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update -y \
+    && apt-get install -y nodejs \
     # Playwright/Chromium dependencies
     && apt-get install -y \
         libnss3 libnspr4 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 \
         libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 \
         libxfixes3 libxrandr2 libgbm1 libasound2 libpango-1.0-0 \
         libcairo2 libatspi2.0-0 libwayland-client0 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    # Configure npm to auto-confirm all prompts (skip "Ok to proceed?")
+    && npm config set yes true \
+    # Verify installations
+    && node --version && npm --version \
+    && echo "npm config yes=true (auto-confirm enabled)"
 
 # Default is 1000, but OSX is often 501
 RUN sed -i 's/^UID_MIN.*/UID_MIN 499/' /etc/login.defs

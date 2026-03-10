@@ -39,6 +39,12 @@ export function GenericEventMessageWrapper({
     success = getObservationResult(event);
   }
 
+  // Extract action type from V1 event (if it's an action event)
+  let actionType: string | undefined;
+  if ("action" in event && event.action && typeof event.action === "object") {
+    actionType = event.action.kind;
+  }
+
   return (
     <div>
       <GenericEventMessage
@@ -46,6 +52,7 @@ export function GenericEventMessageWrapper({
         details={details}
         success={success}
         initiallyExpanded={false}
+        actionType={actionType}
       />
       {isLastMessage && <V1ConfirmationButtons />}
     </div>

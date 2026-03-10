@@ -21,6 +21,9 @@ export function GenericEventMessageWrapper({
   event,
   shouldShowConfirmationButtons,
 }: GenericEventMessageWrapperProps) {
+  // Extract action type from event
+  const actionType = isOpenHandsAction(event) ? event.action : undefined;
+
   return (
     <div>
       {isOpenHandsAction(event) &&
@@ -37,6 +40,7 @@ export function GenericEventMessageWrapper({
             ? getObservationResult(event)
             : undefined
         }
+        actionType={actionType}
       />
 
       {shouldShowConfirmationButtons && <ConfirmationButtons />}

@@ -133,6 +133,8 @@ export function RuntimeBootstrapProgress({
         return t(I18nKey.RUNTIME$WAITING_SANDBOX);
       if (taskStatus === "INITIALIZING") return t(I18nKey.RUNTIME$INITIALIZING);
       if (taskStatus === "STARTING") return t(I18nKey.COMMON$STARTING);
+      // P0 Fix: Handle READY state during transition (WebSocket connecting)
+      if (taskStatus === "READY") return t(I18nKey.RUNTIME$CONNECTING);
     }
     return t(currentStage.labelKey);
   }, [taskStatus, currentStage.labelKey, t]);
