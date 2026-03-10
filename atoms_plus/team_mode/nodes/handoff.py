@@ -226,7 +226,7 @@ async def handoff_to_openhands(state: TeamState) -> TeamState:
             result = await send_message_to_openhands_v1(
                 sandbox_url=sandbox_url,
                 conversation_id=conversation_id,
-                session_api_key=sandbox_api_key,
+                session_api_key=sandbox_api_key or '',
                 message=message,
             )
         else:

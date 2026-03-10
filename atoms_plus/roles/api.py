@@ -297,7 +297,7 @@ async def auto_detect_role(request: AutoRouteRequest):
     # Default to engineer if no match
     if best_match is None or best_score < 0.1:
         role_id = 'role-engineer'
-        matched_keywords = []
+        matched_keywords: list[str] = []
         confidence = 0.5
         reason = 'Default role for general development tasks'
     else:
