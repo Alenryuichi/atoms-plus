@@ -205,7 +205,12 @@ def config_from_env() -> AppServerConfig:
             )
         elif os.getenv('RUNTIME') in ('local', 'e2b', 'modal', 'runloop'):
             # Use ProcessSandboxService for local, process, and other third-party runtimes
-            config.sandbox = ProcessSandboxServiceInjector()
+            process_sandbox_kwargs: dict = {}
+            if os.getenv('OH_SANDBOX_EXPOSED_URL_PATTERN'):
+                process_sandbox_kwargs['exposed_url_pattern'] = os.environ[
+                    'OH_SANDBOX_EXPOSED_URL_PATTERN'
+                ]
+            config.sandbox = ProcessSandboxServiceInjector(**process_sandbox_kwargs)
         else:
             # Support legacy environment variables for Docker sandbox configuration
             docker_sandbox_kwargs: dict = {}
