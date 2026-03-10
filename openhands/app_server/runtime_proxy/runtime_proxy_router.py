@@ -8,6 +8,11 @@ different ports.
 
 It also provides special handling for file operations (list-files, select-file)
 that are not directly supported by the agent server but are needed by the frontend.
+
+Additionally, it rewrites HTML responses to fix absolute paths. Dev servers like
+Vite generate HTML with absolute paths (e.g., src="/@vite/client"), which break
+when accessed through the /runtime/{port}/ proxy. This module rewrites these
+paths to include the correct proxy prefix.
 """
 
 from __future__ import annotations
@@ -15,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import re
 
 import httpx
 from fastapi import (
@@ -25,7 +31,7 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 _logger = logging.getLogger(__name__)
 
@@ -46,8 +52,58 @@ FILES_TO_IGNORE = {
 }
 
 
-async def _forward_request(request: Request, port: int, path: str) -> StreamingResponse:
-    """Forward an HTTP request to the agent server running on the specified port."""
+def _rewrite_html_paths(html_content: str, port: int) -> str:
+    """Rewrite absolute paths in HTML to include the runtime proxy prefix.
+
+    Dev servers like Vite, Webpack, and Next.js generate HTML with absolute paths
+    (e.g., src="/@vite/client", href="/styles.css"). When accessed through the
+    /runtime/{port}/ proxy, these paths break because the browser requests them
+    from the root domain instead of the proxied path.
+
+    This function rewrites:
+      src="/"  -> src="/runtime/{port}/"
+      href="/" -> href="/runtime/{port}/"
+      url(/)   -> url(/runtime/{port}/)  (for inline CSS)
+
+    Note: We only rewrite paths that start with "/" but not "//" (protocol-relative URLs).
+    """
+    prefix = f'/runtime/{port}'
+
+    # Pattern to match src="/" or src='/' (but not src="//")
+    # Captures: attribute name, quote char, path
+    html_content = re.sub(
+        r'(src|href)=(["\'])(/(?!/))([^"\']*)',
+        rf'\1=\2{prefix}\3\4',
+        html_content,
+    )
+
+    # Also handle inline scripts that set base URLs (common in Vite HMR)
+    # e.g., __VITE_BASE__ = "/" -> __VITE_BASE__ = "/runtime/{port}/"
+    html_content = re.sub(
+        r'(["\'])(/(?!/))(["\'])',
+        rf'\1{prefix}\2\3',
+        html_content,
+    )
+
+    return html_content
+
+
+def _is_html_response(content_type: str | None) -> bool:
+    """Check if the response content type indicates HTML."""
+    if not content_type:
+        return False
+    return 'text/html' in content_type.lower()
+
+
+async def _forward_request(
+    request: Request, port: int, path: str
+) -> StreamingResponse | Response:
+    """Forward an HTTP request to the agent server running on the specified port.
+
+    For HTML responses, this function rewrites absolute paths to include the
+    /runtime/{port}/ prefix, allowing dev servers like Vite to work correctly
+    through the proxy.
+    """
     target_url = f'http://localhost:{port}/{path}'
 
     # Copy query string
@@ -86,7 +142,28 @@ async def _forward_request(request: Request, port: int, path: str) -> StreamingR
                 timeout=180.0,  # 3 minutes for long LLM operations
             )
 
-            # Stream the response back
+            content_type = response.headers.get('content-type')
+
+            # For HTML responses, rewrite absolute paths to include proxy prefix
+            if _is_html_response(content_type):
+                html_content = response.text
+                rewritten_html = _rewrite_html_paths(html_content, port)
+
+                # Build response headers, excluding content-length (will be recalculated)
+                response_headers = {
+                    k: v
+                    for k, v in response.headers.items()
+                    if k.lower() != 'content-length'
+                }
+
+                return Response(
+                    content=rewritten_html,
+                    status_code=response.status_code,
+                    headers=response_headers,
+                    media_type=content_type,
+                )
+
+            # For non-HTML responses, stream as-is
             async def generate():
                 async for chunk in response.aiter_bytes():
                     yield chunk
@@ -95,7 +172,7 @@ async def _forward_request(request: Request, port: int, path: str) -> StreamingR
                 generate(),
                 status_code=response.status_code,
                 headers=dict(response.headers),
-                media_type=response.headers.get('content-type'),
+                media_type=content_type,
             )
         except httpx.ConnectError:
             _logger.error(f'Cannot connect to agent server on port {port}')
