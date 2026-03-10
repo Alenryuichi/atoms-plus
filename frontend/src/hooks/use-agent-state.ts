@@ -10,7 +10,10 @@ import { V1ExecutionStatus } from "#/types/v1/core/base/common";
  */
 function mapV1StatusToV0State(status: V1ExecutionStatus | null): AgentState {
   if (!status) {
-    return AgentState.LOADING;
+    // When status is null (initial state or WebSocket not connected),
+    // return AWAITING_USER_INPUT to allow user interaction.
+    // Previously returned LOADING which disabled the input box.
+    return AgentState.AWAITING_USER_INPUT;
   }
 
   switch (status) {

@@ -45,7 +45,13 @@ export const useUnifiedActiveHost = () => {
         const workerUrls =
           sandbox.exposed_urls
             ?.filter((url) => url.name.startsWith("WORKER_"))
-            .map((url) => url.url) || [];
+            .map((url) => {
+              // Ensure URLs end with trailing slash to avoid Railway edge routing issues.
+              // Without trailing slash, Railway may serve the SPA fallback HTML instead
+              // of proxying to the actual dev server.
+              const baseUrl = url.url;
+              return baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+            }) || [];
 
         return { hosts: workerUrls };
       }
