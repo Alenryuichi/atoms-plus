@@ -40,7 +40,7 @@ INFER from context (use defaults if not specified):
 Use Vite for the fastest setup:
 
 ```bash
-npm create vite@latest my-app -- --template react-ts
+npm create vite@latest my-app -- --template react-ts --no-interactive
 cd my-app
 
 npm install -D tailwindcss postcss autoprefixer

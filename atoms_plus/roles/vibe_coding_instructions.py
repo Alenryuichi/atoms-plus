@@ -34,7 +34,7 @@ VIBE_CODING_INSTRUCTIONS = """
    - Follow the project structure defined below
 
 2. WORKFLOW (Execute in order):
-   Step 1: Create project with `npm create vite@latest app -- --template react-ts`
+   Step 1: Create project with `npm create vite@latest app -- --template react-ts --no-interactive`
    Step 2: Set up Tailwind CSS
    Step 3: Implement ALL entities and features from the PROJECT GRAPH
    Step 4: Run `npm install && npm run dev`
