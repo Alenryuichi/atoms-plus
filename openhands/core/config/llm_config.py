@@ -57,9 +57,9 @@ class LLMConfig(BaseModel):
         completion_kwargs: Custom kwargs to pass to litellm.completion.
     """
 
-    model: str = Field(default='claude-opus-4-5-20251101')
+    model: str = Field(default='openai/MiniMax-M2.5')
     api_key: SecretStr | None = Field(default=None)
-    base_url: str | None = Field(default=None)
+    base_url: str | None = Field(default='https://coding.dashscope.aliyuncs.com/v1')
     api_version: str | None = Field(default=None)
     aws_access_key_id: SecretStr | None = Field(default=None)
     aws_secret_access_key: SecretStr | None = Field(default=None)
