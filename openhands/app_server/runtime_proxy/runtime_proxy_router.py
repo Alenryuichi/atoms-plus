@@ -88,6 +88,48 @@ def _rewrite_html_paths(html_content: str, port: int) -> str:
     return html_content
 
 
+def _rewrite_js_paths(js_content: str, port: int) -> str:
+    """Rewrite absolute paths in JavaScript modules to include the runtime proxy prefix.
+
+    Vite and other bundlers generate JavaScript modules with absolute import paths like:
+      import foo from "/node_modules/.vite/deps/react.js"
+      import "/src/index.css"
+
+    When the HTML is loaded from /runtime/{port}/, these absolute paths break because
+    the browser requests them from the root domain. This function rewrites:
+      from "/..."  -> from "/runtime/{port}/..."
+      import "/..." -> import "/runtime/{port}/..."
+
+    Note: We only rewrite paths that start with "/" but not "//" (protocol-relative URLs).
+    """
+    prefix = f'/runtime/{port}'
+
+    # Rewrite ES module imports: from "/path" or from '/path'
+    # Matches: from "/node_modules/..." or from '/src/...'
+    js_content = re.sub(
+        r'from\s+(["\'])(/(?!/))([^"\']*)\1',
+        rf'from \1{prefix}\2\3\1',
+        js_content,
+    )
+
+    # Rewrite dynamic imports: import("/path") or import('/path')
+    js_content = re.sub(
+        r'import\s*\(\s*(["\'])(/(?!/))([^"\']*)\1\s*\)',
+        rf'import(\1{prefix}\2\3\1)',
+        js_content,
+    )
+
+    # Rewrite bare string imports (Vite uses these for CSS):
+    # import "/src/index.css"
+    js_content = re.sub(
+        r'import\s+(["\'])(/(?!/))([^"\']*)\1',
+        rf'import \1{prefix}\2\3\1',
+        js_content,
+    )
+
+    return js_content
+
+
 def _is_html_response(content_type: str | None) -> bool:
     """Check if the response content type indicates HTML."""
     if not content_type:
@@ -95,14 +137,31 @@ def _is_html_response(content_type: str | None) -> bool:
     return 'text/html' in content_type.lower()
 
 
+def _is_js_response(content_type: str | None) -> bool:
+    """Check if the response content type indicates JavaScript."""
+    if not content_type:
+        return False
+    ct_lower = content_type.lower()
+    return any(
+        t in ct_lower
+        for t in (
+            'text/javascript',
+            'application/javascript',
+            'application/x-javascript',
+            'text/ecmascript',
+            'application/ecmascript',
+        )
+    )
+
+
 async def _forward_request(
     request: Request, port: int, path: str
 ) -> StreamingResponse | Response:
     """Forward an HTTP request to the agent server running on the specified port.
 
-    For HTML responses, this function rewrites absolute paths to include the
-    /runtime/{port}/ prefix, allowing dev servers like Vite to work correctly
-    through the proxy.
+    For HTML and JavaScript responses, this function rewrites absolute paths to
+    include the /runtime/{port}/ prefix, allowing dev servers like Vite to work
+    correctly through the proxy.
     """
     target_url = f'http://localhost:{port}/{path}'
 
@@ -163,7 +222,26 @@ async def _forward_request(
                     media_type=content_type,
                 )
 
-            # For non-HTML responses, stream as-is
+            # For JavaScript responses, rewrite import paths to include proxy prefix
+            if _is_js_response(content_type):
+                js_content = response.text
+                rewritten_js = _rewrite_js_paths(js_content, port)
+
+                # Build response headers, excluding content-length (will be recalculated)
+                response_headers = {
+                    k: v
+                    for k, v in response.headers.items()
+                    if k.lower() != 'content-length'
+                }
+
+                return Response(
+                    content=rewritten_js,
+                    status_code=response.status_code,
+                    headers=response_headers,
+                    media_type=content_type,
+                )
+
+            # For non-HTML/JS responses, stream as-is
             async def generate():
                 async for chunk in response.aiter_bytes():
                     yield chunk
