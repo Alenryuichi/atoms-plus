@@ -68,7 +68,8 @@ WORKER_2_PORT = 8012
 # These are auto-detected so users don't need to specify --port explicitly
 WORKER_3_PORT = 5173  # Vite default
 WORKER_4_PORT = 5174  # Vite fallback 1
-WORKER_5_PORT = 3000  # Next.js / Create React App default
+# NOTE: Avoid 3000 and 8080 - they are used by Railway edge servers
+WORKER_5_PORT = 3003  # Next.js / Create React App (avoiding Railway's 3000)
 # Extended Vite fallback ports (5175-5180) to handle port drift when multiple
 # dev servers or previous processes occupy lower ports
 WORKER_6_PORT = 5175  # Vite fallback 2
@@ -83,8 +84,8 @@ WORKER_13_PORT = 3002  # Next.js fallback 2
 WORKER_14_PORT = 3456  # Common custom port (used by some AI)
 WORKER_15_PORT = 4000  # Common backend port
 WORKER_16_PORT = 4173  # Vite preview mode
-WORKER_17_PORT = 8000  # Python/Django default
-WORKER_18_PORT = 8080  # Common HTTP alt port
+WORKER_17_PORT = 8001  # Python/Django (avoiding Railway's 8000)
+WORKER_18_PORT = 8081  # Common HTTP alt port (avoiding Railway's 8080)
 WORKER_19_PORT = 8888  # Jupyter/common dev port
 WORKER_20_PORT = 9000  # Common alternative port
 
@@ -447,7 +448,8 @@ class ProcessSandboxService(SandboxService):
                     )
                     # Build WORKER URLs using the same pattern
                     # Include both explicit ports (8011, 8012) and common dev server defaults
-                    # (5173-5180, 3000-3001) so users don't need to specify --port explicitly.
+                    # (5173-5180, 3001-3003) so users don't need to specify --port explicitly.
+                    # NOTE: Avoid 3000/8000/8080 - they are used by Railway edge servers.
                     # Extended Vite fallback ports handle port drift when ports are occupied.
                     # Additional ports (13-20) cover common custom ports used by AI models.
                     worker_ports = [
