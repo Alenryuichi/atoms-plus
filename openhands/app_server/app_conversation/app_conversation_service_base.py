@@ -359,8 +359,10 @@ class AppConversationServiceBase(AppConversationService, ABC):
 
         # Check if there's an existing pre-commit hook
         with tempfile.TemporaryFile(mode='w+t') as temp_file:
-            result = workspace.file_download(PRE_COMMIT_HOOK, str(temp_file))
-            if result.get('success'):
+            download_result = await workspace.file_download(
+                PRE_COMMIT_HOOK, str(temp_file)
+            )
+            if download_result.success:
                 _logger.info('Preserving existing pre-commit hook')
                 # an existing pre-commit hook exists
                 if 'This hook was installed by OpenHands' not in temp_file.read():
@@ -369,12 +371,12 @@ class AppConversationServiceBase(AppConversationService, ABC):
                         f'mv {PRE_COMMIT_HOOK} {PRE_COMMIT_LOCAL} &&'
                         f'chmod +x {PRE_COMMIT_LOCAL}'
                     )
-                    result = await workspace.execute_command(
+                    exec_result = await workspace.execute_command(
                         command, workspace.working_dir
                     )
-                    if result.exit_code != 0:
+                    if exec_result.exit_code != 0:
                         _logger.error(
-                            f'Failed to preserve existing pre-commit hook: {result.stderr}',
+                            f'Failed to preserve existing pre-commit hook: {exec_result.stderr}',
                         )
                         return
 

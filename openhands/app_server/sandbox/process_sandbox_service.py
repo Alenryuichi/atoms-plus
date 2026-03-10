@@ -156,15 +156,62 @@ class ProcessSandboxService(SandboxService):
                 port += 1
         raise SandboxError('No available ports found')
 
+    def _copy_openhands_directory(self, sandbox_dir: str) -> None:
+        """Copy .openhands directory from project root to sandbox.
+
+        This enables the agent server to load project-specific microagents/skills
+        from the sandbox directory, following OpenHands' native design where
+        skills are loaded from the working directory's .openhands/microagents/.
+
+        The source directory is determined by:
+        1. OH_PROJECT_ROOT environment variable (if set)
+        2. Current working directory (fallback)
+        """
+        import shutil
+
+        # Determine source project root
+        project_root = os.getenv('OH_PROJECT_ROOT', os.getcwd())
+        source_openhands = os.path.join(project_root, '.openhands')
+
+        if not os.path.isdir(source_openhands):
+            _logger.debug(
+                f'No .openhands directory found at {source_openhands}, '
+                'skipping microagents copy'
+            )
+            return
+
+        dest_openhands = os.path.join(sandbox_dir, '.openhands')
+
+        # Skip if already exists (e.g., sandbox reuse)
+        if os.path.exists(dest_openhands):
+            _logger.debug(
+                f'.openhands directory already exists in sandbox at {dest_openhands}'
+            )
+            return
+
+        try:
+            shutil.copytree(source_openhands, dest_openhands)
+            _logger.info(
+                f'Copied .openhands directory to sandbox: '
+                f'{source_openhands} -> {dest_openhands}'
+            )
+        except Exception as e:
+            _logger.warning(f'Failed to copy .openhands directory to sandbox: {e}')
+
     def _create_sandbox_directory(self, sandbox_id: str) -> str:
         """Create a dedicated directory for the sandbox and initialize git.
 
         This ensures each sandbox has:
         1. A dedicated working directory for file isolation
         2. A git repository initialized for the 'Changes' tab to work
+        3. Project microagents copied for skill loading
         """
         sandbox_dir = os.path.join(self.base_working_dir, sandbox_id)
         os.makedirs(sandbox_dir, exist_ok=True)
+
+        # Copy .openhands directory from project root if it exists
+        # This allows the agent server to load project-specific microagents/skills
+        self._copy_openhands_directory(sandbox_dir)
 
         # Initialize git repository if git is available
         # This is required for the frontend "Changes" tab to work
@@ -218,7 +265,6 @@ class ProcessSandboxService(SandboxService):
         sandbox_spec: SandboxSpecInfo,
     ) -> subprocess.Popen:
         """Start the agent server process."""
-
         # Prepare environment variables
         env = os.environ.copy()
         env.update(sandbox_spec.initial_env)
