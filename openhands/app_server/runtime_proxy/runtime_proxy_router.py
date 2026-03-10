@@ -64,6 +64,7 @@ def _rewrite_html_paths(html_content: str, port: int) -> str:
       src="/"  -> src="/runtime/{port}/"
       href="/" -> href="/runtime/{port}/"
       url(/)   -> url(/runtime/{port}/)  (for inline CSS)
+      import ... from "/..." -> import ... from "/runtime/{port}/..."  (inline scripts)
 
     Note: We only rewrite paths that start with "/" but not "//" (protocol-relative URLs).
     """
@@ -77,11 +78,20 @@ def _rewrite_html_paths(html_content: str, port: int) -> str:
         html_content,
     )
 
-    # Also handle inline scripts that set base URLs (common in Vite HMR)
-    # e.g., __VITE_BASE__ = "/" -> __VITE_BASE__ = "/runtime/{port}/"
+    # Handle inline scripts with ES module imports (common in Vite HMR)
+    # e.g., import { foo } from "/@react-refresh"; -> import { foo } from "/runtime/5173/@react-refresh";
+    # Rewrite: from "/..." patterns in inline scripts
     html_content = re.sub(
-        r'(["\'])(/(?!/))(["\'])',
-        rf'\1{prefix}\2\3',
+        r'from\s+(["\'])(/(?!/))([^"\']*)\1',
+        rf'from \1{prefix}\2\3\1',
+        html_content,
+    )
+
+    # Also handle bare string imports in inline scripts
+    # e.g., import "/src/index.css"; -> import "/runtime/5173/src/index.css";
+    html_content = re.sub(
+        r'import\s+(["\'])(/(?!/))([^"\']*)\1',
+        rf'import \1{prefix}\2\3\1',
         html_content,
     )
 
