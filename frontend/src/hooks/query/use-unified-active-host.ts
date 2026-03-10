@@ -7,11 +7,14 @@ import { useRuntimeIsReady } from "#/hooks/use-runtime-is-ready";
 import { useActiveConversation } from "#/hooks/query/use-active-conversation";
 import { useBatchSandboxes } from "./use-batch-sandboxes";
 import { useConversationConfig } from "./use-conversation-config";
+import { useEventStore } from "#/stores/use-event-store";
+import { extractPortsFromEvents } from "#/utils/extract-ports-from-events";
 
 /**
  * Unified hook to get active web host for both legacy (V0) and V1 conversations
  * - V0: Uses the legacy getWebHosts API endpoint and polls them
  * - V1: Gets worker URLs from sandbox exposed_urls (WORKER_1, WORKER_2, etc.)
+ *       + dynamically detected ports from conversation messages
  */
 export const useUnifiedActiveHost = () => {
   const [activeHost, setActiveHost] = React.useState<string | null>(null);
@@ -24,14 +27,30 @@ export const useUnifiedActiveHost = () => {
   const isV1Conversation = conversation?.conversation_version === "V1";
   const sandboxId = conversationConfig?.runtime_id;
 
+  // Get events from store for dynamic port detection
+  const events = useEventStore((state) => state.events);
+
+  // Extract ports mentioned in conversation (memoized)
+  const dynamicPorts = React.useMemo(
+    () => extractPortsFromEvents(events, 50),
+    [events],
+  );
+
   // Fetch sandbox data for V1 conversations
   const sandboxesQuery = useBatchSandboxes(sandboxId ? [sandboxId] : []);
 
   // Get worker URLs from V1 sandbox or legacy web hosts from V0
   const { data, isLoading: hostsQueryLoading } = useQuery({
-    queryKey: [conversationId, "unified", "hosts", isV1Conversation, sandboxId],
+    queryKey: [
+      conversationId,
+      "unified",
+      "hosts",
+      isV1Conversation,
+      sandboxId,
+      dynamicPorts.join(","),
+    ],
     queryFn: async () => {
-      // V1: Get worker URLs from sandbox exposed_urls
+      // V1: Get worker URLs from sandbox exposed_urls + dynamic ports
       if (isV1Conversation) {
         if (
           !sandboxesQuery.data ||
@@ -42,18 +61,34 @@ export const useUnifiedActiveHost = () => {
         }
 
         const sandbox = sandboxesQuery.data[0];
+
+        // Get backend URL base from any exposed URL
+        const anyUrl = sandbox.exposed_urls?.[0]?.url || "";
+        const urlBase = anyUrl.replace(/\/runtime\/\d+\/?$/, "");
+
+        // Start with worker URLs from backend
         const workerUrls =
           sandbox.exposed_urls
             ?.filter((url) => url.name.startsWith("WORKER_"))
             .map((url) => {
-              // Ensure URLs end with trailing slash to avoid Railway edge routing issues.
-              // Without trailing slash, Railway may serve the SPA fallback HTML instead
-              // of proxying to the actual dev server.
               const baseUrl = url.url;
               return baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
             }) || [];
 
-        return { hosts: workerUrls };
+        // Add dynamically detected ports (not already in worker URLs)
+        const existingPorts = new Set(
+          workerUrls.map((url) => {
+            const match = url.match(/\/runtime\/(\d+)/);
+            return match ? parseInt(match[1], 10) : 0;
+          }),
+        );
+
+        const dynamicUrls = dynamicPorts
+          .filter((port) => !existingPorts.has(port))
+          .map((port) => `${urlBase}/runtime/${port}/`);
+
+        // Dynamic ports first (more likely to be correct), then fallback to backend list
+        return { hosts: [...dynamicUrls, ...workerUrls] };
       }
 
       // V0 (Legacy): Use the legacy API endpoint
