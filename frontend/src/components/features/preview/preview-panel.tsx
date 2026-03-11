@@ -15,6 +15,13 @@ import {
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { IconFileCode } from "@tabler/icons-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "#/components/ui/select";
 import { I18nKey } from "#/i18n/declaration";
 import { useWorkspaceFiles } from "#/hooks/query/use-workspace-files";
 import { useWorkspaceFileContent } from "#/hooks/query/use-workspace-file-content";
@@ -258,9 +265,53 @@ function PreviewPanelComponent(
     );
   }
 
+  // Get display name for file (show only filename, not full path)
+  const getDisplayFileName = (filePath: string) => {
+    const parts = filePath.split("/");
+    return parts[parts.length - 1] || filePath;
+  };
+
   return (
     <div className="h-full w-full flex flex-col bg-transparent relative">
-      {/* Sandpack Preview - clean content area without toolbar */}
+      {/* File selector toolbar */}
+      {files && files.length > 0 && (
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10 bg-neutral-900/50">
+          <IconFileCode size={16} className="text-amber-500/70" />
+          <Select
+            value={selectedFile || undefined}
+            onValueChange={(value) => setSelectedFile(value)}
+          >
+            <SelectTrigger className="h-8 w-auto min-w-[200px] max-w-[400px] bg-black/40 border-white/10 text-sm text-neutral-200 hover:border-amber-500/30 focus:ring-amber-500/20">
+              <SelectValue placeholder={t(I18nKey.PREVIEW$SELECT_FILE)}>
+                {selectedFile ? getDisplayFileName(selectedFile) : undefined}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="bg-neutral-900 border-white/10 max-h-[300px]">
+              {files.map((file) => (
+                <SelectItem
+                  key={file}
+                  value={file}
+                  className="text-sm text-neutral-200 hover:bg-amber-500/10 focus:bg-amber-500/10 cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="text-neutral-500 text-xs truncate max-w-[150px]">
+                      {file.includes("/")
+                        ? file.substring(0, file.lastIndexOf("/") + 1)
+                        : ""}
+                    </span>
+                    <span>{getDisplayFileName(file)}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-neutral-500">
+            {files.length} {files.length === 1 ? "file" : "files"}
+          </span>
+        </div>
+      )}
+
+      {/* Sandpack Preview - content area */}
       <div className="flex-1 overflow-hidden h-full">
         <AnimatePresence mode="wait">
           {isLoadingFiles ? (
