@@ -198,11 +198,7 @@ export function ChatInterface() {
   // - We have an optimistic user message (user just submitted from home page)
   // - WebSocket is still connecting or loading history
   const isTransitioningFromTask =
-    !isTask &&
-    !userEventsExist &&
-    !!optimisticUserMessage &&
-    (conversationWebSocket?.isLoadingHistory ||
-      conversationWebSocket?.connectionState !== "OPEN");
+    !isTask && !userEventsExist && !!optimisticUserMessage;
 
   const handleSendMessage = async (
     content: string,
