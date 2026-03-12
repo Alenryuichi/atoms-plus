@@ -257,7 +257,8 @@ async def _forward_request(
                     media_type=content_type,
                 )
 
-            # For non-HTML/JS responses, stream as-is
+            # For non-HTML/JS responses, stream the decoded bytes.
+            # httpx auto-decompresses, so we must strip stale encoding headers.
             async def generate():
                 async for chunk in response.aiter_bytes():
                     yield chunk
@@ -265,7 +266,7 @@ async def _forward_request(
             return StreamingResponse(
                 generate(),
                 status_code=response.status_code,
-                headers=dict(response.headers),
+                headers=_build_rewritten_response_headers(response.headers),
                 media_type=content_type,
             )
         except httpx.ConnectError:

@@ -26,7 +26,6 @@ const EXCLUDED_PORTS = new Set([
   22, // SSH
   80, // HTTP (usually external)
   443, // HTTPS (usually external)
-  8001, // OpenHands agent server
 ]);
 
 /**
@@ -62,6 +61,8 @@ export interface ExtractedPreviewCandidate {
 
 const EXPLICIT_PREVIEW_PATTERNS = [
   /(?:页面预览地址|预览地址|preview\s*(?:url|address)?|app\s*url)\s*[:：]\s*(https?:\/\/[^\s"'`<>]+)/gi,
+  /(?:preview|landing\s*page|app|site)\s+(?:is\s+)?(?:available|running|live|served|accessible)\s+(?:at|on)\s*[:：]?\s*(https?:\/\/[^\s"'`<>]+)/gi,
+  /(?:dev\s*server|server)\s+(?:is\s+)?(?:running|listening|started|ready|available)\s+(?:at|on)\s*[:：]?\s*(https?:\/\/[^\s"'`<>]+)/gi,
 ];
 
 const LOCAL_URL_PATTERN =

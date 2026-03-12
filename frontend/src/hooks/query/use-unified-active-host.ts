@@ -31,9 +31,11 @@ interface HostCandidate {
 const ensureTrailingSlash = (url: string): string =>
   url.endsWith("/") ? url : `${url}/`;
 
-const getRuntimeBase = (exposedUrl: string): string => {
+// Returns the path prefix before /runtime/{port}, or null when no worker
+// URLs are available.  "" is a valid return (means "proxy at current origin").
+const getRuntimeBase = (exposedUrl: string): string | null => {
   const trimmed = exposedUrl.replace(/\/runtime\/\d+\/?$/, "");
-  return trimmed;
+  return trimmed; // "" for relative /runtime/PORT, longer prefix for nested proxies
 };
 
 const runtimeHostForPort = (runtimeBase: string, port: number): string =>
@@ -41,21 +43,34 @@ const runtimeHostForPort = (runtimeBase: string, port: number): string =>
 
 const toRuntimeHostFromPreview = (
   previewUrl: string,
-  runtimeBase: string,
+  runtimeBase: string | null,
   port: number | null,
 ): string => {
-  if (runtimeBase && port) {
+  // When we have a known runtime proxy base AND a port, always route through
+  // the proxy to avoid cross-origin issues with direct localhost URLs.
+  if (runtimeBase !== null && port) {
     return runtimeHostForPort(runtimeBase, port);
   }
 
   try {
     const parsed = new URL(previewUrl);
     const runtimePortMatch = parsed.pathname.match(/\/runtime\/(\d{2,5})\/?$/);
-    if (runtimeBase && runtimePortMatch) {
+    if (runtimeBase !== null && runtimePortMatch) {
       return runtimeHostForPort(
         runtimeBase,
         Number.parseInt(runtimePortMatch[1], 10),
       );
+    }
+    // If the preview URL is a local address and we have a runtime proxy,
+    // extract the port and route through the proxy.
+    if (runtimeBase !== null) {
+      const localPortMatch = parsed.port;
+      if (localPortMatch) {
+        return runtimeHostForPort(
+          runtimeBase,
+          Number.parseInt(localPortMatch, 10),
+        );
+      }
     }
     return ensureTrailingSlash(parsed.origin);
   } catch {
@@ -206,7 +221,7 @@ export const useUnifiedActiveHost = () => {
           "";
         const runtimeBase = runtimeBaseSource
           ? getRuntimeBase(runtimeBaseSource)
-          : "";
+          : null;
 
         previewUrlCandidates.forEach((candidate) => {
           candidates.push({
@@ -220,7 +235,14 @@ export const useUnifiedActiveHost = () => {
           });
         });
 
-        if (sandbox.primary_preview_url) {
+        // Only use static backend URLs when we have no fresh event evidence.
+        // Once the agent reports a concrete preview URL or port, static
+        // worker/primary URLs become stale and may point to the wrong port.
+        if (
+          sandbox.primary_preview_url &&
+          !hasFreshPreviewEvidence &&
+          !hasFreshDynamicPortEvidence
+        ) {
           candidates.push({
             host: ensureTrailingSlash(sandbox.primary_preview_url),
             source: "primary_preview_url",
@@ -228,7 +250,6 @@ export const useUnifiedActiveHost = () => {
           });
         }
 
-        // Start with worker URLs from backend
         if (!hasFreshDevRun) {
           for (const exposed of workerExposed) {
             candidates.push({
@@ -243,7 +264,7 @@ export const useUnifiedActiveHost = () => {
         const existingHosts = new Set(
           candidates.map((candidate) => candidate.host),
         );
-        if (runtimeBase) {
+        if (runtimeBase !== null) {
           dynamicPortCandidates.forEach((candidate) => {
             const dynamicUrl = ensureTrailingSlash(
               `${runtimeBase}/runtime/${candidate.port}`,

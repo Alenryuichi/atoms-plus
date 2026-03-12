@@ -58,7 +58,7 @@ export function ChatInputContainer({
     <div
       ref={chatContainerRef}
       className={cn(
-        "relative flex w-full flex-col items-start justify-center overflow-hidden rounded-[24px] border border-white/10 bg-black/20 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all duration-200 ease-out",
+        "relative flex w-full flex-col items-start justify-center rounded-[24px] border border-white/10 bg-black/20 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all duration-200 ease-out",
         "focus-within:border-white/20 focus-within:bg-black/25",
         disabled && "opacity-80",
       )}

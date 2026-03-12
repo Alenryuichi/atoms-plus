@@ -1,5 +1,4 @@
 import { AgentStatus } from "#/components/features/controls/agent-status";
-import { Tools } from "../../controls/tools";
 import { useUnifiedPauseConversationSandbox } from "#/hooks/mutation/use-unified-stop-conversation";
 import { useConversationId } from "#/hooks/use-conversation-id";
 import { useActiveConversation } from "#/hooks/query/use-active-conversation";
@@ -58,7 +57,6 @@ export function ChatInputActions({
     <div className="w-full flex items-center justify-between">
       <div className="flex items-center gap-1 text-white/65">
         <div className="flex items-center gap-3">
-          <Tools />
           <ChangeAgentButton />
         </div>
       </div>

@@ -14,7 +14,7 @@ import { useEffect, useState, useMemo } from "react";
 import { I18nKey } from "#/i18n/declaration";
 import type { RuntimeStatus } from "#/types/runtime-status";
 
-// 启动阶段配置
+// Runtime status → progress (used after WebSocket is connected)
 const BOOTSTRAP_STAGES = [
   { key: "STATUS$STOPPED", progress: 0, labelKey: I18nKey.COMMON$STARTING },
   {
@@ -75,6 +75,18 @@ const BOOTSTRAP_STAGES = [
   { key: "STATUS$READY", progress: 100, labelKey: I18nKey.COMMON$READY },
 ];
 
+// Task polling status → progress (used before the real conversation exists)
+const TASK_STATUS_PROGRESS: Record<string, number> = {
+  WORKING: 5,
+  WAITING_FOR_SANDBOX: 15,
+  PREPARING_REPOSITORY: 30,
+  RUNNING_SETUP_SCRIPT: 45,
+  SETTING_UP_GIT_HOOKS: 60,
+  SETTING_UP_SKILLS: 75,
+  STARTING_CONVERSATION: 85,
+  READY: 95,
+};
+
 // 随机 tips
 const TIPS = [
   I18nKey.RUNTIME_TIP$1,
@@ -99,16 +111,22 @@ export function RuntimeBootstrapProgress({
   const [tipIndex, setTipIndex] = useState(0);
   const [simulatedProgress, setSimulatedProgress] = useState(0);
 
-  // 计算当前进度
-  const currentStage = useMemo(() => {
-    const stage = BOOTSTRAP_STAGES.find((s) => s.key === runtimeStatus);
-    return stage || BOOTSTRAP_STAGES[0];
-  }, [runtimeStatus]);
+  // Derive progress from runtimeStatus first, then taskStatus as fallback
+  const targetProgress = useMemo(() => {
+    const runtimeStage = BOOTSTRAP_STAGES.find(
+      (s) => s.key === runtimeStatus,
+    );
+    if (runtimeStage) return runtimeStage.progress;
 
-  // 模拟进度增长（在实际进度之间平滑过渡）
+    if (taskStatus && taskStatus in TASK_STATUS_PROGRESS) {
+      return TASK_STATUS_PROGRESS[taskStatus];
+    }
+
+    return 0;
+  }, [runtimeStatus, taskStatus]);
+
+  // Smooth progress animation towards the target
   useEffect(() => {
-    const targetProgress = currentStage.progress;
-
     if (simulatedProgress < targetProgress) {
       const timer = setTimeout(() => {
         setSimulatedProgress((prev) => Math.min(prev + 2, targetProgress));
@@ -116,7 +134,7 @@ export function RuntimeBootstrapProgress({
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [simulatedProgress, currentStage.progress]);
+  }, [simulatedProgress, targetProgress]);
 
   // 轮换 tips
   useEffect(() => {
@@ -126,18 +144,29 @@ export function RuntimeBootstrapProgress({
     return () => clearInterval(interval);
   }, []);
 
-  // 根据 taskStatus 获取友好的状态文本
   const statusText = useMemo(() => {
     if (taskStatus) {
+      if (taskStatus === "WORKING") return t(I18nKey.COMMON$STARTING);
       if (taskStatus === "WAITING_FOR_SANDBOX")
         return t(I18nKey.RUNTIME$WAITING_SANDBOX);
-      if (taskStatus === "INITIALIZING") return t(I18nKey.RUNTIME$INITIALIZING);
-      if (taskStatus === "STARTING") return t(I18nKey.COMMON$STARTING);
-      // P0 Fix: Handle READY state during transition (WebSocket connecting)
+      if (taskStatus === "PREPARING_REPOSITORY")
+        return t(I18nKey.RUNTIME$STARTING);
+      if (taskStatus === "RUNNING_SETUP_SCRIPT")
+        return t(I18nKey.RUNTIME$SETTING_UP_WORKSPACE);
+      if (taskStatus === "SETTING_UP_GIT_HOOKS")
+        return t(I18nKey.RUNTIME$SETTING_UP_GIT);
+      if (taskStatus === "SETTING_UP_SKILLS")
+        return t(I18nKey.RUNTIME$LOADING_SKILLS);
+      if (taskStatus === "STARTING_CONVERSATION")
+        return t(I18nKey.RUNTIME$PREPARING);
       if (taskStatus === "READY") return t(I18nKey.RUNTIME$CONNECTING);
     }
-    return t(currentStage.labelKey);
-  }, [taskStatus, currentStage.labelKey, t]);
+
+    const runtimeStage = BOOTSTRAP_STAGES.find(
+      (s) => s.key === runtimeStatus,
+    );
+    return t(runtimeStage?.labelKey ?? I18nKey.COMMON$STARTING);
+  }, [taskStatus, runtimeStatus, t]);
 
   return (
     <div className="flex flex-col items-center justify-center py-12 px-6 space-y-8">
@@ -157,9 +186,9 @@ export function RuntimeBootstrapProgress({
 
       {/* 进度环 - Amber Gradient with Glow */}
       <div className="relative w-32 h-32">
-        {/* Glow effect */}
+        {/* Glow effect — oversized so the blur fades smoothly without hard edges */}
         <div
-          className="absolute inset-0 rounded-full blur-xl opacity-30"
+          className="absolute -inset-6 rounded-full blur-2xl opacity-30"
           style={{
             background: `conic-gradient(from 0deg, transparent ${100 - simulatedProgress}%, #d4a855 ${100 - simulatedProgress}%)`,
           }}
