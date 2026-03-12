@@ -7,8 +7,7 @@ import { useRuntimeIsReady } from "#/hooks/use-runtime-is-ready";
 import { useActiveConversation } from "#/hooks/query/use-active-conversation";
 import { useBatchSandboxes } from "./use-batch-sandboxes";
 import { useConversationConfig } from "./use-conversation-config";
-import { useEventStore } from "#/stores/use-event-store";
-import { OHEvent } from "#/stores/use-event-store";
+import { useEventStore, OHEvent } from "#/stores/use-event-store";
 import { isExecuteBashActionEvent, isV1Event } from "#/types/v1/type-guards";
 import {
   extractPortCandidatesFromEvents,
@@ -53,7 +52,10 @@ const toRuntimeHostFromPreview = (
     const parsed = new URL(previewUrl);
     const runtimePortMatch = parsed.pathname.match(/\/runtime\/(\d{2,5})\/?$/);
     if (runtimeBase && runtimePortMatch) {
-      return runtimeHostForPort(runtimeBase, Number.parseInt(runtimePortMatch[1], 10));
+      return runtimeHostForPort(
+        runtimeBase,
+        Number.parseInt(runtimePortMatch[1], 10),
+      );
     }
     return ensureTrailingSlash(parsed.origin);
   } catch {
@@ -154,7 +156,10 @@ export const useUnifiedActiveHost = () => {
       isV1Conversation,
       sandboxId,
       previewUrlCandidates
-        .map((candidate) => `${candidate.previewUrl}:${candidate.lastSeenEventIndex}`)
+        .map(
+          (candidate) =>
+            `${candidate.previewUrl}:${candidate.lastSeenEventIndex}`,
+        )
         .join(","),
       dynamicPortCandidates
         .map((candidate) => `${candidate.port}:${candidate.lastSeenEventIndex}`)
@@ -191,9 +196,12 @@ export const useUnifiedActiveHost = () => {
 
         // Build a runtime base from worker URLs; avoid relying on exposed_urls[0] ordering.
         const workerExposed =
-          sandbox.exposed_urls?.filter((url) => url.name.startsWith("WORKER_")) ?? [];
+          sandbox.exposed_urls?.filter((url) =>
+            url.name.startsWith("WORKER_"),
+          ) ?? [];
         const runtimeBaseSource =
-          workerExposed.find((url) => /\/runtime\/\d+\/?$/.test(url.url))?.url ||
+          workerExposed.find((url) => /\/runtime\/\d+\/?$/.test(url.url))
+            ?.url ||
           workerExposed[0]?.url ||
           "";
         const runtimeBase = runtimeBaseSource
@@ -232,7 +240,9 @@ export const useUnifiedActiveHost = () => {
         }
 
         // Add dynamically detected recent ports, ahead of static worker list.
-        const existingHosts = new Set(candidates.map((candidate) => candidate.host));
+        const existingHosts = new Set(
+          candidates.map((candidate) => candidate.host),
+        );
         if (runtimeBase) {
           dynamicPortCandidates.forEach((candidate) => {
             const dynamicUrl = ensureTrailingSlash(
@@ -273,8 +283,9 @@ export const useUnifiedActiveHost = () => {
         });
 
         const forceHost =
-          candidates.find((candidate) => candidate.source === "event_preview_url")
-            ?.host ?? null;
+          candidates.find(
+            (candidate) => candidate.source === "event_preview_url",
+          )?.host ?? null;
 
         return { hosts: dedupedHosts, forceHost };
       }

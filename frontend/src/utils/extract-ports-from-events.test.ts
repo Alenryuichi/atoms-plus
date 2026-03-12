@@ -7,7 +7,7 @@ import {
 } from "./extract-ports-from-events";
 
 const makeLegacyEvent = (text: string): OHEvent =>
-  ({ message: text, content: text } as unknown as OHEvent);
+  ({ message: text, content: text }) as unknown as OHEvent;
 
 describe("extractPortsFromEvents", () => {
   it("prioritizes most recently seen ports", () => {
