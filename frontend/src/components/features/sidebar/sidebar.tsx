@@ -125,7 +125,7 @@ export function Sidebar() {
                 whileHover="hover"
                 whileTap="tap"
               >
-                <OpenHandsLogoButton />
+                <OpenHandsLogoButton compact />
               </motion.div>
             </motion.div>
             <motion.div variants={navItemVariants}>

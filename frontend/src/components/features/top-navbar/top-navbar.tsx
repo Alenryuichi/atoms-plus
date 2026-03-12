@@ -187,8 +187,9 @@ function NavActionsDesktop({
               onClick={toggleChatPanelCollapsed}
               aria-label={collapseLabel}
               className={cn(
-                "flex items-center justify-center size-9 rounded-xl workbench-control",
-                isChatPanelCollapsed && "workbench-control-active",
+                "flex items-center justify-center size-8 text-white/40 transition-colors duration-150",
+                "hover:text-white/85",
+                isChatPanelCollapsed && "text-white",
               )}
               title={collapseLabel}
             >
@@ -210,8 +211,9 @@ function NavActionsDesktop({
               disabled={!isEmailVerified}
               aria-label={t(I18nKey.SIDEBAR$CONVERSATIONS)}
               className={cn(
-                "flex items-center justify-center size-9 rounded-xl workbench-control",
-                conversationPanelIsOpen && "workbench-control-active",
+                "flex items-center justify-center size-8 text-white/40 transition-colors duration-150",
+                "hover:text-white/85",
+                conversationPanelIsOpen && "text-white",
                 !isEmailVerified && "opacity-50 cursor-not-allowed",
               )}
               title={t(I18nKey.SIDEBAR$CONVERSATIONS)}
@@ -687,7 +689,7 @@ export function TopNavbar() {
           {/* Left: Logo */}
           <div className="flex items-center justify-start">
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <OpenHandsLogoButton />
+              <OpenHandsLogoButton className="md:-ml-2 lg:-ml-3" />
             </motion.div>
           </div>
 
@@ -768,7 +770,7 @@ export function TopNavbar() {
         {/* Left: Logo - absolutely positioned, hidden when chat panel is collapsed on conversation page */}
         <div
           className={cn(
-            "absolute left-4 md:left-8 lg:left-12 top-1/2 -translate-y-1/2 z-10",
+            "absolute left-3 md:left-6 lg:left-8 top-1/2 -translate-y-1/2 z-10",
             "transition-opacity duration-300",
             isConversationPage &&
               isChatPanelCollapsed &&
@@ -776,7 +778,7 @@ export function TopNavbar() {
           )}
         >
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <OpenHandsLogoButton />
+            <OpenHandsLogoButton className="-ml-1 md:-ml-2 lg:-ml-3" />
           </motion.div>
         </div>
 

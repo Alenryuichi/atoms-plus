@@ -282,3 +282,8 @@ image*.png
 .claude-flow/
 .playwright-mcp/
 *.png
+!frontend/src/assets/branding/atoms-plus/
+!frontend/src/assets/branding/atoms-plus/atoms-plus-icon-dark.png
+!frontend/src/assets/branding/atoms-plus/atoms-plus-icon-light.png
+!frontend/src/assets/branding/atoms-plus/atoms-plus-lockup-dark.png
+!frontend/src/assets/branding/atoms-plus/atoms-plus-lockup-light.png

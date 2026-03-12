@@ -218,7 +218,7 @@ export function ConversationTabs() {
           type="button"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className={cn(
-            "flex size-8 items-center justify-center rounded-lg cursor-pointer text-white/45 transition-colors duration-150 hover:text-white/85",
+            "flex size-8 items-center justify-center cursor-pointer text-white/40 transition-colors duration-150 hover:text-white/85",
           )}
           aria-label={t(I18nKey.COMMON$MORE_OPTIONS)}
         >
