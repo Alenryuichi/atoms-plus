@@ -1,15 +1,18 @@
 import { useTranslation } from "react-i18next";
 import React from "react";
-import { FileDiffViewer } from "#/components/features/diff-viewer/file-diff-viewer";
 import { EmptyChangesMessage } from "#/components/features/diff-viewer/empty-changes-message";
+import { FileTree } from "#/components/features/diff-viewer/file-tree";
+import { DiffPanel } from "#/components/features/diff-viewer/diff-panel";
+import { ChangesToolbar } from "#/components/features/diff-viewer/changes-toolbar";
 import { retrieveAxiosErrorMessage } from "#/utils/retrieve-axios-error-message";
 import { useUnifiedGetGitChanges } from "#/hooks/query/use-unified-get-git-changes";
+import { useFileTree } from "#/hooks/use-file-tree";
 import { I18nKey } from "#/i18n/declaration";
 import { RUNTIME_INACTIVE_STATES } from "#/types/agent-state";
 import { RandomTip } from "#/components/features/tips/random-tip";
 import { useAgentState } from "#/hooks/use-agent-state";
+import type { GitChange } from "#/api/open-hands.types";
 
-// Error message patterns
 const GIT_REPO_ERROR_PATTERN = /not a git repository/i;
 const DIRECTORY_NOT_EXIST_PATTERN = /directory does not exist/i;
 
@@ -34,13 +37,14 @@ function GitChanges() {
   const [statusMessage, setStatusMessage] = React.useState<string[] | null>(
     null,
   );
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [selectedPath, setSelectedPath] = React.useState<string | null>(null);
 
   const { curAgentState } = useAgentState();
   const runtimeIsActive = !RUNTIME_INACTIVE_STATES.includes(curAgentState);
 
   const isNotGitRepoError =
     error && GIT_REPO_ERROR_PATTERN.test(retrieveAxiosErrorMessage(error));
-
   const isDirectoryNotExistError =
     error && DIRECTORY_NOT_EXIST_PATTERN.test(retrieveAxiosErrorMessage(error));
 
@@ -53,7 +57,6 @@ function GitChanges() {
         GIT_REPO_ERROR_PATTERN.test(errorMessage) ||
         DIRECTORY_NOT_EXIST_PATTERN.test(errorMessage)
       ) {
-        // Show friendly message for git repo errors or directory not exist errors
         setStatusMessage([
           I18nKey.DIFF_VIEWER$NOT_A_GIT_REPO,
           I18nKey.DIFF_VIEWER$ASK_OH,
@@ -75,9 +78,42 @@ function GitChanges() {
     setStatusMessage,
   ]);
 
-  return (
-    <main className="h-full overflow-y-scroll p-4 md:pr-1.5 gap-3 flex flex-col items-center custom-scrollbar-always">
-      {!isSuccess || !gitChanges.length ? (
+  const {
+    flatNodes,
+    expandedPaths,
+    toggleExpanded,
+    expandAll,
+    collapseAll,
+    showArtifacts,
+    setShowArtifacts,
+    artifactCount,
+    stats,
+  } = useFileTree(gitChanges ?? [], searchQuery);
+
+  const selectedFile: GitChange | null = React.useMemo(() => {
+    if (!selectedPath || !gitChanges) return null;
+    return gitChanges.find((c) => c.path === selectedPath) ?? null;
+  }, [selectedPath, gitChanges]);
+
+  const allVisibleFiles = React.useMemo(() => {
+    if (!gitChanges) return [];
+    return gitChanges.filter((c) => {
+      if (searchQuery.trim()) {
+        return c.path.toLowerCase().includes(searchQuery.toLowerCase());
+      }
+      return true;
+    });
+  }, [gitChanges, searchQuery]);
+
+  const handleSelectFile = React.useCallback((path: string) => {
+    setSelectedPath(path);
+  }, []);
+
+  const hasChanges = isSuccess && gitChanges && gitChanges.length > 0;
+
+  if (!hasChanges) {
+    return (
+      <main className="h-full flex flex-col">
         <div className="relative flex h-full w-full items-center">
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2">
             {statusMessage && (
@@ -87,7 +123,7 @@ function GitChanges() {
                 ))}
               </StatusMessage>
             )}
-            {!statusMessage && isSuccess && gitChanges.length === 0 && (
+            {!statusMessage && isSuccess && gitChanges?.length === 0 && (
               <EmptyChangesMessage />
             )}
           </div>
@@ -100,17 +136,45 @@ function GitChanges() {
             )}
           </div>
         </div>
-      ) : (
-        gitChanges
-          .slice(0, 100)
-          .map((change) => (
-            <FileDiffViewer
-              key={change.path}
-              path={change.path}
-              type={change.status}
+      </main>
+    );
+  }
+
+  return (
+    <main className="h-full flex flex-col overflow-hidden">
+      <div className="flex flex-1 min-h-0">
+        {/* Left: File Tree */}
+        <div className="flex flex-col w-[240px] min-w-[180px] border-r border-white/[0.06] shrink-0">
+          <ChangesToolbar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            stats={stats}
+            artifactCount={artifactCount}
+            showArtifacts={showArtifacts}
+            onToggleArtifacts={() => setShowArtifacts(!showArtifacts)}
+            onExpandAll={expandAll}
+            onCollapseAll={collapseAll}
+            allExpanded={expandedPaths.size > 0}
+          />
+          <div className="flex-1 min-h-0">
+            <FileTree
+              flatNodes={flatNodes}
+              selectedPath={selectedPath}
+              onSelectFile={handleSelectFile}
+              onToggleDir={toggleExpanded}
             />
-          ))
-      )}
+          </div>
+        </div>
+
+        {/* Right: Diff Viewer */}
+        <div className="flex-1 min-w-0">
+          <DiffPanel
+            selectedFile={selectedFile}
+            allFiles={allVisibleFiles}
+            onNavigate={handleSelectFile}
+          />
+        </div>
+      </div>
     </main>
   );
 }

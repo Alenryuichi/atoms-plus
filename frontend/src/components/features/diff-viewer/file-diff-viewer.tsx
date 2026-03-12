@@ -19,7 +19,7 @@ function LoadingSpinner({ className }: LoadingSpinnerProps) {
     <div className="flex items-center justify-center">
       <div
         className={cn(
-          "animate-spin rounded-full border-4 border-gray-200 border-t-blue-500",
+          "animate-spin rounded-full border-2 border-white/20 border-t-white/70",
           className,
         )}
         role="status"
@@ -82,8 +82,7 @@ export function FileDiffViewer({ path, type }: FileDiffViewerProps) {
         const modifiedHeight = modifiedEditor.getContentHeight();
         const contentHeight = Math.max(originalHeight, modifiedHeight);
 
-        // Add a small buffer to avoid scrollbar
-        setEditorHeight(contentHeight + 20);
+        setEditorHeight(Math.min(contentHeight + 20, 600));
       }
     }
   }, []);
@@ -94,19 +93,25 @@ export function FileDiffViewer({ path, type }: FileDiffViewerProps) {
       inherit: true,
       rules: [
         { token: "comment", foreground: "6a9955" },
-        { token: "keyword", foreground: "569cd6" },
-        { token: "string", foreground: "ce9178" },
-        { token: "number", foreground: "b5cea8" },
+        { token: "keyword", foreground: "89b4fa" },
+        { token: "string", foreground: "f9e2af" },
+        { token: "number", foreground: "a6e3a1" },
+        { token: "type", foreground: "cba6f7" },
       ],
       colors: {
-        "diffEditor.insertedTextBackground": "#014b01AA", // Stronger green background
-        "diffEditor.removedTextBackground": "#750000AA", // Stronger red background
-        "diffEditor.insertedLineBackground": "#003f00AA", // Dark green for added lines
-        "diffEditor.removedLineBackground": "#5a0000AA", // Dark red for removed lines
-        "diffEditor.border": "#444444", // Border between diff editors
-
-        "editorUnnecessaryCode.border": "#00000000", // No border for unnecessary code
-        "editorUnnecessaryCode.opacity": "#00000077", // Slightly faded
+        "editor.background": "#0f111500",
+        "editorGutter.background": "#0f111500",
+        "diffEditor.insertedTextBackground": "#a6e3a125",
+        "diffEditor.removedTextBackground": "#f38ba825",
+        "diffEditor.insertedLineBackground": "#a6e3a10d",
+        "diffEditor.removedLineBackground": "#f38ba80d",
+        "diffEditor.border": "#ffffff0f",
+        "editorLineNumber.foreground": "#585b70",
+        "editor.lineHighlightBackground": "#ffffff05",
+        "scrollbar.shadow": "#00000000",
+        "editorOverviewRuler.border": "#00000000",
+        "editorUnnecessaryCode.border": "#00000000",
+        "editorUnnecessaryCode.opacity": "#00000077",
       },
     });
   };
@@ -138,7 +143,7 @@ export function FileDiffViewer({ path, type }: FileDiffViewerProps) {
     <div data-testid="file-diff-viewer-outer" className="w-full flex flex-col">
       <div
         className={cn(
-          "flex justify-between items-center px-2.5 py-3.5 border border-neutral-600 rounded-xl hover:cursor-pointer",
+          "flex justify-between items-center px-3 py-2.5 border border-white/[0.06] bg-white/[0.03] rounded-lg hover:bg-white/[0.05] hover:cursor-pointer transition-colors",
           !isCollapsed && !isLoading && "border-b-0 rounded-b-none",
         )}
         onClick={() => setIsCollapsed((prev) => !prev)}
@@ -159,7 +164,7 @@ export function FileDiffViewer({ path, type }: FileDiffViewerProps) {
       </div>
       {isSuccess && !isCollapsed && (
         <div
-          className="w-full border border-neutral-600 overflow-hidden"
+          className="w-full border border-white/[0.06] border-t-0 rounded-b-lg overflow-hidden"
           style={{ height: `${editorHeight}px` }}
         >
           <DiffEditor
