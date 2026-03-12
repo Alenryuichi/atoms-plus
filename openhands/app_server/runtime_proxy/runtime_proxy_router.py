@@ -31,7 +31,7 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
-from fastapi.responses import JSONResponse, Response, StreamingResponse
+from fastapi.responses import JSONResponse, RedirectResponse, Response, StreamingResponse
 
 _logger = logging.getLogger(__name__)
 
@@ -164,6 +164,26 @@ def _is_js_response(content_type: str | None) -> bool:
     )
 
 
+def _build_rewritten_response_headers(headers: httpx.Headers) -> dict[str, str]:
+    """Return safe headers for rewritten payloads.
+
+    HTML/JS rewrites operate on decoded text, so upstream encoding and validators
+    tied to the original bytes must be removed before returning the new body.
+    """
+
+    stripped_headers = {
+        'content-encoding',
+        'content-length',
+        'transfer-encoding',
+        'etag',
+        'content-md5',
+        'digest',
+    }
+    return {
+        key: value for key, value in headers.items() if key.lower() not in stripped_headers
+    }
+
+
 async def _forward_request(
     request: Request, port: int, path: str
 ) -> StreamingResponse | Response:
@@ -218,17 +238,10 @@ async def _forward_request(
                 html_content = response.text
                 rewritten_html = _rewrite_html_paths(html_content, port)
 
-                # Build response headers, excluding content-length (will be recalculated)
-                response_headers = {
-                    k: v
-                    for k, v in response.headers.items()
-                    if k.lower() != 'content-length'
-                }
-
                 return Response(
                     content=rewritten_html,
                     status_code=response.status_code,
-                    headers=response_headers,
+                    headers=_build_rewritten_response_headers(response.headers),
                     media_type=content_type,
                 )
 
@@ -237,17 +250,10 @@ async def _forward_request(
                 js_content = response.text
                 rewritten_js = _rewrite_js_paths(js_content, port)
 
-                # Build response headers, excluding content-length (will be recalculated)
-                response_headers = {
-                    k: v
-                    for k, v in response.headers.items()
-                    if k.lower() != 'content-length'
-                }
-
                 return Response(
                     content=rewritten_js,
                     status_code=response.status_code,
-                    headers=response_headers,
+                    headers=_build_rewritten_response_headers(response.headers),
                     media_type=content_type,
                 )
 
@@ -442,6 +448,16 @@ async def select_file(
         )
 
     return JSONResponse(content={'code': content})
+
+
+@router.get('/{port:int}')
+async def redirect_runtime_root(request: Request, port: int) -> RedirectResponse:
+    """Normalize runtime root URLs to always include a trailing slash."""
+
+    redirect_url = f'{request.url.path}/'
+    if request.url.query:
+        redirect_url = f'{redirect_url}?{request.url.query}'
+    return RedirectResponse(url=redirect_url, status_code=307)
 
 
 @router.api_route(

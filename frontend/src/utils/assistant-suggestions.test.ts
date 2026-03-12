@@ -24,8 +24,7 @@ describe("parseAssistantSuggestions", () => {
   });
 
   it("splits single-line bullet suggestions under a heading into 3 chips", () => {
-    const content =
-      "下一步： - 霓虹按钮配色 - 卡片悬浮阴影 - 页脚联系方式";
+    const content = "下一步： - 霓虹按钮配色 - 卡片悬浮阴影 - 页脚联系方式";
 
     expect(parseAssistantSuggestions(content)).toEqual([
       "霓虹按钮配色",

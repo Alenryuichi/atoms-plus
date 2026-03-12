@@ -16,6 +16,11 @@ npm_create_vite:
   correct: npm create vite@latest app -- --template react-ts --no-interactive
   reason: create-vite ignores CI env, checks isTTY directly
 
+npx_create_vite:
+  wrong: npx --yes create-vite@latest app --template react-ts
+  correct: npx create-vite@latest app --template react-ts --no-interactive
+  reason: create-vite's beta prompt still appears under PTY; --yes is not sufficient
+
 npx:
   wrong: npx create-react-app my-app
   correct: npx --yes create-react-app my-app

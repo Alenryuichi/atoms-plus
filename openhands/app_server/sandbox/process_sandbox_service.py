@@ -60,34 +60,28 @@ from openhands.app_server.services.injector import InjectorState
 
 _logger = logging.getLogger(__name__)
 
-# Standard worker ports for dev servers (matches Docker/Daytona sandbox)
-# These ports are exposed via the runtime proxy so frontend can access them
-WORKER_1_PORT = 8011
-WORKER_2_PORT = 8012
-# Additional common dev server ports (Vite defaults to 5173, Next.js to 3000)
-# These are auto-detected so users don't need to specify --port explicitly
-WORKER_3_PORT = 5173  # Vite default
-WORKER_4_PORT = 5174  # Vite fallback 1
-# NOTE: Avoid 3000 and 8080 - they are used by Railway edge servers
-WORKER_5_PORT = 3003  # Next.js / Create React App (avoiding Railway's 3000)
-# Extended Vite fallback ports (5175-5180) to handle port drift when multiple
-# dev servers or previous processes occupy lower ports
-WORKER_6_PORT = 5175  # Vite fallback 2
-WORKER_7_PORT = 5176  # Vite fallback 3
-WORKER_8_PORT = 5177  # Vite fallback 4
-WORKER_9_PORT = 5178  # Vite fallback 5
-WORKER_10_PORT = 5179  # Vite fallback 6
-WORKER_11_PORT = 5180  # Vite fallback 7
-WORKER_12_PORT = 3001  # Next.js fallback
-# Additional common ports that AI models often use
-WORKER_13_PORT = 3002  # Next.js fallback 2
-WORKER_14_PORT = 3456  # Common custom port (used by some AI)
-WORKER_15_PORT = 4000  # Common backend port
-WORKER_16_PORT = 4173  # Vite preview mode
-WORKER_17_PORT = 8001  # Python/Django (avoiding Railway's 8000)
-WORKER_18_PORT = 8081  # Common HTTP alt port (avoiding Railway's 8080)
-WORKER_19_PORT = 8888  # Jupyter/common dev port
-WORKER_20_PORT = 9000  # Common alternative port
+WORKER_PORT_NAMES = [
+    WORKER_1,
+    WORKER_2,
+    WORKER_3,
+    WORKER_4,
+    WORKER_5,
+    WORKER_6,
+    WORKER_7,
+    WORKER_8,
+    WORKER_9,
+    WORKER_10,
+    WORKER_11,
+    WORKER_12,
+    WORKER_13,
+    WORKER_14,
+    WORKER_15,
+    WORKER_16,
+    WORKER_17,
+    WORKER_18,
+    WORKER_19,
+    WORKER_20,
+]
 
 
 class ProcessInfo(BaseModel):
@@ -100,17 +94,21 @@ class ProcessInfo(BaseModel):
     session_api_key: str
     created_at: datetime
     sandbox_spec_id: str
+    worker_ports: dict[str, int]
 
     model_config = ConfigDict(frozen=True)
 
 
 # Global store
 _processes: dict[str, ProcessInfo] = {}
+_reserved_ports: set[int] = set()
+_port_allocation_lock = asyncio.Lock()
 
 # Pre-warmed sandbox pool for instant allocation
 # Each entry is (sandbox_id, ProcessInfo) ready to be assigned
 _warm_pool: list[tuple[str, ProcessInfo]] = []
 _pool_lock = asyncio.Lock()
+_pool_replenish_inflight = 0
 
 # Pool configuration (can be overridden via environment variables)
 POOL_SIZE = int(os.getenv('OH_SANDBOX_POOL_SIZE', '1'))
@@ -145,10 +143,14 @@ class ProcessSandboxService(SandboxService):
         # Ensure base working directory exists
         os.makedirs(self.base_working_dir, exist_ok=True)
 
-    def _find_unused_port(self) -> int:
+    def _find_unused_port(self, excluded_ports: set[int] | None = None) -> int:
         """Find an unused port starting from base_port."""
+        reserved_ports = excluded_ports or set()
         port = self.base_port
         while port < self.base_port + 10000:  # Try up to 10000 ports
+            if port in reserved_ports:
+                port += 1
+                continue
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.bind(('', port))
@@ -156,6 +158,42 @@ class ProcessSandboxService(SandboxService):
             except OSError:
                 port += 1
         raise SandboxError('No available ports found')
+
+    def _collect_reserved_ports(self) -> set[int]:
+        """Collect ports reserved by running and pre-warmed sandboxes."""
+        reserved_ports = set(_reserved_ports)
+        for process_info in _processes.values():
+            reserved_ports.add(process_info.port)
+            reserved_ports.update(process_info.worker_ports.values())
+        for _, process_info in _warm_pool:
+            reserved_ports.add(process_info.port)
+            reserved_ports.update(process_info.worker_ports.values())
+        return reserved_ports
+
+    def _allocate_worker_ports(self, excluded_ports: set[int]) -> dict[str, int]:
+        """Allocate a sandbox-specific set of worker ports."""
+        worker_ports: dict[str, int] = {}
+        reserved_ports = set(excluded_ports)
+        for worker_name in WORKER_PORT_NAMES:
+            worker_port = self._find_unused_port(reserved_ports)
+            worker_ports[worker_name] = worker_port
+            reserved_ports.add(worker_port)
+        return worker_ports
+
+    async def _reserve_process_ports(self) -> tuple[int, dict[str, int]]:
+        """Reserve one agent port plus worker ports for a sandbox."""
+        async with _port_allocation_lock:
+            reserved_ports = self._collect_reserved_ports()
+            agent_port = self._find_unused_port(reserved_ports)
+            reserved_ports.add(agent_port)
+            worker_ports = self._allocate_worker_ports(reserved_ports)
+            _reserved_ports.update({agent_port, *worker_ports.values()})
+            return agent_port, worker_ports
+
+    async def _release_port_numbers(self, ports: set[int]) -> None:
+        """Release port reservations after sandbox teardown or startup failure."""
+        async with _port_allocation_lock:
+            _reserved_ports.difference_update(ports)
 
     def _copy_openhands_directory(self, sandbox_dir: str) -> None:
         """Copy .openhands directory from project root to sandbox.
@@ -264,6 +302,7 @@ class ProcessSandboxService(SandboxService):
         working_dir: str,
         session_api_key: str,
         sandbox_spec: SandboxSpecInfo,
+        worker_ports: dict[str, int],
     ) -> subprocess.Popen:
         """Start the agent server process."""
         # Prepare environment variables
@@ -284,31 +323,13 @@ class ProcessSandboxService(SandboxService):
         )
         env['WORKSPACE_BASE'] = working_dir
 
-        # Add worker port environment variables so the agent knows which ports to use
-        # for web applications (npm run dev, etc.). These match the ports exposed via
-        # WORKER_* URLs in the sandbox's exposed_urls.
-        # WORKER_1 (8011) is the recommended port for dev servers.
-        # WORKER_3-12 cover common dev server defaults and Vite port drift scenarios.
-        env[WORKER_1] = str(WORKER_1_PORT)
-        env[WORKER_2] = str(WORKER_2_PORT)
-        env[WORKER_3] = str(WORKER_3_PORT)
-        env[WORKER_4] = str(WORKER_4_PORT)
-        env[WORKER_5] = str(WORKER_5_PORT)
-        env[WORKER_6] = str(WORKER_6_PORT)
-        env[WORKER_7] = str(WORKER_7_PORT)
-        env[WORKER_8] = str(WORKER_8_PORT)
-        env[WORKER_9] = str(WORKER_9_PORT)
-        env[WORKER_10] = str(WORKER_10_PORT)
-        env[WORKER_11] = str(WORKER_11_PORT)
-        env[WORKER_12] = str(WORKER_12_PORT)
-        env[WORKER_13] = str(WORKER_13_PORT)
-        env[WORKER_14] = str(WORKER_14_PORT)
-        env[WORKER_15] = str(WORKER_15_PORT)
-        env[WORKER_16] = str(WORKER_16_PORT)
-        env[WORKER_17] = str(WORKER_17_PORT)
-        env[WORKER_18] = str(WORKER_18_PORT)
-        env[WORKER_19] = str(WORKER_19_PORT)
-        env[WORKER_20] = str(WORKER_20_PORT)
+        # Export sandbox-specific worker ports so local sandboxes do not collide on
+        # framework defaults like 5173 or 3000.
+        for worker_name, worker_port in worker_ports.items():
+            env[worker_name] = str(worker_port)
+        # Many frameworks and agents default to PORT, so point it at the primary
+        # sandbox worker port to keep preview startup on an isolated port.
+        env['PORT'] = str(worker_ports[WORKER_1])
 
         # Prepare command arguments
         cmd = [
@@ -435,39 +456,8 @@ class ProcessSandboxService(SandboxService):
     async def _select_primary_preview_url(
         self, worker_urls: list[ExposedUrl]
     ) -> str | None:
-        """Pick the first healthy worker URL for preview.
-
-        The probe is best-effort and intentionally short so sandbox listing stays fast.
-        """
-        preferred_port_order = [
-            5173,
-            5174,
-            5175,
-            5176,
-            5177,
-            5178,
-            5179,
-            5180,
-            3003,
-            3002,
-            3001,
-            3000,
-            4173,
-            8081,
-            8888,
-            9000,
-            4000,
-            3456,
-            8011,
-            8012,
-        ]
-        order_index = {port: idx for idx, port in enumerate(preferred_port_order)}
-        sorted_urls = sorted(
-            worker_urls,
-            key=lambda item: order_index.get(item.port, len(preferred_port_order)),
-        )
-
-        for worker_url in sorted_urls:
+        """Pick the first healthy worker URL for preview."""
+        for worker_url in worker_urls:
             try:
                 probe_target = worker_url.url
                 # Relative exposed URLs are proxied by app server; probe localhost directly.
@@ -503,35 +493,6 @@ class ProcessSandboxService(SandboxService):
                     exposed_url = self.exposed_url_pattern.format(
                         port=process_info.port
                     )
-                    # Build WORKER URLs using the same pattern
-                    # Include both explicit ports (8011, 8012) and common dev server defaults
-                    # (5173-5180, 3001-3003) so users don't need to specify --port explicitly.
-                    # NOTE: Avoid 3000/8000/8080 - they are used by Railway edge servers.
-                    # Extended Vite fallback ports handle port drift when ports are occupied.
-                    # Additional ports (13-20) cover common custom ports used by AI models.
-                    worker_ports = [
-                        (WORKER_1, WORKER_1_PORT),
-                        (WORKER_2, WORKER_2_PORT),
-                        (WORKER_3, WORKER_3_PORT),
-                        (WORKER_4, WORKER_4_PORT),
-                        (WORKER_5, WORKER_5_PORT),
-                        (WORKER_6, WORKER_6_PORT),
-                        (WORKER_7, WORKER_7_PORT),
-                        (WORKER_8, WORKER_8_PORT),
-                        (WORKER_9, WORKER_9_PORT),
-                        (WORKER_10, WORKER_10_PORT),
-                        (WORKER_11, WORKER_11_PORT),
-                        (WORKER_12, WORKER_12_PORT),
-                        (WORKER_13, WORKER_13_PORT),
-                        (WORKER_14, WORKER_14_PORT),
-                        (WORKER_15, WORKER_15_PORT),
-                        (WORKER_16, WORKER_16_PORT),
-                        (WORKER_17, WORKER_17_PORT),
-                        (WORKER_18, WORKER_18_PORT),
-                        (WORKER_19, WORKER_19_PORT),
-                        (WORKER_20, WORKER_20_PORT),
-                    ]
-
                     exposed_urls = [
                         ExposedUrl(
                             name=AGENT_SERVER,
@@ -540,8 +501,9 @@ class ProcessSandboxService(SandboxService):
                         ),
                     ]
                     # Expose worker ports for dev servers (npm run dev, etc.)
-                    # These ports are accessed via the runtime proxy
-                    for worker_name, worker_port in worker_ports:
+                    # These sandbox-specific ports are accessed via the runtime proxy.
+                    for worker_name in WORKER_PORT_NAMES:
+                        worker_port = process_info.worker_ports[worker_name]
                         worker_url = self.exposed_url_pattern.format(port=worker_port)
                         exposed_urls.append(
                             ExposedUrl(
@@ -712,20 +674,24 @@ class ProcessSandboxService(SandboxService):
             sandbox_id = base62.encodebytes(os.urandom(16))
         session_api_key = base62.encodebytes(os.urandom(32))
 
-        # Find available port
-        port = self._find_unused_port()
+        port, worker_ports = await self._reserve_process_ports()
 
-        # Create sandbox directory
-        working_dir = self._create_sandbox_directory(sandbox_id)
+        try:
+            # Create sandbox directory
+            working_dir = self._create_sandbox_directory(sandbox_id)
 
-        # Start the agent process
-        process = await self._start_agent_process(
-            sandbox_id=sandbox_id,
-            port=port,
-            working_dir=working_dir,
-            session_api_key=session_api_key,
-            sandbox_spec=sandbox_spec,
-        )
+            # Start the agent process
+            process = await self._start_agent_process(
+                sandbox_id=sandbox_id,
+                port=port,
+                working_dir=working_dir,
+                session_api_key=session_api_key,
+                sandbox_spec=sandbox_spec,
+                worker_ports=worker_ports,
+            )
+        except Exception:
+            await self._release_port_numbers({port, *worker_ports.values()})
+            raise
 
         # Store process info
         process_info = ProcessInfo(
@@ -736,6 +702,7 @@ class ProcessSandboxService(SandboxService):
             session_api_key=session_api_key,
             created_at=utc_now(),
             sandbox_spec_id=sandbox_spec.id,
+            worker_ports=worker_ports,
         )
         _processes[sandbox_id] = process_info
 
@@ -749,12 +716,13 @@ class ProcessSandboxService(SandboxService):
 
     async def _replenish_pool(self) -> None:
         """Replenish the warm pool after a sandbox was taken."""
-        global _warm_pool
+        global _pool_replenish_inflight, _warm_pool
 
         async with _pool_lock:
             current_size = len(_warm_pool)
-            if current_size >= POOL_SIZE:
+            if current_size + _pool_replenish_inflight >= POOL_SIZE:
                 return
+            _pool_replenish_inflight += 1
 
         _logger.info(
             f'Replenishing warm pool (current: {current_size}, target: {POOL_SIZE})'
@@ -772,6 +740,9 @@ class ProcessSandboxService(SandboxService):
                 )
         except Exception as e:
             _logger.warning(f'Failed to replenish warm pool: {e}')
+        finally:
+            async with _pool_lock:
+                _pool_replenish_inflight = max(0, _pool_replenish_inflight - 1)
 
     async def _prewarm_sandbox(self) -> tuple[str, ProcessInfo]:
         """Pre-warm a single sandbox (directory + agent process + wait for ready)."""
@@ -782,20 +753,24 @@ class ProcessSandboxService(SandboxService):
         sandbox_id = base62.encodebytes(os.urandom(16))
         session_api_key = base62.encodebytes(os.urandom(32))
 
-        # Find available port
-        port = self._find_unused_port()
+        port, worker_ports = await self._reserve_process_ports()
 
-        # Create sandbox directory
-        working_dir = self._create_sandbox_directory(sandbox_id)
+        try:
+            # Create sandbox directory
+            working_dir = self._create_sandbox_directory(sandbox_id)
 
-        # Start the agent process
-        process = await self._start_agent_process(
-            sandbox_id=sandbox_id,
-            port=port,
-            working_dir=working_dir,
-            session_api_key=session_api_key,
-            sandbox_spec=sandbox_spec,
-        )
+            # Start the agent process
+            process = await self._start_agent_process(
+                sandbox_id=sandbox_id,
+                port=port,
+                working_dir=working_dir,
+                session_api_key=session_api_key,
+                sandbox_spec=sandbox_spec,
+                worker_ports=worker_ports,
+            )
+        except Exception:
+            await self._release_port_numbers({port, *worker_ports.values()})
+            raise
 
         # Create process info
         process_info = ProcessInfo(
@@ -806,6 +781,7 @@ class ProcessSandboxService(SandboxService):
             session_api_key=session_api_key,
             created_at=utc_now(),
             sandbox_spec_id=sandbox_spec.id,
+            worker_ports=worker_ports,
         )
 
         # Wait for server to be ready
@@ -816,6 +792,7 @@ class ProcessSandboxService(SandboxService):
                 process.wait(timeout=5)
             except Exception:
                 pass
+            await self._release_port_numbers({port, *worker_ports.values()})
             raise SandboxError('Pre-warmed agent server failed to start')
 
         _logger.info(f'Pre-warmed sandbox {sandbox_id} is ready on port {port}')
@@ -900,6 +877,9 @@ class ProcessSandboxService(SandboxService):
 
             # Remove from our tracking
             del _processes[sandbox_id]
+            await self._release_port_numbers(
+                {process_info.port, *process_info.worker_ports.values()}
+            )
 
             return True
 
@@ -908,6 +888,9 @@ class ProcessSandboxService(SandboxService):
             # Still remove from tracking even if cleanup failed
             if sandbox_id in _processes:
                 del _processes[sandbox_id]
+            await self._release_port_numbers(
+                {process_info.port, *process_info.worker_ports.values()}
+            )
             return True
 
 
