@@ -13,6 +13,12 @@ from openhands.app_server.sandbox.process_sandbox_service import (
     ProcessInfo,
     ProcessSandboxService,
     ProcessSandboxServiceInjector,
+    WORKER_1,
+    WORKER_2,
+    WORKER_PORT_NAMES,
+    _processes,
+    _reserved_ports,
+    _warm_pool,
 )
 from openhands.app_server.sandbox.sandbox_models import SandboxStatus
 
@@ -52,6 +58,18 @@ def temp_dir():
         yield tmpdir
 
 
+@pytest.fixture(autouse=True)
+def clear_process_store():
+    """Reset global sandbox state before each test."""
+    _processes.clear()
+    _warm_pool.clear()
+    _reserved_ports.clear()
+    yield
+    _processes.clear()
+    _warm_pool.clear()
+    _reserved_ports.clear()
+
+
 @pytest.fixture
 def process_sandbox_service(mock_httpx_client, temp_dir):
     """Create a ProcessSandboxService instance for testing."""
@@ -83,7 +101,10 @@ class TestProcessSandboxService:
 
         expected_dir = os.path.join(process_sandbox_service.base_working_dir, 'test-id')
         assert sandbox_dir == expected_dir
-        mock_makedirs.assert_called_once_with(expected_dir, exist_ok=True)
+        assert any(
+            call.args == (expected_dir,) and call.kwargs == {'exist_ok': True}
+            for call in mock_makedirs.call_args_list
+        )
 
     @pytest.mark.asyncio
     async def test_wait_for_server_ready_success(self, process_sandbox_service):
@@ -126,6 +147,7 @@ class TestProcessSandboxService:
             session_api_key='test-key',
             created_at=datetime.now(),
             sandbox_spec_id='test-spec',
+            worker_ports={},
         )
 
         status = process_sandbox_service._get_process_status(process_info)
@@ -148,6 +170,7 @@ class TestProcessSandboxService:
             session_api_key='test-key',
             created_at=datetime.now(),
             sandbox_spec_id='test-spec',
+            worker_ports={},
         )
 
         status = process_sandbox_service._get_process_status(process_info)
@@ -220,6 +243,132 @@ class TestProcessSandboxService:
             assert result is not None
             assert result.id == 'custom_sandbox_id'
 
+    @pytest.mark.asyncio
+    async def test_reserve_process_ports_allocates_unique_worker_ports(
+        self, process_sandbox_service
+    ):
+        """Test reserving unique worker ports for separate sandboxes."""
+        first_agent_port, first_worker_ports = (
+            await process_sandbox_service._reserve_process_ports()
+        )
+        second_agent_port, second_worker_ports = (
+            await process_sandbox_service._reserve_process_ports()
+        )
+
+        first_ports = {first_agent_port, *first_worker_ports.values()}
+        second_ports = {second_agent_port, *second_worker_ports.values()}
+
+        assert first_ports.isdisjoint(second_ports)
+
+    @pytest.mark.asyncio
+    @patch('subprocess.Popen')
+    @patch('asyncio.sleep', new_callable=AsyncMock)
+    async def test_start_agent_process_exports_reserved_worker_ports(
+        self, mock_sleep, mock_popen, process_sandbox_service
+    ):
+        """Test agent startup exports sandbox-specific worker ports."""
+        mock_process = MagicMock()
+        mock_process.pid = 4321
+        mock_process.poll.return_value = None
+        mock_popen.return_value = mock_process
+
+        worker_ports = {
+            worker_name: 12000 + index
+            for index, worker_name in enumerate(WORKER_PORT_NAMES, start=1)
+        }
+        sandbox_spec = MockSandboxSpec()
+
+        process = await process_sandbox_service._start_agent_process(
+            sandbox_id='sandbox-1',
+            port=9000,
+            working_dir='/tmp/test',
+            session_api_key='test-key',
+            sandbox_spec=sandbox_spec,
+            worker_ports=worker_ports,
+        )
+
+        assert process is mock_process
+        env = mock_popen.call_args.kwargs['env']
+        assert env[WORKER_1] == '12001'
+        assert env[WORKER_2] == '12002'
+        assert env['PORT'] == '12001'
+        mock_sleep.assert_awaited()
+
+    @pytest.mark.asyncio
+    async def test_process_to_sandbox_info_uses_dynamic_worker_ports(
+        self, process_sandbox_service
+    ):
+        """Test sandbox info exposes reserved worker ports and preview URL."""
+        worker_ports = {
+            worker_name: 12000 + index
+            for index, worker_name in enumerate(WORKER_PORT_NAMES, start=1)
+        }
+        process_info = ProcessInfo(
+            pid=1234,
+            port=9000,
+            user_id='test-user-id',
+            working_dir='/tmp/test',
+            session_api_key='test-key',
+            created_at=datetime.now(),
+            sandbox_spec_id='test-spec',
+            worker_ports=worker_ports,
+        )
+
+        with patch.object(
+            process_sandbox_service,
+            '_get_process_status',
+            return_value=SandboxStatus.RUNNING,
+        ):
+            health_response = MagicMock()
+            health_response.status_code = 200
+            preview_response = MagicMock()
+            preview_response.status_code = 200
+            process_sandbox_service.httpx_client.get.side_effect = [
+                health_response,
+                preview_response,
+            ]
+
+            sandbox_info = await process_sandbox_service._process_to_sandbox_info(
+                'sandbox-1', process_info
+            )
+
+        assert sandbox_info.exposed_urls is not None
+        exposed_ports = {url.name: url.port for url in sandbox_info.exposed_urls}
+        assert exposed_ports[WORKER_1] == worker_ports[WORKER_1]
+        assert exposed_ports[WORKER_2] == worker_ports[WORKER_2]
+        assert sandbox_info.primary_preview_url == f"http://localhost:{worker_ports[WORKER_1]}"
+
+    @pytest.mark.asyncio
+    @patch('psutil.Process')
+    async def test_delete_sandbox_releases_reserved_ports(
+        self, mock_process_class, process_sandbox_service, temp_dir
+    ):
+        """Test deleting a sandbox releases its reserved ports."""
+        worker_ports = {WORKER_1: 12001, WORKER_2: 12002}
+        process_info = ProcessInfo(
+            pid=1234,
+            port=9000,
+            user_id='test-user-id',
+            working_dir=temp_dir,
+            session_api_key='test-key',
+            created_at=datetime.now(),
+            sandbox_spec_id='test-spec',
+            worker_ports=worker_ports,
+        )
+        _processes['sandbox-1'] = process_info
+        _reserved_ports.update({9000, *worker_ports.values()})
+
+        mock_process = MagicMock()
+        mock_process.is_running.return_value = False
+        mock_process_class.return_value = mock_process
+
+        deleted = await process_sandbox_service.delete_sandbox('sandbox-1')
+
+        assert deleted is True
+        assert 9000 not in _reserved_ports
+        assert 12001 not in _reserved_ports
+        assert 12002 not in _reserved_ports
+
     @patch('psutil.Process')
     def test_get_process_status_paused(
         self, mock_process_class, process_sandbox_service
@@ -238,6 +387,7 @@ class TestProcessSandboxService:
             session_api_key='test-key',
             created_at=datetime.now(),
             sandbox_spec_id='test-spec',
+            worker_ports={},
         )
 
         status = process_sandbox_service._get_process_status(process_info)
@@ -247,7 +397,7 @@ class TestProcessSandboxService:
     def test_get_process_status_starting(
         self, mock_process_class, process_sandbox_service
     ):
-        """Test getting process status for starting process."""
+        """Test sleeping server processes are treated as running."""
         mock_process = MagicMock()
         mock_process.is_running.return_value = True
         mock_process.status.return_value = psutil.STATUS_SLEEPING
@@ -261,10 +411,11 @@ class TestProcessSandboxService:
             session_api_key='test-key',
             created_at=datetime.now(),
             sandbox_spec_id='test-spec',
+            worker_ports={},
         )
 
         status = process_sandbox_service._get_process_status(process_info)
-        assert status == SandboxStatus.STARTING
+        assert status == SandboxStatus.RUNNING
 
     @patch('psutil.Process')
     def test_get_process_status_access_denied(
@@ -281,6 +432,7 @@ class TestProcessSandboxService:
             session_api_key='test-key',
             created_at=datetime.now(),
             sandbox_spec_id='test-spec',
+            worker_ports={},
         )
 
         status = process_sandbox_service._get_process_status(process_info)
@@ -308,13 +460,14 @@ class TestProcessSandboxService:
                 session_api_key='test-key',
                 created_at=datetime.now(),
                 sandbox_spec_id='test-spec',
+                worker_ports={},
             )
 
             sandbox_info = await process_sandbox_service._process_to_sandbox_info(
                 'test-sandbox', process_info
             )
 
-            assert sandbox_info.status == SandboxStatus.ERROR
+            assert sandbox_info.status == SandboxStatus.STARTING
             assert sandbox_info.session_api_key is None
             assert sandbox_info.exposed_urls is None
 
@@ -340,13 +493,14 @@ class TestProcessSandboxService:
                 session_api_key='test-key',
                 created_at=datetime.now(),
                 sandbox_spec_id='test-spec',
+                worker_ports={},
             )
 
             sandbox_info = await process_sandbox_service._process_to_sandbox_info(
                 'test-sandbox', process_info
             )
 
-            assert sandbox_info.status == SandboxStatus.ERROR
+            assert sandbox_info.status == SandboxStatus.STARTING
             assert sandbox_info.session_api_key is None
             assert sandbox_info.exposed_urls is None
 

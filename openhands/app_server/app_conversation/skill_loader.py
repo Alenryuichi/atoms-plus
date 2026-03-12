@@ -38,6 +38,8 @@ When starting a web server, use the corresponding ports via environment variable
 - $WORKER_1 for the first port
 - $WORKER_2 for the second port
 
+Do not hard-code ports like 5173, 3000, or 8080. Each sandbox receives its own isolated worker ports.
+
 **CRITICAL: You MUST enable CORS and bind to 0.0.0.0.** Without CORS headers, the App tab cannot detect your server and will show an empty state.
 
 Example (Flask):

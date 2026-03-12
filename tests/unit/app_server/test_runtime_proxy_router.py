@@ -37,7 +37,7 @@ def test_runtime_root_redirects_to_trailing_slash():
     app.include_router(router)
     client = TestClient(app)
 
-    response = client.get('/runtime/4000?foo=bar', follow_redirects=False)
+    response = client.get('/runtime/12037?foo=bar', follow_redirects=False)
 
     assert response.status_code == 307
-    assert response.headers['location'] == '/runtime/4000/?foo=bar'
+    assert response.headers['location'] == '/runtime/12037/?foo=bar'

@@ -270,6 +270,28 @@ class TestBuildSandboxConfig:
         # Assert
         assert result is None
 
+    def test_preserves_dynamic_runtime_urls(self):
+        """Test sandbox config preserves sandbox-specific runtime URLs."""
+        sandbox = SandboxInfo(
+            id='test-sandbox',
+            created_by_user_id='user-123',
+            sandbox_spec_id='spec-123',
+            status=SandboxStatus.RUNNING,
+            session_api_key='test-key',
+            exposed_urls=[
+                ExposedUrl(name='WORKER_1', url='/runtime/12037', port=12037),
+                ExposedUrl(name='WORKER_2', url='/runtime/12038', port=12038),
+            ],
+        )
+
+        result = build_sandbox_config(sandbox)
+
+        assert result is not None
+        assert [url.url for url in result.exposed_urls] == [
+            '/runtime/12037',
+            '/runtime/12038',
+        ]
+
 
 class TestConvertSkillInfoToSkill:
     """Test _convert_skill_info_to_skill function."""
