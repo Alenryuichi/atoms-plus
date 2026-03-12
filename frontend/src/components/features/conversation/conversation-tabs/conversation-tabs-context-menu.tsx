@@ -6,14 +6,10 @@ import { useConversationId } from "#/hooks/use-conversation-id";
 import { useConversationLocalStorageState } from "#/utils/conversation-local-storage";
 import { I18nKey } from "#/i18n/declaration";
 import TerminalIcon from "#/icons/terminal.svg?react";
-import GlobeIcon from "#/icons/globe.svg?react";
 import ServerIcon from "#/icons/server.svg?react";
 import GitChanges from "#/icons/git_changes.svg?react";
-import VSCodeIcon from "#/icons/vscode.svg?react";
 import PillIcon from "#/icons/pill.svg?react";
 import PillFillIcon from "#/icons/pill-fill.svg?react";
-import LessonPlanIcon from "#/icons/lesson-plan.svg?react";
-import PreviewIcon from "#/icons/preview.svg?react";
 
 interface ConversationTabsContextMenuProps {
   isOpen: boolean;
@@ -31,17 +27,9 @@ export function ConversationTabsContextMenu({
     useConversationLocalStorageState(conversationId);
 
   const tabConfig = [
-    {
-      tab: "planner",
-      icon: LessonPlanIcon,
-      i18nKey: I18nKey.COMMON$PLANNER,
-    },
     { tab: "editor", icon: GitChanges, i18nKey: I18nKey.COMMON$CHANGES },
-    { tab: "vscode", icon: VSCodeIcon, i18nKey: I18nKey.COMMON$CODE },
-    { tab: "terminal", icon: TerminalIcon, i18nKey: I18nKey.COMMON$TERMINAL },
     { tab: "served", icon: ServerIcon, i18nKey: I18nKey.COMMON$APP },
-    { tab: "browser", icon: GlobeIcon, i18nKey: I18nKey.COMMON$BROWSER },
-    { tab: "preview", icon: PreviewIcon, i18nKey: I18nKey.COMMON$PREVIEW },
+    { tab: "terminal", icon: TerminalIcon, i18nKey: I18nKey.COMMON$TERMINAL },
   ];
 
   if (!isOpen) return null;

@@ -1,7 +1,7 @@
 import { API_KEYS_HANDLERS } from "./api-keys-handlers";
 import { BILLING_HANDLERS } from "./billing-handlers";
 import { FILE_SERVICE_HANDLERS } from "./file-service-handlers";
-import { PREVIEW_HANDLERS } from "./preview-handlers";
+
 import { TASK_SUGGESTIONS_HANDLERS } from "./task-suggestions-handlers";
 import { SECRETS_HANDLERS } from "./secrets-handlers";
 import { GIT_REPOSITORY_HANDLERS } from "./git-repository-handlers";
@@ -16,8 +16,6 @@ import { FEEDBACK_HANDLERS } from "./feedback-handlers";
 import { ANALYTICS_HANDLERS } from "./analytics-handlers";
 
 export const handlers = [
-  // Preview handlers first - they override default file handlers with web-previewable files
-  ...PREVIEW_HANDLERS,
   ...API_KEYS_HANDLERS,
   ...BILLING_HANDLERS,
   ...FILE_SERVICE_HANDLERS,

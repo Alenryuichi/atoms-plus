@@ -1,10 +1,9 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { IconArrowUpRight, IconFileText } from "@tabler/icons-react";
+import { IconFileText } from "@tabler/icons-react";
 import { I18nKey } from "#/i18n/declaration";
 import { MarkdownRenderer } from "#/components/features/markdown/markdown-renderer";
 import { useHandleBuildPlanClick } from "#/hooks/use-handle-build-plan-click";
-import { useSelectConversationTab } from "#/hooks/use-select-conversation-tab";
 import {
   planComponents,
   createPlanComponents,
@@ -20,18 +19,13 @@ import { Button } from "#/components/ui/button";
 
 const MAX_CONTENT_LENGTH = 300;
 
-// Shine effect class for streaming text
 const SHINE_TEXT_CLASS = "shine-text";
 
-// Plan components with shine effect applied for streaming state
 const shineComponents = createPlanComponents(SHINE_TEXT_CLASS);
 
 interface PlanPreviewProps {
-  /** Raw plan content from PLAN.md file */
   planContent?: string | null;
-  /** Whether the plan content is actively being streamed */
   isStreaming?: boolean;
-  /** Whether the Build button should be disabled (e.g., while streaming) */
   isBuildDisabled?: boolean;
 }
 
@@ -42,15 +36,10 @@ export function PlanPreview({
   isBuildDisabled,
 }: PlanPreviewProps) {
   const { t } = useTranslation();
-  const { navigateToTab } = useSelectConversationTab();
   const { handleBuildPlanClick } = useHandleBuildPlanClick();
   const { scrollDomToBottom } = useScrollContext();
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  const handleViewClick = () => {
-    navigateToTab("planner");
-  };
-
-  // Handle Build action with scroll to bottom
   const handleBuildClick = useCallback(
     (event?: React.MouseEvent<HTMLButtonElement>) => {
       handleBuildPlanClick(event);
@@ -59,12 +48,12 @@ export function PlanPreview({
     [handleBuildPlanClick, scrollDomToBottom],
   );
 
-  // Truncate plan content for preview
-  const truncatedContent = useMemo(() => {
+  const displayContent = useMemo(() => {
     if (!planContent) return "";
-    if (planContent.length <= MAX_CONTENT_LENGTH) return planContent;
+    if (isExpanded || planContent.length <= MAX_CONTENT_LENGTH)
+      return planContent;
     return `${planContent.slice(0, MAX_CONTENT_LENGTH)}...`;
-  }, [planContent]);
+  }, [planContent, isExpanded]);
 
   if (!planContent) {
     return null;
@@ -72,43 +61,31 @@ export function PlanPreview({
 
   return (
     <Card className="border-primary/30 shadow-card mt-2">
-      {/* Header */}
       <CardHeader className="p-3 pb-2 border-b border-border/50">
         <div className="flex items-center gap-2">
           <IconFileText size={16} stroke={1.5} className="text-primary" />
           <span className="text-sm font-semibold text-foreground">
             {t(I18nKey.COMMON$PLAN_MD)}
           </span>
-          <div className="flex-1" />
-          <button
-            type="button"
-            onClick={handleViewClick}
-            className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors cursor-pointer"
-            data-testid="plan-preview-view-button"
-          >
-            <span>{t(I18nKey.COMMON$VIEW)}</span>
-            <IconArrowUpRight size={16} stroke={1.5} />
-          </button>
         </div>
       </CardHeader>
 
-      {/* Content */}
       <CardContent
         data-testid="plan-preview-content"
         className="p-4 text-sm text-foreground leading-relaxed"
       >
-        {truncatedContent && (
+        {displayContent && (
           <>
             <MarkdownRenderer
               includeStandard
               components={isStreaming ? shineComponents : planComponents}
             >
-              {truncatedContent}
+              {displayContent}
             </MarkdownRenderer>
-            {planContent && planContent.length > MAX_CONTENT_LENGTH && (
+            {!isExpanded && planContent.length > MAX_CONTENT_LENGTH && (
               <button
                 type="button"
-                onClick={handleViewClick}
+                onClick={() => setIsExpanded(true)}
                 className="text-primary cursor-pointer hover:underline text-left mt-2"
                 data-testid="plan-preview-read-more-button"
               >
@@ -119,7 +96,6 @@ export function PlanPreview({
         )}
       </CardContent>
 
-      {/* Footer */}
       <CardFooter className="p-3 pt-0">
         <Button
           onClick={handleBuildClick}

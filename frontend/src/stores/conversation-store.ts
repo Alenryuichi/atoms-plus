@@ -5,23 +5,9 @@ import {
   setConversationState,
 } from "#/utils/conversation-local-storage";
 
-// Check if running in mock mode - default to preview tab for testing
-const isMockMode = import.meta.env.VITE_MOCK_API === "true";
-
-export type ConversationTab =
-  | "editor"
-  | "browser"
-  | "served"
-  | "vscode"
-  | "terminal"
-  | "planner"
-  | "preview";
+export type ConversationTab = "editor" | "served" | "terminal";
 
 export type ConversationMode = "code" | "plan";
-
-export type PreviewViewMode = "split" | "editor" | "preview";
-
-export type PreviewSubTab = "design" | "console";
 
 // Panel width constants
 const PANEL_WIDTH_STORAGE_KEY = "desktop-layout-panel-width";
@@ -49,8 +35,6 @@ interface ConversationState {
   planContent: string | null;
   conversationMode: ConversationMode;
   subConversationTaskId: string | null; // Task ID for sub-conversation creation
-  previewViewMode: PreviewViewMode; // Preview panel view mode (split/editor/preview)
-  previewSubTab: PreviewSubTab; // Sub-tab within preview panel (design/console)
   // Panel width state - shared between TopNavbar and ConversationMain
   panelLeftWidth: number; // Left panel width as percentage (30-80)
   panelIsDragging: boolean; // Whether user is currently dragging the resize handle
@@ -82,8 +66,6 @@ interface ConversationActions {
   setConversationMode: (conversationMode: ConversationMode) => void;
   setSubConversationTaskId: (taskId: string | null) => void;
   setPlanContent: (planContent: string | null) => void;
-  setPreviewViewMode: (previewViewMode: PreviewViewMode) => void;
-  setPreviewSubTab: (previewSubTab: PreviewSubTab) => void;
   // Panel width actions
   setPanelLeftWidth: (width: number) => void;
   setPanelIsDragging: (isDragging: boolean) => void;
@@ -176,8 +158,7 @@ export const useConversationStore = create<ConversationStore>()(
     (set, get) => ({
       // Initial state
       isRightPanelShown: getInitialRightPanelState(),
-      // In mock mode, default to "preview" tab for testing the Preview panel
-      selectedTab: (isMockMode ? "preview" : "editor") as ConversationTab,
+      selectedTab: "editor" as ConversationTab,
       images: [],
       files: [],
       loadingFiles: [],
@@ -190,8 +171,6 @@ export const useConversationStore = create<ConversationStore>()(
       planContent: null,
       conversationMode: getInitialConversationMode(),
       subConversationTaskId: null,
-      previewViewMode: "preview" as PreviewViewMode, // Default to preview mode
-      previewSubTab: "design" as PreviewSubTab, // Default to design sub-tab (show preview, not console)
       // Panel width state - synced between TopNavbar and ConversationMain
       panelLeftWidth: getInitialPanelWidth(),
       panelIsDragging: false,
@@ -355,12 +334,6 @@ export const useConversationStore = create<ConversationStore>()(
 
       setPlanContent: (planContent) =>
         set({ planContent }, false, "setPlanContent"),
-
-      setPreviewViewMode: (previewViewMode) =>
-        set({ previewViewMode }, false, "setPreviewViewMode"),
-
-      setPreviewSubTab: (previewSubTab) =>
-        set({ previewSubTab }, false, "setPreviewSubTab"),
 
       // Panel width actions - for synchronized resizable panels
       setPanelLeftWidth: (width) => {

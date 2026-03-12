@@ -318,7 +318,6 @@ export function ChatInterface() {
 
           {isTask &&
             !userEventsExist &&
-            taskStatus !== "READY" &&
             taskStatus !== "ERROR" && (
               <RuntimeBootstrapProgress
                 runtimeStatus={conversation?.runtime_status as RuntimeStatus}

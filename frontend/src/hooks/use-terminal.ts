@@ -16,15 +16,17 @@ const renderCommand = (
 ) => {
   const { content, type } = command;
 
-  // Skip rendering user input commands that come from the event stream
-  // as they've already been displayed in the terminal as the user typed
   if (type === "input" && isUserInput) {
     return;
   }
 
   const trimmedContent = (content || "").replaceAll("\n", "\r\n").trim();
-  // Only write if there's actual content to avoid empty newlines
-  if (trimmedContent) {
+  if (!trimmedContent) return;
+
+  if (type === "input") {
+    // Green prompt for commands, reset color after
+    terminal.writeln(`\x1b[38;2;166;227;161m$ ${parseTerminalOutput(trimmedContent)}\x1b[0m`);
+  } else {
     terminal.writeln(parseTerminalOutput(trimmedContent));
   }
 };
@@ -89,9 +91,32 @@ export const useTerminal = () => {
       scrollback: 10000,
       scrollSensitivity: 1,
       fastScrollSensitivity: 5,
-      disableStdin: true, // Make terminal read-only
+      disableStdin: true,
+      allowTransparency: true,
       theme: {
-        background: "#25272D",
+        background: "transparent",
+        foreground: "#d4d4d8",
+        cursor: "#d4d4d8",
+        cursorAccent: "#1e1e2e",
+        selectionBackground: "rgba(255, 255, 255, 0.08)",
+        selectionForeground: undefined,
+        selectionInactiveBackground: "rgba(255, 255, 255, 0.04)",
+        black: "#45475a",
+        red: "#f38ba8",
+        green: "#a6e3a1",
+        yellow: "#f9e2af",
+        blue: "#89b4fa",
+        magenta: "#cba6f7",
+        cyan: "#94e2d5",
+        white: "#bac2de",
+        brightBlack: "#585b70",
+        brightRed: "#f38ba8",
+        brightGreen: "#a6e3a1",
+        brightYellow: "#f9e2af",
+        brightBlue: "#89b4fa",
+        brightMagenta: "#cba6f7",
+        brightCyan: "#94e2d5",
+        brightWhite: "#a6adc8",
       },
     });
 
@@ -128,11 +153,6 @@ export const useTerminal = () => {
       // This happens when we just switch to Terminal from other tabs
       if (commands.length > 0) {
         for (let i = 0; i < commands.length; i += 1) {
-          if (commands[i].type === "input") {
-            terminal.current.write("$ ");
-          }
-          // Don't pass isUserInput=true here because we're initializing the terminal
-          // and need to show all previous commands
           renderCommand(commands[i], terminal.current, false);
         }
         lastCommandIndex.current = commands.length;
@@ -154,11 +174,6 @@ export const useTerminal = () => {
       lastCommandIndex.current < commands.length
     ) {
       for (let i = lastCommandIndex.current; i < commands.length; i += 1) {
-        if (commands[i].type === "input") {
-          terminal.current.write("$ ");
-        }
-        // Pass true for isUserInput to skip rendering user input commands
-        // that have already been displayed as the user typed
         renderCommand(commands[i], terminal.current, false);
       }
       lastCommandIndex.current = commands.length;

@@ -1,19 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import TerminalIcon from "#/icons/terminal.svg?react";
-import GlobeIcon from "#/icons/globe.svg?react";
 import ServerIcon from "#/icons/server.svg?react";
 import GitChanges from "#/icons/git_changes.svg?react";
-import VSCodeIcon from "#/icons/vscode.svg?react";
 import ThreeDotsVerticalIcon from "#/icons/three-dots-vertical.svg?react";
-import LessonPlanIcon from "#/icons/lesson-plan.svg?react";
-import PreviewIcon from "#/icons/preview.svg?react";
 import { cn } from "#/utils/utils";
 import { useConversationLocalStorageState } from "#/utils/conversation-local-storage";
 import { ConversationTabNav } from "./conversation-tab-nav";
 import { ChatActionTooltip } from "../../chat/chat-action-tooltip";
 import { I18nKey } from "#/i18n/declaration";
-import { VSCodeTooltipContent } from "./vscode-tooltip-content";
 import { useConversationStore } from "#/stores/conversation-store";
 import { ConversationTabsContextMenu } from "./conversation-tabs-context-menu";
 import { useConversationId } from "#/hooks/use-conversation-id";
@@ -39,7 +34,6 @@ export function ConversationTabs() {
 
   // Initialize Zustand state from localStorage on component mount
   useEffect(() => {
-    // Initialize selectedTab from localStorage if available
     setSelectedTab(persistedState.selectedTab);
     setHasRightPanelToggled(persistedState.rightPanelShown);
   }, [
@@ -52,7 +46,6 @@ export function ConversationTabs() {
   useEffect(() => {
     const handlePanelVisibilityChange = () => {
       if (isRightPanelShown) {
-        // If no tab is selected, default to editor tab
         if (!selectedTab) {
           onTabChange("editor");
         }
@@ -66,15 +59,6 @@ export function ConversationTabs() {
 
   const tabs = [
     {
-      tabValue: "planner",
-      isActive: isTabActive("planner"),
-      icon: LessonPlanIcon,
-      onClick: () => selectTab("planner"),
-      tooltipContent: t(I18nKey.COMMON$PLANNER),
-      tooltipAriaLabel: t(I18nKey.COMMON$PLANNER),
-      label: t(I18nKey.COMMON$PLANNER),
-    },
-    {
       tabValue: "editor",
       isActive: isTabActive("editor"),
       icon: GitChanges,
@@ -82,25 +66,6 @@ export function ConversationTabs() {
       tooltipContent: t(I18nKey.COMMON$CHANGES),
       tooltipAriaLabel: t(I18nKey.COMMON$CHANGES),
       label: t(I18nKey.COMMON$CHANGES),
-    },
-    {
-      tabValue: "vscode",
-      isActive: isTabActive("vscode"),
-      icon: VSCodeIcon,
-      onClick: () => selectTab("vscode"),
-      tooltipContent: <VSCodeTooltipContent />,
-      tooltipAriaLabel: t(I18nKey.COMMON$CODE),
-      label: t(I18nKey.COMMON$CODE),
-    },
-    {
-      tabValue: "terminal",
-      isActive: isTabActive("terminal"),
-      icon: TerminalIcon,
-      onClick: () => selectTab("terminal"),
-      tooltipContent: t(I18nKey.COMMON$TERMINAL),
-      tooltipAriaLabel: t(I18nKey.COMMON$TERMINAL),
-      label: t(I18nKey.COMMON$TERMINAL),
-      className: "pl-2",
     },
     {
       tabValue: "served",
@@ -112,22 +77,13 @@ export function ConversationTabs() {
       label: t(I18nKey.COMMON$APP),
     },
     {
-      tabValue: "browser",
-      isActive: isTabActive("browser"),
-      icon: GlobeIcon,
-      onClick: () => selectTab("browser"),
-      tooltipContent: t(I18nKey.COMMON$BROWSER),
-      tooltipAriaLabel: t(I18nKey.COMMON$BROWSER),
-      label: t(I18nKey.COMMON$BROWSER),
-    },
-    {
-      tabValue: "preview",
-      isActive: isTabActive("preview"),
-      icon: PreviewIcon,
-      onClick: () => selectTab("preview"),
-      tooltipContent: t(I18nKey.COMMON$PREVIEW),
-      tooltipAriaLabel: t(I18nKey.COMMON$PREVIEW),
-      label: t(I18nKey.COMMON$PREVIEW),
+      tabValue: "terminal",
+      isActive: isTabActive("terminal"),
+      icon: TerminalIcon,
+      onClick: () => selectTab("terminal"),
+      tooltipContent: t(I18nKey.COMMON$TERMINAL),
+      tooltipAriaLabel: t(I18nKey.COMMON$TERMINAL),
+      label: t(I18nKey.COMMON$TERMINAL),
     },
   ];
 

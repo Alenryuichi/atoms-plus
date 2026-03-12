@@ -21,8 +21,7 @@ export function ConversationMain() {
   const isMobile = useBreakpoint();
   const { isRightPanelShown, isChatPanelCollapsed } = useConversationStore();
 
-  // Auto-switch to Preview tab when agent finishes with web files
-  // Auto-refresh Preview panel when files are written
+  // Auto-switch to App (served) tab when agent finishes with web files
   useAutoPreview();
 
   // Panel width state is now in Zustand store, synchronized with TopNavbar
