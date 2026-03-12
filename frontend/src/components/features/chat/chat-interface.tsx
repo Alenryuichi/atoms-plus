@@ -35,6 +35,11 @@ import { useTaskPolling } from "#/hooks/query/use-task-polling";
 import { useConversationWebSocket } from "#/contexts/conversation-websocket-context";
 import ChatStatusIndicator from "./chat-status-indicator";
 import { getStatusColor, getStatusText } from "#/utils/utils";
+import { isMessageEvent, isActionEvent } from "#/types/v1/type-guards";
+import { parseMessageFromEvent as parseV0MessageFromEvent } from "./event-content-helpers/parse-message-from-event";
+import { parseMessageFromEvent as parseV1MessageFromEvent } from "#/components/v1/chat/event-content-helpers/parse-message-from-event";
+import { parseAssistantSuggestions } from "#/utils/assistant-suggestions";
+import type { OHEvent } from "#/stores/use-event-store";
 
 import { RuntimeBootstrapProgress } from "./runtime-bootstrap-progress";
 import type { RuntimeStatus } from "#/types/runtime-status";
@@ -48,12 +53,49 @@ function getEntryPoint(
   return "direct";
 }
 
-// Atoms Plus: Mock suggestions for the UI prototype
-const SUGGESTIONS = [
-  "添加深色/浅色主题切换",
-  "添加文章详情页面",
-  "添加滚动入场动画",
-];
+const getLatestAssistantTextFromV0 = (events: OHEvent[]): string => {
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const event = events[i];
+    if (!("action" in event) || event.source !== "agent") continue;
+
+    if (event.action === "message") {
+      return parseV0MessageFromEvent(event);
+    }
+
+    if (
+      event.action === "finish" &&
+      "args" in event &&
+      event.args &&
+      typeof event.args === "object" &&
+      "final_thought" in event.args &&
+      typeof event.args.final_thought === "string"
+    ) {
+      return event.args.final_thought.trim();
+    }
+  }
+
+  return "";
+};
+
+const getLatestAssistantTextFromV1 = (events: OHEvent[]): string => {
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const event = events[i];
+
+    if (isMessageEvent(event) && event.llm_message.role === "assistant") {
+      return parseV1MessageFromEvent(event);
+    }
+
+    if (
+      isActionEvent(event) &&
+      event.action.kind === "FinishAction" &&
+      typeof event.action.message === "string"
+    ) {
+      return event.action.message.trim();
+    }
+  }
+
+  return "";
+};
 
 export function ChatInterface() {
   const posthog = usePostHog();
@@ -128,6 +170,17 @@ export function ChatInterface() {
   const optimisticUserMessage = getOptimisticUserMessage();
 
   const isV1Conversation = conversation?.conversation_version === "V1";
+  const latestAssistantText = React.useMemo(
+    () =>
+      isV1Conversation
+        ? getLatestAssistantTextFromV1(v1FullEvents)
+        : getLatestAssistantTextFromV0(v0Events),
+    [isV1Conversation, v0Events, v1FullEvents],
+  );
+  const suggestionChips = React.useMemo(
+    () => parseAssistantSuggestions(latestAssistantText),
+    [latestAssistantText],
+  );
 
   const showV1Messages =
     v1FullEvents.length > 0 || !conversationWebSocket?.isLoadingHistory;
@@ -257,13 +310,11 @@ export function ChatInterface() {
 
   return (
     <ScrollProvider value={scrollProviderValue}>
-      {/* Atoms Plus: Airy transparent chat interface */}
-      <div className="h-full flex flex-col relative bg-transparent min-h-0 overflow-hidden">
-        {/* Atoms Plus: Message area with refined scrollbar and padding */}
+      <div className="h-full flex flex-col relative min-h-0 overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.05),_transparent_44%)]">
         <div
           ref={scrollRef}
           onScroll={(e) => onChatBodyScroll(e.currentTarget)}
-          className="atoms-chat-scroll flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 pt-6 pb-2 gap-0"
+          className="atoms-chat-scroll custom-scrollbar flex flex-col flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 pt-8 pb-3 md:px-8 md:pt-10"
         >
           {isChatLoading && isReturningToConversation && (
             <ChatMessagesSkeleton />
@@ -305,22 +356,21 @@ export function ChatInterface() {
 
           {/* Typing indicator - placed inside message area for better flow */}
           {curAgentState === AgentState.RUNNING && (
-            <div className="mb-8 pl-10">
+            <div className="mb-8 pl-11">
               <TypingIndicator />
             </div>
           )}
         </div>
 
-        {/* Atoms Plus: Bottom control area */}
-        <div className="flex flex-col gap-3 px-4 pb-4 pt-2 bg-transparent">
-          {/* Suggestion Chips - matching reference */}
-          {!isAgentRunning && totalEvents > 0 && (
+        <div className="mx-4 mb-4 mt-2 flex flex-col gap-3 rounded-[24px] workbench-panel px-3 py-3 md:mx-6 md:px-4">
+          {!isAgentRunning && suggestionChips.length > 0 && (
             <div className="flex flex-wrap gap-2 px-1">
-              {SUGGESTIONS.map((suggestion, idx) => (
+              {suggestionChips.map((suggestion, idx) => (
                 <button
                   key={idx}
+                  type="button"
                   onClick={() => handleSendMessage(suggestion, [], [])}
-                  className="px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.03] text-[11px] text-white/60 hover:text-white/90 hover:bg-white/[0.08] hover:border-white/20 transition-all cursor-pointer"
+                  className="workbench-chip cursor-pointer rounded-full px-3 py-1.5 text-[11px] font-medium"
                 >
                   {suggestion}
                 </button>
@@ -328,7 +378,6 @@ export function ChatInterface() {
             </div>
           )}
 
-          {/* Status Bar */}
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
               {isStartingStatus && (
@@ -340,7 +389,6 @@ export function ChatInterface() {
               <ConfirmationModeEnabled />
             </div>
 
-            {/* Right: Scroll to bottom */}
             {!hitBottom && <ScrollToBottomButton onClick={scrollDomToBottom} />}
           </div>
 
