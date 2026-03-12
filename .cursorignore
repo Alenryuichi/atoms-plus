@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+openhands/integrations/vscode/node_modules/
+
+# Build outputs
+dist/
+build/
+frontend/dist/
+openhands/integrations/vscode/out/
+openhands/integrations/vscode/dist/
+
+# Python caches and virtual envs
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Logs and runtime artifacts
+*.log
+logs/
+.openhands/
+
+# Coverage and reports
+coverage/
+.coverage
+htmlcov/
+
+# IDE/system/temp files
+.DS_Store
+*.tmp
+*.swp
