@@ -36,25 +36,25 @@ const getActionColorScheme = (
   // If running (no success status), use blue
   if (!success) {
     return {
-      border: "border-blue-500/40 hover:border-blue-500/60",
-      borderExpanded: "border-l-blue-500/50",
-      text: "text-blue-400",
-      bg: "from-blue-500/5",
-      detailBorder: "border-blue-500/20",
-      detailBg: "from-blue-500/5",
-      statusBadge: "text-blue-400/60",
+      border: "border-white/[0.08] hover:border-white/15",
+      borderExpanded: "border-l-white/10",
+      text: "text-blue-300",
+      bg: "bg-white/[0.03]",
+      detailBorder: "border-white/[0.08]",
+      detailBg: "bg-white/[0.025]",
+      statusBadge: "text-blue-300/70",
     };
   }
 
   // Success state - use emerald
   if (success === "success") {
     return {
-      border: "border-emerald-500/40 hover:border-emerald-500/60",
-      borderExpanded: "border-l-emerald-500/50",
+      border: "border-white/[0.08] hover:border-white/15",
+      borderExpanded: "border-l-emerald-400/40",
       text: "text-emerald-400",
-      bg: "from-emerald-500/5",
-      detailBorder: "border-emerald-500/20",
-      detailBg: "from-emerald-500/5",
+      bg: "bg-white/[0.03]",
+      detailBorder: "border-white/[0.08]",
+      detailBg: "bg-white/[0.025]",
       statusBadge: "text-emerald-400/60",
     };
   }
@@ -62,12 +62,12 @@ const getActionColorScheme = (
   // Timeout - use amber
   if (success === "timeout") {
     return {
-      border: "border-amber-500/40 hover:border-amber-500/60",
-      borderExpanded: "border-l-amber-500/50",
+      border: "border-white/[0.08] hover:border-white/15",
+      borderExpanded: "border-l-amber-300/40",
       text: "text-amber-400",
-      bg: "from-amber-500/5",
-      detailBorder: "border-amber-500/20",
-      detailBg: "from-amber-500/5",
+      bg: "bg-white/[0.03]",
+      detailBorder: "border-white/[0.08]",
+      detailBg: "bg-white/[0.025]",
       statusBadge: "text-amber-400/60",
     };
   }
@@ -75,24 +75,24 @@ const getActionColorScheme = (
   // MCP tools - use purple
   if (actionType === "call_tool_mcp" || actionType === "mcp") {
     return {
-      border: "border-purple-500/40 hover:border-purple-500/60",
-      borderExpanded: "border-l-purple-500/50",
+      border: "border-white/[0.08] hover:border-white/15",
+      borderExpanded: "border-l-violet-400/40",
       text: "text-purple-400",
-      bg: "from-purple-500/5",
-      detailBorder: "border-purple-500/20",
-      detailBg: "from-purple-500/5",
+      bg: "bg-white/[0.03]",
+      detailBorder: "border-white/[0.08]",
+      detailBg: "bg-white/[0.025]",
       statusBadge: "text-purple-400/60",
     };
   }
 
   // Default - use neutral
   return {
-    border: "border-white/10 hover:border-white/20",
-    borderExpanded: "border-l-amber-500/50",
+    border: "border-white/[0.08] hover:border-white/15",
+    borderExpanded: "border-l-white/10",
     text: "text-white/70",
-    bg: "from-white/5",
-    detailBorder: "border-white/10",
-    detailBg: "from-white/5",
+    bg: "bg-white/[0.03]",
+    detailBorder: "border-white/[0.08]",
+    detailBg: "bg-white/[0.025]",
     statusBadge: "text-white/60",
   };
 };
@@ -150,33 +150,22 @@ export function GenericEventMessage({
 
   return (
     <div className="w-full flex flex-col mb-3 group/event">
-      {/* Atoms Plus: Enhanced action bar with color coding */}
       <motion.button
         type="button"
         onClick={() => details && setShowDetails((prev) => !prev)}
         className={cn(
-          "relative flex items-center justify-between w-full py-3 px-4 rounded-xl transition-all",
-          "border-l-4 shadow-sm hover:shadow-md",
+          "relative flex w-full items-center justify-between rounded-2xl px-4 py-3 transition-all",
+          "border shadow-none",
           colorScheme.border,
           details ? "cursor-pointer" : "cursor-default",
-          showDetails && cn("bg-white/[0.02]", colorScheme.borderExpanded),
+          colorScheme.bg,
+          showDetails && cn("bg-white/[0.05]", colorScheme.borderExpanded),
           "hover:bg-white/[0.05]",
         )}
-        whileHover={{ scale: details ? 1.002 : 1 }}
+        whileHover={{ y: details ? -1 : 0 }}
         transition={{ duration: 0.15 }}
       >
-        {/* Shimmer effect on hover */}
-        <div className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none">
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
-            initial={{ x: "-200%" }}
-            whileHover={{ x: "200%" }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-          />
-        </div>
-
         <div className="flex items-center gap-3 overflow-hidden relative z-10">
-          {/* Chevron indicator */}
           {details && (
             <motion.div
               className={cn(
@@ -189,17 +178,15 @@ export function GenericEventMessage({
             </motion.div>
           )}
 
-          {/* Action type icon */}
           {ActionIcon && (
             <ActionIcon size={16} className={colorScheme.text} stroke={2} />
           )}
 
-          <span className={cn("text-[13px] font-semibold text-white/90")}>
+          <span className={cn("text-[13px] font-semibold text-white/88")}>
             {title}
           </span>
         </div>
 
-        {/* Status Indicator on the right */}
         <div className="flex items-center gap-2 pl-2 relative z-10">
           <span
             className={cn(
@@ -227,17 +214,9 @@ export function GenericEventMessage({
           )}
           {!success && (
             <motion.div
-              animate={{
-                rotate: 360,
-                filter: [
-                  "drop-shadow(0 0 2px currentColor)",
-                  "drop-shadow(0 0 4px currentColor)",
-                  "drop-shadow(0 0 2px currentColor)",
-                ],
-              }}
+              animate={{ rotate: 360 }}
               transition={{
                 rotate: { duration: 1, repeat: Infinity, ease: "linear" },
-                filter: { duration: 2, repeat: Infinity, ease: "easeInOut" },
               }}
             >
               <IconLoader2
@@ -253,17 +232,16 @@ export function GenericEventMessage({
       {/* Expanded Details */}
       {showDetails && details && (
         <motion.div
-          className={cn("mt-3 ml-8 pl-5 border-l-2", colorScheme.detailBorder)}
+          className={cn("mt-3 ml-6 border-l pl-4", colorScheme.detailBorder)}
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
         >
           <div
             className={cn(
-              "text-[12px] leading-relaxed text-white/60 p-4 rounded-lg border",
-              "bg-gradient-to-br to-transparent",
+              "rounded-xl border p-4 text-[12px] leading-relaxed text-white/62",
               colorScheme.detailBg,
-              colorScheme.detailBorder.replace("border-", "border border-"),
+              colorScheme.detailBorder,
             )}
           >
             {typeof details === "string" ? (

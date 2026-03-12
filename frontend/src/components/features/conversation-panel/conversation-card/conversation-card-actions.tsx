@@ -36,13 +36,16 @@ export function ConversationCardActions({
       <button
         data-testid="ellipsis-button"
         type="button"
+        aria-label="Conversation actions"
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
           onContextMenuToggle(!contextMenuOpen);
         }}
         className={cn(
-          "cursor-pointer w-6 h-6 flex flex-row items-center justify-center translate-x-2.5",
+          "flex h-8 w-8 translate-x-1 flex-row items-center justify-center rounded-xl border border-transparent text-white/45 transition-all duration-150",
+          "hover:border-white/10 hover:bg-white/[0.05] hover:text-white",
+          contextMenuOpen && "border-white/10 bg-white/[0.06] text-white",
           isConversationArchived && "opacity-60",
         )}
       >

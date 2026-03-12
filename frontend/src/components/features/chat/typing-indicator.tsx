@@ -28,7 +28,7 @@ export function TypingIndicator() {
 
   return (
     <motion.div
-      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-gradient-to-br from-black/60 to-black/40 backdrop-blur-md border border-amber-500/30 shadow-xl shadow-black/30"
+      className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-2.5 text-white/70 backdrop-blur-md"
       variants={containerVariants}
       initial="initial"
       animate="animate"
@@ -36,7 +36,7 @@ export function TypingIndicator() {
       {[0, 1, 2].map((index) => (
         <motion.span
           key={index}
-          className="w-2 h-2 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 shadow-lg shadow-amber-500/50"
+          className="h-2 w-2 rounded-full bg-white/70"
           variants={dotVariants}
           initial="initial"
           animate="animate"
@@ -49,7 +49,7 @@ export function TypingIndicator() {
           }}
         />
       ))}
-      <span className="ml-1 text-xs font-medium text-amber-400/80 tracking-wide">
+      <span className="ml-1 text-xs font-medium uppercase tracking-[0.16em] text-white/48">
         {t(I18nKey.AGENT_STATUS$THINKING)}
       </span>
     </motion.div>

@@ -8,7 +8,7 @@ import { useBreakpoint } from "#/hooks/use-breakpoint";
 import { useAutoPreview } from "#/hooks/use-auto-preview";
 
 function getMobileChatPanelClass(isRightPanelShown: boolean) {
-  return isRightPanelShown ? "h-160" : "flex-1";
+  return isRightPanelShown ? "min-h-[15rem] flex-[0_0_42%]" : "flex-1";
 }
 
 function getDesktopTabPanelClass(isRightPanelShown: boolean) {
@@ -47,9 +47,10 @@ export function ConversationMain() {
       <div
         ref={containerRef}
         className={cn(
-          // Atoms Plus: Direct layout without floating cards - panels sit directly on container
-          "flex flex-1 min-h-0 overflow-hidden gap-2",
-          isMobile ? "flex-col" : "transition-all duration-300 ease-in-out",
+          "flex flex-1 min-h-0 overflow-hidden",
+          isMobile
+            ? "flex-col pt-3"
+            : "transition-all duration-300 ease-in-out pt-0",
         )}
         style={
           !isMobile
@@ -94,10 +95,10 @@ export function ConversationMain() {
             "flex flex-col min-h-0 transition-all duration-300 ease-in-out overflow-hidden",
             isMobile
               ? cn(
-                  "absolute bottom-4 left-3 right-3 top-160",
+                  "min-h-0",
                   isRightPanelShown
-                    ? "h-160 translate-y-0 opacity-100"
-                    : "h-0 translate-y-full opacity-0",
+                    ? "relative mt-3 flex-1 translate-y-0 opacity-100"
+                    : "pointer-events-none absolute inset-x-0 bottom-0 top-full translate-y-4 opacity-0",
                 )
               : getDesktopTabPanelClass(isRightPanelShown),
           )}

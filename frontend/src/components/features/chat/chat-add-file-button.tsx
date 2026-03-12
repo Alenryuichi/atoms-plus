@@ -13,18 +13,11 @@ export function ChatAddFileButton({
   return (
     <button
       type="button"
+      aria-label="Add files"
       className={cn(
-        // Atoms Plus: Refined glass circle button
-        "relative shrink-0 size-9 rounded-full",
-        "flex items-center justify-center",
-        "bg-black/30 backdrop-blur-sm",
-        "border border-white/10",
-        "transition-all duration-200",
-        // Hover effects
-        !disabled && "hover:border-amber-500/40 hover:bg-black/50",
-        !disabled && "hover:shadow-[0_0_12px_rgba(212,168,85,0.15)]",
-        !disabled && "hover:scale-105 active:scale-95",
-        // Disabled state
+        "relative shrink-0 flex size-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-white/70 backdrop-blur-sm transition-all duration-150",
+        !disabled &&
+          "hover:border-white/15 hover:bg-white/[0.07] hover:text-white active:scale-[0.98]",
         disabled && "opacity-40 cursor-not-allowed",
         !disabled && "cursor-pointer",
       )}
@@ -36,7 +29,7 @@ export function ChatAddFileButton({
       <IconPaperclip
         size={16}
         stroke={1.5}
-        color={disabled ? "#6b7280" : "#d4a855"}
+        color={disabled ? "#6b7280" : "currentColor"}
       />
     </button>
   );

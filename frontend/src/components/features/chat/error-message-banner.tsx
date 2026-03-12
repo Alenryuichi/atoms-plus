@@ -32,7 +32,7 @@ export function ErrorMessageBanner({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="w-full rounded-lg p-3.5 border-l-4 border-red-500/80 bg-neutral-900/60 backdrop-blur-sm flex gap-3 items-start text-white"
+      className="flex w-full items-start gap-3 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3.5 text-white backdrop-blur-sm"
       data-testid="error-message-banner"
     >
       {/* Icon */}
@@ -42,11 +42,8 @@ export function ErrorMessageBanner({
 
       <div className="min-w-0 flex-1 space-y-1.5">
         <div className="flex items-center gap-2">
-          {/* eslint-disable-next-line i18next/no-literal-string */}
-          <span className="text-sm font-medium text-white/90">Error</span>
-          {/* eslint-disable-next-line i18next/no-literal-string */}
-          <span className="text-[10px] px-1.5 py-0.5 bg-red-500/15 border border-red-500/30 text-red-400 rounded font-medium">
-            Critical
+          <span className="text-sm font-medium text-white/90">
+            {t(I18nKey.COMMON$ERROR)}
           </span>
         </div>
 
@@ -63,7 +60,7 @@ export function ErrorMessageBanner({
               components={{
                 a: (
                   <Link
-                    className="underline font-bold cursor-pointer text-red-400 hover:text-red-300"
+                    className="cursor-pointer font-bold text-rose-300 underline hover:text-rose-200"
                     to="/settings/billing"
                   >
                     link

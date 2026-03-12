@@ -32,8 +32,8 @@ export function ChatInputRow({
   onBlur,
 }: ChatInputRowProps) {
   return (
-    <div className="box-border content-stretch flex flex-row items-center justify-between p-0 relative shrink-0 w-full pb-3 gap-3">
-      <div className="basis-0 box-border content-stretch flex flex-row gap-3 grow items-center justify-start min-h-px min-w-px p-0 relative shrink-0">
+    <div className="relative flex w-full shrink-0 flex-row items-end justify-between gap-3 pb-2">
+      <div className="basis-0 relative flex min-h-px min-w-px grow flex-row items-end justify-start gap-3">
         <ChatAddFileButton
           disabled={disabled}
           handleFileIconClick={() => handleFileIconClick(disabled)}
@@ -41,6 +41,7 @@ export function ChatInputRow({
 
         <ChatInputField
           chatInputRef={chatInputRef}
+          disabled={disabled}
           onInput={onInput}
           onPaste={onPaste}
           onKeyDown={onKeyDown}

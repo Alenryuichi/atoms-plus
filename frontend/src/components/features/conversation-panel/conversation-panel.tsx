@@ -164,10 +164,10 @@ export function ConversationPanel({ onClose }: ConversationPanelProps) {
           scrollContainerRef.current = node;
       }}
       data-testid="conversation-panel"
-      className="w-full md:w-[400px] h-full border border-[#525252] bg-[#25272D] rounded-lg overflow-y-auto absolute custom-scrollbar-always"
+      className="absolute h-full w-full overflow-y-auto rounded-[28px] border border-white/10 bg-[#0b0b0d]/92 p-2 shadow-[0_24px_80px_-32px_rgba(0,0,0,0.8)] backdrop-blur-xl custom-scrollbar-always md:w-[400px]"
     >
       {isFetching && conversations.length === 0 && (
-        <div className="space-y-2">
+        <div className="space-y-2 px-1 py-1">
           {Array.from({ length: 5 }).map((_, index) => (
             <ConversationCardSkeleton key={index} />
           ))}
@@ -176,18 +176,23 @@ export function ConversationPanel({ onClose }: ConversationPanelProps) {
 
       {error && (
         <div className="flex flex-col items-center justify-center h-full">
-          <p className="text-danger">{error.message}</p>
+          <p className="text-danger text-sm">{error.message}</p>
         </div>
       )}
       {!isFetching && conversations?.length === 0 && !startTasks?.length && (
         <div className="flex flex-col items-center justify-center h-full">
-          <p className="text-neutral-400">
+          <p className="text-sm text-white/55">
             {t(I18nKey.CONVERSATION$NO_CONVERSATIONS)}
           </p>
         </div>
       )}
       {/* Render conversation list with stagger animation */}
-      <motion.div variants={listVariants} initial="hidden" animate="visible">
+      <motion.div
+        variants={listVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-1"
+      >
         {/* Render in-progress start tasks first */}
         {startTasks?.map((task) => (
           <motion.div key={task.id} variants={itemVariants}>

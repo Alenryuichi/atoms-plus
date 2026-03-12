@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import TerminalIcon from "#/icons/terminal.svg?react";
 import GlobeIcon from "#/icons/globe.svg?react";
@@ -24,6 +24,7 @@ export function ConversationTabs() {
   const { setHasRightPanelToggled, setSelectedTab } = useConversationStore();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const tabListRef = useRef<HTMLDivElement>(null);
 
   const { state: persistedState } =
     useConversationLocalStorageState(conversationId);
@@ -135,50 +136,89 @@ export function ConversationTabs() {
     (tab) => !persistedState.unpinnedTabs.includes(tab.tabValue),
   );
 
+  const handleTabKeyDown = (
+    index: number,
+    event: React.KeyboardEvent<HTMLButtonElement>,
+  ) => {
+    if (visibleTabs.length === 0) return;
+
+    const getNextIndex = () => {
+      switch (event.key) {
+        case "ArrowRight":
+          return (index + 1) % visibleTabs.length;
+        case "ArrowLeft":
+          return (index - 1 + visibleTabs.length) % visibleTabs.length;
+        case "Home":
+          return 0;
+        case "End":
+          return visibleTabs.length - 1;
+        default:
+          return null;
+      }
+    };
+
+    const nextIndex = getNextIndex();
+    if (nextIndex === null) return;
+
+    event.preventDefault();
+    visibleTabs[nextIndex].onClick();
+
+    const tabsElements = tabListRef.current?.querySelectorAll('[role="tab"]');
+    const nextTab = tabsElements?.[nextIndex] as HTMLButtonElement | undefined;
+    nextTab?.focus();
+  };
+
   return (
-    <div
-      className={cn(
-        "relative",
-        "flex flex-row justify-start items-center gap-1",
-      )}
-    >
-      {visibleTabs.map(
-        (
-          {
-            tabValue,
-            icon,
-            onClick,
-            isActive,
-            tooltipContent,
-            tooltipAriaLabel,
-            label,
-            className,
-          },
-          index,
-        ) => (
-          <ChatActionTooltip
-            key={index}
-            tooltip={tooltipContent}
-            ariaLabel={tooltipAriaLabel}
-          >
-            <ConversationTabNav
-              tabValue={tabValue}
-              icon={icon}
-              onClick={onClick}
-              isActive={isActive}
-              label={label}
-              className={className}
-            />
-          </ChatActionTooltip>
-        ),
-      )}
-      <div className="relative">
+    <div className="relative flex min-w-0 items-center gap-2">
+      <div
+        ref={tabListRef}
+        role="tablist"
+        aria-label="Conversation panels"
+        className={cn(
+          "relative flex min-w-0 flex-1 flex-row items-center justify-start gap-2 overflow-x-auto",
+        )}
+      >
+        {visibleTabs.map(
+          (
+            {
+              tabValue,
+              icon,
+              onClick,
+              isActive,
+              tooltipContent,
+              tooltipAriaLabel,
+              label,
+              className,
+            },
+            index,
+          ) => (
+            <ChatActionTooltip
+              key={index}
+              tooltip={tooltipContent}
+              ariaLabel={tooltipAriaLabel}
+            >
+              <ConversationTabNav
+                id={`conversation-tab-${tabValue}`}
+                tabValue={tabValue}
+                icon={icon}
+                onClick={onClick}
+                onKeyDown={(event) => handleTabKeyDown(index, event)}
+                isActive={isActive}
+                label={label}
+                ariaLabel={tooltipAriaLabel}
+                panelId="conversation-tab-panel"
+                className={className}
+              />
+            </ChatActionTooltip>
+          ),
+        )}
+      </div>
+      <div className="relative shrink-0">
         <button
           type="button"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className={cn(
-            "p-1 pl-0 rounded-md cursor-pointer",
-            "text-[#9299AA] bg-[#0D0F11]",
+            "flex size-8 items-center justify-center rounded-lg cursor-pointer text-white/45 transition-colors duration-150 hover:text-white/85",
           )}
           aria-label={t(I18nKey.COMMON$MORE_OPTIONS)}
         >

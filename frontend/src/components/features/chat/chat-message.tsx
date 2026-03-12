@@ -11,7 +11,7 @@ import { I18nKey } from "#/i18n/declaration";
 
 // Message animation variants - slide in from bottom
 const messageVariants = {
-  hidden: (type: OpenHandsSourceType) => ({
+  hidden: () => ({
     opacity: 0,
     y: 20,
   }),
@@ -75,7 +75,7 @@ export function ChatMessage({
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       className={cn(
-        "relative w-full flex flex-col gap-2 mb-6",
+        "relative mb-8 flex w-full flex-col gap-3",
         isUserMessage && "items-end",
       )}
       variants={messageVariants}
@@ -85,19 +85,15 @@ export function ChatMessage({
     >
       {/* Atoms Plus: User message bubble with subtle gradient border */}
       {isUserMessage && (
-        <div className="flex flex-col items-end max-w-[85%] gap-1">
+        <div className="flex max-w-[85%] flex-col items-end gap-2">
           <div className="relative group/message">
-            {/* Gradient border effect */}
-            <div className="absolute inset-0 rounded-2xl rounded-tr-sm bg-gradient-to-br from-amber-500/20 via-transparent to-purple-500/20 opacity-50" />
-
             <Card
               className={cn(
-                "relative px-4 py-2.5 bg-gradient-to-br from-white/[0.08] to-white/[0.03] backdrop-blur-md border border-transparent shadow-none",
-                "rounded-2xl rounded-tr-sm",
+                "relative rounded-3xl rounded-tr-lg border border-white/10 bg-white/[0.045] px-4 py-3 shadow-none backdrop-blur-md",
               )}
             >
               <div
-                className="text-[13px] text-white/95 leading-relaxed font-medium"
+                className="text-[14px] font-medium leading-6 text-white/92"
                 style={{ whiteSpace: "normal", wordBreak: "break-word" }}
               >
                 <MarkdownRenderer includeStandard>{message}</MarkdownRenderer>
@@ -108,12 +104,13 @@ export function ChatMessage({
             <button
               type="button"
               onClick={handleCopyToClipboard}
+              aria-label={t(I18nKey.BUTTON$COPY)}
               className={cn(
-                "absolute -left-8 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md",
-                "bg-black/60 hover:bg-black/80 border border-white/10",
-                "flex items-center justify-center transition-all",
-                "opacity-0 group-hover/message:opacity-100",
-                isCopy ? "text-emerald-400" : "text-white/60 hover:text-white",
+                "absolute -left-10 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] transition-all",
+                "opacity-0 group-hover/message:opacity-100 group-focus-within/message:opacity-100",
+                isCopy
+                  ? "text-emerald-400"
+                  : "text-white/55 hover:border-white/15 hover:bg-white/[0.07] hover:text-white",
               )}
             >
               {isCopy ? (
@@ -135,9 +132,9 @@ export function ChatMessage({
           </div>
 
           {/* Message status */}
-          <div className="flex items-center gap-1 mr-2">
+          <div className="mr-2 flex items-center gap-1.5">
             <IconCheck size={12} className="text-emerald-400" stroke={3} />
-            <span className="text-[10px] text-white/40">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-white/35">
               {t(I18nKey.CHAT_INTERFACE$MESSAGE_SENT)}
             </span>
           </div>
@@ -146,7 +143,7 @@ export function ChatMessage({
 
       {/* Atoms Plus: Agent message with avatar and enhanced content */}
       {isAgentMessage && (
-        <div className="flex flex-col gap-3 w-full group">
+        <div className="group flex w-full flex-col gap-3">
           <AgentAvatar
             name="Alex"
             role={isFromPlanningAgent ? "Planner" : "Engineer"}
@@ -157,9 +154,9 @@ export function ChatMessage({
             <div className="relative group/message">
               <div
                 className={cn(
-                  "text-[13px] text-white/95 leading-relaxed font-medium",
+                  "max-w-[78ch] text-[14px] font-medium leading-7 text-white/88",
                   isFromPlanningAgent &&
-                    "bg-white/[0.02] p-4 rounded-xl border border-white/5",
+                    "rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 backdrop-blur-sm",
                 )}
                 style={{ whiteSpace: "normal", wordBreak: "break-word" }}
               >
@@ -170,14 +167,13 @@ export function ChatMessage({
               <button
                 type="button"
                 onClick={handleCopyToClipboard}
+                aria-label={t(I18nKey.BUTTON$COPY)}
                 className={cn(
-                  "absolute -left-8 top-2 w-6 h-6 rounded-md",
-                  "bg-black/60 hover:bg-black/80 border border-white/10",
-                  "flex items-center justify-center transition-all",
-                  "opacity-0 group-hover/message:opacity-100",
+                  "absolute -left-10 top-2 flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] transition-all",
+                  "opacity-0 group-hover/message:opacity-100 group-focus-within/message:opacity-100",
                   isCopy
                     ? "text-emerald-400"
-                    : "text-white/60 hover:text-white",
+                    : "text-white/55 hover:border-white/15 hover:bg-white/[0.07] hover:text-white",
                 )}
               >
                 {isCopy ? (
@@ -211,7 +207,7 @@ export function ChatMessage({
                     key={index}
                     type="button"
                     onClick={action.onClick}
-                    className="text-white/40 hover:text-white/80 transition-colors"
+                    className="rounded-lg px-1 py-1 text-white/45 transition-colors hover:bg-white/[0.04] hover:text-white/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15"
                     title={action.tooltip}
                   >
                     {action.icon}

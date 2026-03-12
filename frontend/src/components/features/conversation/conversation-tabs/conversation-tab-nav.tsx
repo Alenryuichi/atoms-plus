@@ -3,49 +3,59 @@ import { cn } from "#/utils/utils";
 
 type ConversationTabNavProps = {
   tabValue: string;
+  id?: string;
   icon: ComponentType<{ className: string }>;
   onClick(): void;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLButtonElement>) => void;
   isActive?: boolean;
   label?: string;
+  ariaLabel?: string;
+  panelId?: string;
   className?: string;
 };
 
 export function ConversationTabNav({
   tabValue,
+  id,
   icon: Icon,
   onClick,
+  onKeyDown,
   isActive,
   label,
+  ariaLabel,
+  panelId,
   className,
 }: ConversationTabNavProps) {
   return (
     <button
+      id={id}
       type="button"
       onClick={() => {
         onClick();
       }}
+      onKeyDown={onKeyDown}
       data-testid={`conversation-tab-${tabValue}`}
+      role="tab"
+      aria-selected={Boolean(isActive)}
+      aria-label={ariaLabel ?? label}
+      aria-controls={panelId}
+      tabIndex={isActive ? 0 : -1}
       className={cn(
-        // Base styles - cleaner modern look matching reference
-        "flex items-center gap-2 rounded-lg cursor-pointer",
-        "px-3 py-1.5",
-        "transition-all duration-200 ease-in-out",
-        // Inactive state
-        "text-muted-foreground bg-transparent",
-        // Active state - subtle primary accent
-        isActive && "bg-primary/10 text-primary shadow-sm",
-        // Hover states
+        "flex items-center gap-2 cursor-pointer px-2.5 py-2",
+        "border-b border-transparent transition-all duration-150 ease-out",
+        "text-white/45",
         isActive
-          ? "hover:bg-primary/15"
-          : "hover:bg-accent hover:text-accent-foreground",
-        // Focus states
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
+          ? "border-white/20 text-white"
+          : "hover:text-white/80",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15 focus-visible:ring-offset-0",
         className,
       )}
     >
       <Icon className={cn("w-4 h-4 text-inherit flex-shrink-0")} />
       {isActive && label && (
-        <span className="text-sm font-medium whitespace-nowrap">{label}</span>
+        <span className="text-sm font-medium whitespace-nowrap tracking-[-0.01em]">
+          {label}
+        </span>
       )}
     </button>
   );

@@ -23,7 +23,7 @@ export function StartTaskCardHeader({
       <ConversationVersionBadge version="V1" />
 
       {/* Title */}
-      <h3 className="text-sm font-medium text-neutral-100 truncate flex-1">
+      <h3 className="flex-1 truncate text-sm font-medium text-white/88">
         {title}
       </h3>
 

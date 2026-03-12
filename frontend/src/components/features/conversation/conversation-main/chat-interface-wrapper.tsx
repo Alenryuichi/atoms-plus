@@ -14,7 +14,7 @@ export function ChatInterfaceWrapper({
       <div
         className={cn(
           "w-full h-full min-h-0 flex flex-col transition-all duration-300 ease-in-out",
-          isRightPanelShown ? "max-w-4xl" : "max-w-6xl",
+          isRightPanelShown ? "max-w-[960px]" : "max-w-[1180px]",
         )}
       >
         <ChatInterface />

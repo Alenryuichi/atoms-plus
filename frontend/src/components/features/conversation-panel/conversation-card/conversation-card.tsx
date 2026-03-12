@@ -124,15 +124,15 @@ export function ConversationCard({
       data-context-menu-open={contextMenuOpen.toString()}
       onClick={onClick}
       className={cn(
-        "relative h-auto w-full p-3.5 border-b border-neutral-600/50 cursor-pointer",
-        "transition-colors duration-150",
+        "relative h-auto w-full cursor-pointer rounded-2xl border border-transparent px-3.5 py-3.5",
+        "transition-colors duration-150 workbench-item",
+        contextMenuOpen && "workbench-item-active",
       )}
       whileHover={{
-        backgroundColor: contextMenuOpen ? undefined : "rgba(69, 69, 69, 0.8)",
-        x: 2,
+        y: contextMenuOpen ? 0 : -1,
       }}
       whileTap={{ scale: 0.995 }}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      transition={{ type: "spring", stiffness: 420, damping: 32 }}
     >
       <div className="flex items-center justify-between w-full">
         <ConversationCardHeader

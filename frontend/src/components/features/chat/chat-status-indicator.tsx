@@ -64,8 +64,8 @@ function ChatStatusIndicator({
     <div
       data-testid="chat-status-indicator"
       className={cn(
-        "flex items-center gap-3 p-3 rounded-lg border transition-all",
-        "bg-gradient-to-r to-transparent",
+        "flex items-center gap-3 rounded-xl border px-3 py-2 transition-all",
+        "bg-white/[0.03]",
         gradientBg,
         borderColor,
       )}
@@ -96,7 +96,7 @@ function ChatStatusIndicator({
       <div className="flex-1">
         <motion.div
           key={`text-${status}`}
-          className="text-sm font-medium text-white/90"
+          className="text-xs font-medium uppercase tracking-[0.16em] text-white/58"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}

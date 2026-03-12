@@ -64,7 +64,7 @@ export function ConversationPanelWrapper({
           animate="visible"
           exit="exit"
           className={cn(
-            "absolute h-full w-full left-0 top-0 z-[100] bg-black/80 rounded-xl",
+            "absolute left-0 top-0 z-[100] h-full w-full rounded-[28px] bg-black/55 backdrop-blur-sm",
             pathname === "/" && "bottom-0 top-0 h-auto",
           )}
         >

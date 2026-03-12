@@ -22,15 +22,15 @@ export function RecentConversation({ conversation }: RecentConversationProps) {
   return (
     <Link
       to={`/conversations/${conversation.conversation_id}`}
-      className="flex flex-col gap-1 p-[14px] cursor-pointer w-full rounded-lg hover:bg-[#5C5D62] transition-all duration-300 text-left"
+      className="workbench-item flex w-full cursor-pointer flex-col gap-2 rounded-2xl border border-transparent px-3.5 py-3 text-left transition-all duration-150"
     >
-      <div className="flex items-center gap-2 pl-1">
+      <div className="flex items-center gap-2">
         <ConversationStatusIndicator conversationStatus={conversation.status} />
-        <span className="text-xs text-white leading-6 font-normal">
+        <span className="text-sm font-medium leading-6 text-white/88">
           {conversation.title}
         </span>
       </div>
-      <div className="flex items-center justify-between text-xs text-[#A3A3A3] leading-4 font-normal">
+      <div className="flex items-center justify-between text-xs font-normal leading-4 text-white/48">
         <div className="flex items-center gap-3">
           {hasRepository ? (
             <div className="flex items-center gap-2">
@@ -46,7 +46,7 @@ export function RecentConversation({ conversation }: RecentConversationProps) {
             </div>
           ) : (
             <div className="flex items-center gap-1">
-              <RepoForkedIcon width={12} height={12} color="#A3A3A3" />
+              <RepoForkedIcon width={12} height={12} color="currentColor" />
               <span className="max-w-[124px] truncate">
                 {t(I18nKey.COMMON$NO_REPOSITORY)}
               </span>
@@ -54,7 +54,7 @@ export function RecentConversation({ conversation }: RecentConversationProps) {
           )}
           {hasRepository ? (
             <div className="flex items-center gap-1">
-              <CodeBranchIcon width={12} height={12} color="#A3A3A3" />
+              <CodeBranchIcon width={12} height={12} color="currentColor" />
               <span
                 className="max-w-[124px] truncate"
                 title={conversation.selected_branch || ""}
@@ -65,7 +65,7 @@ export function RecentConversation({ conversation }: RecentConversationProps) {
           ) : null}
         </div>
         {(conversation.created_at || conversation.last_updated_at) && (
-          <span>
+          <span className="tabular-nums">
             {formatTimeDelta(
               conversation.created_at || conversation.last_updated_at,
             )}{" "}

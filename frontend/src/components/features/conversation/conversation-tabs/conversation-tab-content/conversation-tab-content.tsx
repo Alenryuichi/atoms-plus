@@ -55,6 +55,7 @@ export function ConversationTabContent() {
     () => TAB_CONFIG[selectedTab ?? "editor"],
     [selectedTab],
   );
+  const activeTabId = `conversation-tab-${selectedTab ?? "editor"}`;
 
   const ActiveComponent = activeTab.component;
 
@@ -66,7 +67,7 @@ export function ConversationTabContent() {
     <TabContainer>
       {/* Internal title bar removed - tabs are now in TopNavbar */}
       <Suspense fallback={<ConversationLoading />}>
-        <TabContentArea>
+        <TabContentArea ariaLabelledBy={activeTabId}>
           <TabWrapper
             // Force Terminal remount to reset XTerm buffer/state
             key={

@@ -146,6 +146,11 @@ function NavActionsDesktop({
 
   // Effective left width for layout - when collapsed, use minimal width
   const effectiveLeftWidth = isChatPanelCollapsed ? 0 : panelLeftWidth;
+  const collapseLabel = t(
+    isChatPanelCollapsed
+      ? I18nKey.EXPANDABLE_MESSAGE$SHOW_DETAILS
+      : I18nKey.EXPANDABLE_MESSAGE$HIDE_DETAILS,
+  );
 
   // Chat page: Icon buttons + Preview controls aligned with split panels
   // CRITICAL: Must use EXACTLY the same flex layout as ConversationMain to achieve pixel-perfect alignment
@@ -155,17 +160,17 @@ function NavActionsDesktop({
   if (isConversationPage) {
     return (
       <nav
-        className="absolute hidden md:flex items-center gap-2 z-[5]"
+        className="absolute hidden lg:flex items-center gap-0 z-[5]"
         style={{
-          top: "8px",
-          bottom: "8px",
-          left: "8px",
-          right: "8px",
+          top: "12px",
+          bottom: "12px",
+          left: "12px",
+          right: "12px",
         }}
       >
         {/* Left section: Collapse Button + Conversation Toggle - aligned to right edge (near divider) */}
         <div
-          className="flex items-center justify-end h-full gap-1"
+          className="flex items-center justify-end h-full gap-2"
           style={{
             flexGrow: effectiveLeftWidth,
             flexShrink: 1,
@@ -176,17 +181,16 @@ function NavActionsDesktop({
           }}
         >
           {/* Collapse/Expand Chat Panel Button */}
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
             <button
               type="button"
               onClick={toggleChatPanelCollapsed}
+              aria-label={collapseLabel}
               className={cn(
-                "flex items-center justify-center w-8 h-8 rounded-lg",
-                "text-white/40 hover:text-white/90",
-                "transition-all duration-200",
-                isChatPanelCollapsed && "text-white bg-white/10",
+                "flex items-center justify-center size-9 rounded-xl workbench-control",
+                isChatPanelCollapsed && "workbench-control-active",
               )}
-              title={isChatPanelCollapsed ? "展开对话面板" : "收起对话面板"}
+              title={collapseLabel}
             >
               {isChatPanelCollapsed ? (
                 <IconChevronsRight size={18} stroke={1.5} />
@@ -197,18 +201,17 @@ function NavActionsDesktop({
           </motion.div>
 
           {/* Conversation List Button */}
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
             <button
               type="button"
               onClick={() =>
                 isEmailVerified && setConversationPanelIsOpen((prev) => !prev)
               }
               disabled={!isEmailVerified}
+              aria-label={t(I18nKey.SIDEBAR$CONVERSATIONS)}
               className={cn(
-                "flex items-center justify-center w-8 h-8 rounded-lg",
-                "text-white/40 hover:text-white/90",
-                "transition-all duration-200",
-                conversationPanelIsOpen && "text-white bg-white/10",
+                "flex items-center justify-center size-9 rounded-xl workbench-control",
+                conversationPanelIsOpen && "workbench-control-active",
                 !isEmailVerified && "opacity-50 cursor-not-allowed",
               )}
               title={t(I18nKey.SIDEBAR$CONVERSATIONS)}
@@ -220,7 +223,7 @@ function NavActionsDesktop({
 
         {/* Center Divider - matches ResizeHandle width (8px gap) */}
         <div className="flex-shrink-0 w-2 flex items-center justify-center">
-          <div className="h-6 w-px bg-white/10" />
+          <div className="h-9 w-px workbench-divider" />
         </div>
 
         {/* Right section: Tab Switcher + User Avatar - Tabs aligned to left (near divider), Avatar on far right */}
@@ -241,8 +244,8 @@ function NavActionsDesktop({
           {/* User Avatar on the far right - ml-auto pushes it to the end */}
           <motion.div
             className="ml-auto"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.98 }}
           >
             <UserActions
               user={
@@ -370,7 +373,7 @@ function MobileMenuAuthed({
       className={cn(
         "fixed top-16 left-0 right-0 z-40",
         "bg-[#0a0a0b]/98 backdrop-blur-xl border-b border-neutral-800/50",
-        "p-4 md:hidden",
+        "p-4 lg:hidden",
       )}
     >
       <nav className="flex flex-col gap-3">
@@ -537,7 +540,7 @@ function MobileMenuLanding({
       className={cn(
         "fixed top-16 left-0 right-0 z-40",
         "bg-neutral-900/95 backdrop-blur-md border-b border-neutral-700/40",
-        "p-4 md:hidden",
+        "p-4 lg:hidden",
       )}
     >
       <nav className="flex flex-col gap-2">
@@ -725,7 +728,7 @@ export function TopNavbar() {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden text-white hover:bg-white/10"
+              className="lg:hidden text-white hover:bg-white/10"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             >
@@ -793,7 +796,7 @@ export function TopNavbar() {
         <div
           className={cn(
             "absolute right-4 md:right-8 lg:right-12 top-1/2 -translate-y-1/2 z-10 items-center gap-3",
-            isConversationPage ? "hidden" : "hidden md:flex",
+            isConversationPage ? "hidden" : "hidden lg:flex",
           )}
         >
           {/* Conversations Icon Button (Homepage only) - pure icon style */}
@@ -838,19 +841,21 @@ export function TopNavbar() {
         </div>
 
         {/* Mobile Menu Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden text-white hover:bg-white/10"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-        >
-          {mobileMenuOpen ? (
-            <IconX size={20} stroke={1.5} />
-          ) : (
-            <IconMenu2 size={20} stroke={1.5} />
-          )}
-        </Button>
+        <div className="absolute right-4 top-1/2 z-10 -translate-y-1/2 lg:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white hover:bg-white/10"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+          >
+            {mobileMenuOpen ? (
+              <IconX size={20} stroke={1.5} />
+            ) : (
+              <IconMenu2 size={20} stroke={1.5} />
+            )}
+          </Button>
+        </div>
       </header>
 
       {/* Mobile Menu - Authenticated */}

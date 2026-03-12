@@ -17,15 +17,15 @@ export function ConversationStatusIndicator({
   const conversationStatusBackgroundColor = useMemo(() => {
     switch (conversationStatus) {
       case "STOPPED":
-        return "bg-[#3C3C49]";
+        return "bg-white/25";
       case "RUNNING":
-        return "bg-[#1FBD53]"; // Running/online - green
+        return "bg-emerald-400/90";
       case "STARTING":
-        return "bg-[#FFD43B]"; // Busy/starting - yellow
+        return "bg-amber-300/90";
       case "ERROR":
-        return "bg-[#FF684E]"; // Error - red
+        return "bg-rose-400/90";
       default:
-        return "bg-[#3C3C49]"; // Default to grey for unknown states
+        return "bg-white/25";
     }
   }, [conversationStatus]);
 
@@ -38,7 +38,7 @@ export function ConversationStatusIndicator({
       content={statusLabel}
       placement="right"
       showArrow
-      tooltipClassName="bg-[#1a1a1a] text-white text-xs shadow-lg"
+      tooltipClassName="border border-white/10 bg-[#101012] text-white text-xs shadow-lg"
     >
       <div
         className={cn(

@@ -12,13 +12,13 @@ const MOBILE_BREAKPOINT = 1024;
  */
 export function useBreakpoint(breakpoint: number = MOBILE_BREAKPOINT): boolean {
   const [isMobile, setIsMobile] = useState(
-    () => window.innerWidth <= breakpoint,
+    () => window.innerWidth < breakpoint,
   );
   const isMobileRef = useRef(isMobile);
 
   useEffect(() => {
     function handleResize() {
-      const newIsMobile = window.innerWidth <= breakpoint;
+      const newIsMobile = window.innerWidth < breakpoint;
       if (newIsMobile !== isMobileRef.current) {
         isMobileRef.current = newIsMobile;
         setIsMobile(newIsMobile);

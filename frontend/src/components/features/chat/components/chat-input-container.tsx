@@ -4,7 +4,6 @@ import { UploadedFiles } from "../uploaded-files";
 import { ChatInputRow } from "./chat-input-row";
 import { ChatInputActions } from "./chat-input-actions";
 import { SlashCommandMenu } from "./slash-command-menu";
-import { useConversationStore } from "#/stores/conversation-store";
 import { cn } from "#/lib/utils";
 import { SlashCommandItem } from "#/hooks/chat/use-slash-command";
 
@@ -55,22 +54,13 @@ export function ChatInputContainer({
   slashSelectedIndex = 0,
   onSlashSelect,
 }: ChatInputContainerProps) {
-  const conversationMode = useConversationStore(
-    (state) => state.conversationMode,
-  );
-
   return (
     <div
       ref={chatContainerRef}
       className={cn(
-        // Atoms Plus: Clean airy input box - matching reference
-        "bg-white/[0.03] backdrop-blur-xl",
-        "border border-white/10",
-        "flex flex-col items-start justify-center",
-        "p-2 px-3 relative rounded-2xl w-full",
-        "transition-all duration-300 ease-out shadow-sm",
-        // Focus state
-        "focus-within:border-white/20 focus-within:bg-white/[0.05] focus-within:shadow-md",
+        "relative flex w-full flex-col items-start justify-center overflow-hidden rounded-[24px] border border-white/10 bg-black/20 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all duration-200 ease-out",
+        "focus-within:border-white/20 focus-within:bg-black/25",
+        disabled && "opacity-80",
       )}
       onDragOver={(e) => onDragOver(e, disabled)}
       onDragLeave={(e) => onDragLeave(e, disabled)}
@@ -106,8 +96,7 @@ export function ChatInputContainer({
         />
       </div>
 
-      {/* Action Bar - moved inside or adjusted for layout */}
-      <div className="w-full flex items-center justify-between pb-1 px-1 mt-[-8px]">
+      <div className="mt-1 w-full border-t border-white/[0.06] px-1 pt-2">
         <ChatInputActions
           disabled={disabled}
           handleResumeAgent={handleResumeAgent}
