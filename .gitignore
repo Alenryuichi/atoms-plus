@@ -280,4 +280,5 @@ FINAL_DIAGNOSIS*.md
 image*.png
 # Temporary files
 .claude-flow/
+.playwright-mcp/
 *.png
