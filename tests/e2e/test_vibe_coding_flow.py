@@ -81,20 +81,35 @@ class TestVibeCodingFlow:
 
     def test_vibe_coding_instructions_generation(self):
         """Test that Vibe Coding instructions are correctly generated."""
+        from atoms_plus.project_graph.models import ProjectGraph, TechStack
         from atoms_plus.roles.vibe_coding_instructions import (
             generate_vibe_coding_instructions,
         )
 
-        # Test web app task
+        react_graph = ProjectGraph(
+            name='React App',
+            description='React app',
+            tech_stack=TechStack(framework='React', styling='Tailwind CSS'),
+        )
         instructions = generate_vibe_coding_instructions(
             role_id='role-engineer',
             is_web_app_task=True,
+            project_graph=react_graph,
         )
 
         assert len(instructions) > 500, 'Instructions too short'
         assert 'MANDATORY' in instructions, 'Missing MANDATORY section'
         assert 'React' in instructions or 'web' in instructions.lower()
-        assert 'Tailwind' in instructions or 'CSS' in instructions
+        assert 'npm run build' in instructions
+        assert 'PORT' in instructions
+        assert '$WORKER_2' in instructions
+        assert '../components/...' in instructions
+        assert 'Do not force React/Vite' in instructions
+        assert 'Tailwind CSS' in instructions
+        assert 'Never rely on the previous command' in instructions
+        assert 'Avoid interactive scaffolding flows' in instructions
+        assert '--no-interactive' in instructions
+        assert 'Do not rely on `--yes` for create-vite' in instructions
 
         # Test non-web app task
         instructions_non_web = generate_vibe_coding_instructions(
@@ -105,6 +120,48 @@ class TestVibeCodingFlow:
         assert len(instructions_non_web) < len(instructions), (
             'Non-web instructions should be shorter'
         )
+
+        next_graph = ProjectGraph(
+            name='Next App',
+            description='Next app',
+            tech_stack=TechStack(framework='Next.js', styling='Tailwind CSS'),
+        )
+        next_instructions = generate_vibe_coding_instructions(
+            role_id='role-engineer',
+            is_web_app_task=True,
+            project_graph=next_graph,
+        )
+        assert 'Next.js projects' in next_instructions
+        assert 'rather than creating a Vite app' in next_instructions
+        assert '../components/...' not in next_instructions
+        assert 'Avoid interactive scaffolding flows' in next_instructions
+
+        vue_graph = ProjectGraph(
+            name='Vue App',
+            description='Vue app',
+            tech_stack=TechStack(framework='Vue', styling='CSS Modules'),
+        )
+        vue_instructions = generate_vibe_coding_instructions(
+            role_id='role-engineer',
+            is_web_app_task=True,
+            project_graph=vue_graph,
+        )
+        assert 'Vue projects' in vue_instructions
+        assert 'Do not generate React-only files' in vue_instructions
+        assert 'If you use Tailwind CSS' not in vue_instructions
+
+        nuxt_graph = ProjectGraph(
+            name='Nuxt App',
+            description='Nuxt app',
+            tech_stack=TechStack(framework='Nuxt', styling='Tailwind CSS'),
+        )
+        nuxt_instructions = generate_vibe_coding_instructions(
+            role_id='role-engineer',
+            is_web_app_task=True,
+            project_graph=nuxt_graph,
+        )
+        assert 'For Nuxt projects' in nuxt_instructions
+        assert 'plain Vue or Vite scaffold' in nuxt_instructions
 
     def test_code_quality_checks(self):
         """Test code quality validation logic."""
