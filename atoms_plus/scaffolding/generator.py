@@ -55,7 +55,7 @@ class ProjectGenerator:
             GenerationResult with status and file list
         """
         # Get template info
-        template_id = self._get_template_id(config.project_type)
+        template_id = config.template_id or self._get_template_id(config.project_type)
         template_path = TemplateRegistry.get_template_path(template_id)
         
         if not template_path or not os.path.exists(template_path):
@@ -111,6 +111,7 @@ class ProjectGenerator:
             errors=errors,
             warnings=warnings,
             next_steps=next_steps,
+            template_id=template_id,
         )
     
     def _get_template_id(self, project_type: ProjectType) -> str:

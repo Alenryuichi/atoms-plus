@@ -215,6 +215,7 @@ class AppConversationServiceBase(AppConversationService, ABC):
         task.status = AppConversationStartTaskStatus.PREPARING_REPOSITORY
         yield task
         await self.clone_or_init_git_repo(task, workspace)
+        await self.maybe_apply_scaffold(task, workspace)
 
         task.status = AppConversationStartTaskStatus.RUNNING_SETUP_SCRIPT
         yield task
@@ -232,6 +233,34 @@ class AppConversationServiceBase(AppConversationService, ABC):
             workspace.working_dir,
             agent_server_url,
         )
+
+    async def maybe_apply_scaffold(
+        self,
+        task: AppConversationStartTask,
+        workspace: AsyncRemoteWorkspace,
+    ) -> None:
+        """Apply an optional scaffold payload into the active workspace."""
+        scaffold_request = task.request.scaffold
+        if not scaffold_request:
+            return
+
+        task.detail = 'Applying scaffold template to workspace'
+
+        try:
+            from atoms_plus.scaffolding.orchestration import ScaffoldingOrchestrator
+        except ImportError as exc:
+            raise RuntimeError('Scaffolding support is not available in this deployment') from exc
+
+        result = await ScaffoldingOrchestrator.apply_to_workspace(
+            workspace, scaffold_request
+        )
+        if not result.success:
+            raise RuntimeError(
+                'Scaffolding failed: '
+                + '; '.join(result.errors or ['unknown generation error'])
+            )
+
+        task.detail = f'Generated {len(result.files_created)} scaffold files'
 
     async def _configure_git_user_settings(
         self,
@@ -381,9 +410,10 @@ class AppConversationServiceBase(AppConversationService, ABC):
                         return
 
         # write the pre-commit hook
+        pre_commit_destination = str(Path(workspace.working_dir) / PRE_COMMIT_HOOK)
         await workspace.file_upload(
             source_path=Path(__file__).parent / 'git' / 'pre-commit.sh',
-            destination_path=PRE_COMMIT_HOOK,
+            destination_path=pre_commit_destination,
         )
 
         # Make the pre-commit hook executable

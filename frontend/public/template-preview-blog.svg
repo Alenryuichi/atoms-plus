@@ -1,0 +1,42 @@
+<svg width="960" height="600" viewBox="0 0 960 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="960" height="600" rx="40" fill="#0D1117"/>
+<rect width="960" height="600" rx="40" fill="url(#bg)"/>
+<rect x="48" y="52" width="864" height="496" rx="28" fill="#141A22" stroke="rgba(255,255,255,0.08)"/>
+<rect x="48" y="52" width="864" height="52" rx="28" fill="#1B2430"/>
+<circle cx="86" cy="78" r="8" fill="#FB7185"/>
+<circle cx="114" cy="78" r="8" fill="#FBBF24"/>
+<circle cx="142" cy="78" r="8" fill="#34D399"/>
+<rect x="188" y="66" width="176" height="24" rx="12" fill="#273244"/>
+<rect x="112" y="144" width="736" height="172" rx="28" fill="url(#hero)"/>
+<rect x="154" y="188" width="248" height="18" rx="9" fill="#FFF7ED"/>
+<rect x="154" y="222" width="332" height="12" rx="6" fill="#FEF3C7" fill-opacity="0.78"/>
+<rect x="154" y="248" width="286" height="12" rx="6" fill="#FEF3C7" fill-opacity="0.42"/>
+<rect x="154" y="282" width="136" height="34" rx="17" fill="#141A22" fill-opacity="0.3"/>
+<circle cx="754" cy="230" r="52" fill="#FFF7ED" fill-opacity="0.18"/>
+<rect x="112" y="344" width="450" height="156" rx="28" fill="#1B2430"/>
+<rect x="152" y="378" width="162" height="94" rx="20" fill="url(#cover)"/>
+<rect x="336" y="388" width="148" height="14" rx="7" fill="#FFF7ED" fill-opacity="0.9"/>
+<rect x="336" y="418" width="186" height="10" rx="5" fill="#CBD5E1" fill-opacity="0.56"/>
+<rect x="336" y="442" width="168" height="10" rx="5" fill="#CBD5E1" fill-opacity="0.36"/>
+<rect x="336" y="468" width="92" height="10" rx="5" fill="#FDBA74" fill-opacity="0.76"/>
+<rect x="590" y="344" width="258" height="156" rx="28" fill="#1B2430"/>
+<rect x="628" y="382" width="146" height="12" rx="6" fill="#FFF7ED" fill-opacity="0.88"/>
+<rect x="628" y="414" width="180" height="10" rx="5" fill="#475569"/>
+<rect x="628" y="438" width="164" height="10" rx="5" fill="#475569"/>
+<rect x="628" y="462" width="134" height="10" rx="5" fill="#475569"/>
+<defs>
+<linearGradient id="bg" x1="112" y1="80" x2="828" y2="520" gradientUnits="userSpaceOnUse">
+<stop stop-color="#1F2937"/>
+<stop offset="0.52" stop-color="#111827"/>
+<stop offset="1" stop-color="#3F3F46"/>
+</linearGradient>
+<linearGradient id="hero" x1="112" y1="144" x2="848" y2="316" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FDBA74"/>
+<stop offset="1" stop-color="#F97316"/>
+</linearGradient>
+<linearGradient id="cover" x1="152" y1="378" x2="314" y2="472" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FB923C"/>
+<stop offset="1" stop-color="#7C2D12"/>
+</linearGradient>
+</defs>
+</svg>

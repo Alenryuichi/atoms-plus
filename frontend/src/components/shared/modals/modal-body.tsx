@@ -1,23 +1,20 @@
+/* eslint-disable react/jsx-props-no-spreading */
+
 import React from "react";
 import { cn } from "#/utils/utils";
 
 type ModalWidth = "small" | "medium";
 
-interface ModalBodyProps {
+interface ModalBodyProps extends React.HTMLAttributes<HTMLDivElement> {
   testID?: string;
   children: React.ReactNode;
-  className?: React.HTMLProps<HTMLDivElement>["className"];
   width?: ModalWidth;
 }
 
-export function ModalBody({
-  testID,
-  children,
-  className,
-  width = "small",
-}: ModalBodyProps) {
-  return (
+export const ModalBody = React.forwardRef<HTMLDivElement, ModalBodyProps>(
+  ({ testID, children, className, width = "small", ...props }, ref) => (
     <div
+      ref={ref}
       data-testid={testID}
       className={cn(
         "bg-base-secondary flex flex-col gap-6 items-center p-6 rounded-xl",
@@ -25,8 +22,11 @@ export function ModalBody({
         width === "medium" && "w-[700px]",
         className,
       )}
+      {...props}
     >
       {children}
     </div>
-  );
-}
+  ),
+);
+
+ModalBody.displayName = "ModalBody";

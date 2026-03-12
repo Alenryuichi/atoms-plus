@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Template Loading Demos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #050816;
+        --panel: rgba(12, 16, 30, 0.8);
+        --panel-strong: rgba(16, 20, 36, 0.96);
+        --border: rgba(255, 255, 255, 0.1);
+        --muted: rgba(218, 225, 255, 0.56);
+        --text: #f6f7fb;
+        --cyan: #93f0ff;
+        --amber: #ffd38a;
+        --violet: #a68cff;
+        --lime: #9effca;
+        --rose: #ff9ab8;
+        --shadow: 0 30px 90px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background:
+          radial-gradient(circle at top left, rgba(147, 240, 255, 0.14), transparent 24%),
+          radial-gradient(circle at top right, rgba(166, 140, 255, 0.1), transparent 22%),
+          linear-gradient(180deg, #040611 0%, #060917 38%, #03050e 100%);
+        color: var(--text);
+        font-family: "Syne", sans-serif;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 34px 34px;
+        mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent);
+      }
+
+      .page {
+        width: min(1320px, calc(100vw - 48px));
+        margin: 0 auto;
+        padding: 56px 0 80px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 18px;
+        margin-bottom: 34px;
+      }
+
+      .eyebrow {
+        width: fit-content;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: var(--amber);
+        font-size: 11px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        background: rgba(255, 211, 138, 0.08);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(40px, 6vw, 72px);
+        line-height: 0.96;
+        letter-spacing: -0.04em;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 760px;
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.7;
+      }
+
+      .hero p em {
+        font-family: "Instrument Serif", serif;
+        font-style: italic;
+        color: var(--text);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+      }
+
+      .demo {
+        position: relative;
+        overflow: hidden;
+        min-height: 420px;
+        padding: 22px;
+        border: 1px solid var(--border);
+        border-radius: 28px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 24%),
+          var(--panel);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(22px);
+      }
+
+      .demo::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        border-radius: inherit;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .demo-head {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .demo-kicker {
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+      }
+
+      .demo-title {
+        margin-top: 6px;
+        font-size: 30px;
+        line-height: 1;
+      }
+
+      .demo-pill {
+        padding: 7px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .demo-copy {
+        position: relative;
+        z-index: 1;
+        margin: 0 0 20px;
+        max-width: 420px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.7;
+      }
+
+      .stage {
+        position: relative;
+        z-index: 1;
+        height: 250px;
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+      }
+
+      .pick {
+        position: relative;
+        z-index: 1;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 18px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        color: rgba(255, 255, 255, 0.88);
+        text-decoration: none;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .pick span {
+        color: var(--amber);
+      }
+
+      .skeleton-stage {
+        padding: 20px;
+        background: linear-gradient(180deg, rgba(9, 12, 24, 0.98), rgba(13, 17, 32, 0.98));
+      }
+
+      .skeleton-window {
+        position: relative;
+        height: 100%;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+        overflow: hidden;
+      }
+
+      .skeleton-window::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(100deg, transparent 24%, rgba(255, 255, 255, 0.09) 48%, transparent 72%);
+        transform: translateX(-120%);
+        animation: shimmer 1.8s linear infinite;
+      }
+
+      .window-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .skeleton-body {
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        gap: 16px;
+        padding: 16px;
+      }
+
+      .skeleton-stack,
+      .skeleton-main {
+        display: grid;
+        gap: 12px;
+      }
+
+      .line,
+      .block {
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .block {
+        border-radius: 18px;
+      }
+
+      .mesh-stage {
+        background:
+          radial-gradient(circle at 20% 20%, rgba(158, 255, 202, 0.22), transparent 24%),
+          radial-gradient(circle at 80% 24%, rgba(166, 140, 255, 0.28), transparent 24%),
+          radial-gradient(circle at 70% 70%, rgba(255, 154, 184, 0.22), transparent 26%),
+          linear-gradient(180deg, rgba(10, 14, 29, 0.95), rgba(6, 8, 17, 0.98));
+      }
+
+      .mesh-orb {
+        position: absolute;
+        border-radius: 999px;
+        filter: blur(10px);
+        opacity: 0.75;
+        mix-blend-mode: screen;
+      }
+
+      .mesh-panel {
+        position: absolute;
+        inset: 22px;
+        padding: 18px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(10, 12, 24, 0.68);
+        backdrop-filter: blur(18px);
+      }
+
+      .mesh-metric {
+        position: absolute;
+        right: 18px;
+        top: 18px;
+        padding: 10px 12px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .scan-stage {
+        background:
+          linear-gradient(180deg, rgba(5, 8, 16, 0.98), rgba(8, 12, 25, 0.98));
+      }
+
+      .scan-stage::before,
+      .scan-stage::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .scan-stage::before {
+        background-image:
+          linear-gradient(rgba(147, 240, 255, 0.07) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(147, 240, 255, 0.05) 1px, transparent 1px);
+        background-size: 24px 24px;
+        opacity: 0.35;
+      }
+
+      .scan-stage::after {
+        height: 36px;
+        top: -36px;
+        background: linear-gradient(180deg, transparent, rgba(147, 240, 255, 0.22), transparent);
+        animation: scanner 2.5s linear infinite;
+      }
+
+      .scan-shell {
+        position: absolute;
+        inset: 20px;
+        display: grid;
+        grid-template-columns: 86px 1fr;
+        gap: 16px;
+      }
+
+      .scan-rail,
+      .scan-card {
+        border-radius: 18px;
+        border: 1px solid rgba(147, 240, 255, 0.12);
+        background: rgba(7, 11, 23, 0.72);
+      }
+
+      .scan-rail {
+        padding: 12px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .scan-card {
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .scan-line {
+        height: 10px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(147, 240, 255, 0.08), rgba(147, 240, 255, 0.22), rgba(147, 240, 255, 0.08));
+        background-size: 240% 100%;
+        animation: pulseLine 1.8s ease-in-out infinite;
+      }
+
+      .orbit-stage {
+        background:
+          radial-gradient(circle at center, rgba(255, 211, 138, 0.12), transparent 26%),
+          linear-gradient(180deg, rgba(12, 12, 21, 0.98), rgba(7, 8, 16, 0.98));
+      }
+
+      .orbit-ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        transform: translate(-50%, -50%);
+      }
+
+      .orbit-core {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 110px;
+        height: 110px;
+        transform: translate(-50%, -50%);
+        border-radius: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .orbit-core::before,
+      .orbit-core::after {
+        content: "";
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .orbit-core::before {
+        top: 28px;
+      }
+
+      .orbit-core::after {
+        top: 48px;
+      }
+
+      .orbit-dot {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 12px;
+        height: 12px;
+        margin: -6px;
+        border-radius: 999px;
+        background: radial-gradient(circle, white, rgba(255, 211, 138, 0.7));
+        box-shadow: 0 0 24px rgba(255, 211, 138, 0.45);
+      }
+
+      .legend {
+        margin-top: 28px;
+        color: rgba(255, 255, 255, 0.56);
+        font-size: 13px;
+        line-height: 1.8;
+      }
+
+      .legend strong {
+        color: rgba(255, 255, 255, 0.88);
+      }
+
+      @keyframes shimmer {
+        from {
+          transform: translateX(-120%);
+        }
+        to {
+          transform: translateX(140%);
+        }
+      }
+
+      @keyframes scanner {
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(320px);
+        }
+      }
+
+      @keyframes pulseLine {
+        0%,
+        100% {
+          opacity: 0.42;
+          background-position: 0% 50%;
+        }
+        50% {
+          opacity: 1;
+          background-position: 100% 50%;
+        }
+      }
+
+      @media (max-width: 960px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div class="eyebrow">Loading Demo Gallery</div>
+        <h1>Choose a better waiting state.</h1>
+        <p>
+          Four distinct directions for the template-loading moment. Each one is
+          usable, but they communicate different product tones:
+          <em> refined skeleton, ambient product glow, precision scan,</em>
+          and
+          <em> premium orbit</em>.
+        </p>
+      </section>
+
+      <section class="grid">
+        <article class="demo">
+          <div class="demo-head">
+            <div>
+              <div class="demo-kicker">Option A</div>
+              <div class="demo-title">Editorial Skeleton</div>
+            </div>
+            <div class="demo-pill">Safest for production</div>
+          </div>
+          <p class="demo-copy">
+            Feels like real UI arriving instead of a detached loading widget.
+            Most aligned with polished SaaS products and easiest to integrate
+            into the current wizard.
+          </p>
+          <div class="stage skeleton-stage">
+            <div class="skeleton-window">
+              <div class="window-bar">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="line" style="width: 96px; height: 10px; margin-left: 12px;"></div>
+              </div>
+              <div class="skeleton-body">
+                <div class="skeleton-stack">
+                  <div class="block" style="height: 48px;"></div>
+                  <div class="block" style="height: 48px; opacity: 0.72;"></div>
+                  <div class="block" style="height: 48px; opacity: 0.54;"></div>
+                </div>
+                <div class="skeleton-main">
+                  <div class="line" style="width: 120px; height: 14px;"></div>
+                  <div class="line" style="width: 100%; height: 10px;"></div>
+                  <div class="line" style="width: 82%; height: 10px;"></div>
+                  <div class="block" style="height: 84px;"></div>
+                  <div class="block" style="height: 42px; opacity: 0.72;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <a class="pick" href="#option-a"><span>A</span> Best if you want product-grade and low risk</a>
+        </article>
+
+        <article class="demo">
+          <div class="demo-head">
+            <div>
+              <div class="demo-kicker">Option B</div>
+              <div class="demo-title">Ambient Mesh</div>
+            </div>
+            <div class="demo-pill">Most modern / soft</div>
+          </div>
+          <p class="demo-copy">
+            Uses blurred color fields and a floating glass panel to feel more
+            premium. Slightly more expressive than a skeleton without becoming
+            noisy.
+          </p>
+          <div class="stage mesh-stage" id="mesh-stage">
+            <div class="mesh-orb" style="left: 20px; top: 22px; width: 110px; height: 110px; background: rgba(158, 255, 202, 0.3);"></div>
+            <div class="mesh-orb" style="right: 24px; top: 30px; width: 140px; height: 140px; background: rgba(166, 140, 255, 0.28);"></div>
+            <div class="mesh-orb" style="right: 60px; bottom: 16px; width: 130px; height: 130px; background: rgba(255, 154, 184, 0.22);"></div>
+            <div class="mesh-panel">
+              <div class="mesh-metric">Loading starter blueprint...</div>
+              <div class="line" style="width: 110px; height: 11px; margin-top: 8px;"></div>
+              <div class="line" style="width: 58%; height: 28px; margin-top: 22px;"></div>
+              <div class="line" style="width: 88%; height: 10px; margin-top: 14px;"></div>
+              <div class="line" style="width: 72%; height: 10px; margin-top: 10px;"></div>
+              <div class="block" style="height: 96px; margin-top: 22px;"></div>
+            </div>
+          </div>
+          <a class="pick" href="#option-b"><span>B</span> Best if you want premium and calm</a>
+        </article>
+
+        <article class="demo">
+          <div class="demo-head">
+            <div>
+              <div class="demo-kicker">Option C</div>
+              <div class="demo-title">Precision Scan</div>
+            </div>
+            <div class="demo-pill">Sharper / more technical</div>
+          </div>
+          <p class="demo-copy">
+            A more engineered look. Good if you want the product to feel
+            infrastructure-heavy, developer-oriented, and intentionally precise.
+          </p>
+          <div class="stage scan-stage">
+            <div class="scan-shell">
+              <div class="scan-rail">
+                <div class="scan-line"></div>
+                <div class="scan-line"></div>
+                <div class="scan-line"></div>
+                <div class="scan-line"></div>
+              </div>
+              <div class="scan-card">
+                <div class="scan-line" style="width: 120px;"></div>
+                <div class="scan-line" style="width: 100%;"></div>
+                <div class="scan-line" style="width: 92%;"></div>
+                <div class="scan-line" style="width: 78%;"></div>
+                <div class="scan-line" style="width: 68%; margin-top: 18px;"></div>
+                <div class="scan-line" style="width: 100%;"></div>
+                <div class="scan-line" style="width: 84%;"></div>
+              </div>
+            </div>
+          </div>
+          <a class="pick" href="#option-c"><span>C</span> Best if you want crisp and technical</a>
+        </article>
+
+        <article class="demo">
+          <div class="demo-head">
+            <div>
+              <div class="demo-kicker">Option D</div>
+              <div class="demo-title">Premium Orbit</div>
+            </div>
+            <div class="demo-pill">Most expressive</div>
+          </div>
+          <p class="demo-copy">
+            A luxury-style waiting state. Strong visual identity, memorable, and
+            the farthest from generic skeletons, but also the least understated.
+          </p>
+          <div class="stage orbit-stage">
+            <div class="orbit-ring" style="width: 220px; height: 220px;"></div>
+            <div class="orbit-ring" style="width: 154px; height: 154px;"></div>
+            <div class="orbit-core"></div>
+            <div class="orbit-dot orbit-one"></div>
+            <div class="orbit-dot orbit-two"></div>
+          </div>
+          <a class="pick" href="#option-d"><span>D</span> Best if you want memorable and branded</a>
+        </article>
+      </section>
+
+      <p class="legend">
+        <strong>My recommendation:</strong> pick <strong>A</strong> if you want
+        the cleanest production UX, pick <strong>B</strong> if you want a more
+        premium feel without being flashy, pick <strong>C</strong> for a
+        technical/devtool tone, or pick <strong>D</strong> only if you want the
+        loading state to become a brand moment.
+      </p>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+    <script>
+      const orbitOne = document.querySelector(".orbit-one");
+      const orbitTwo = document.querySelector(".orbit-two");
+      const meshOrbs = document.querySelectorAll(".mesh-orb");
+
+      gsap.to(meshOrbs[0], {
+        x: 30,
+        y: 14,
+        duration: 4.2,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+      });
+
+      gsap.to(meshOrbs[1], {
+        x: -22,
+        y: 24,
+        duration: 5,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+      });
+
+      gsap.to(meshOrbs[2], {
+        x: -16,
+        y: -18,
+        duration: 4.4,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+      });
+
+      const orbitState = { outer: -Math.PI / 2, inner: Math.PI / 2 };
+
+      gsap.ticker.add(() => {
+        orbitState.outer += 0.035;
+        orbitState.inner -= 0.05;
+
+        gsap.set(orbitOne, {
+          x: Math.cos(orbitState.outer) * 110,
+          y: Math.sin(orbitState.outer) * 110,
+        });
+
+        gsap.set(orbitTwo, {
+          x: Math.cos(orbitState.inner) * 77,
+          y: Math.sin(orbitState.inner) * 77,
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,16 +1,23 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useCreateConversation } from "#/hooks/mutation/use-create-conversation";
+import { useScaffoldingPresets } from "#/hooks/query/use-scaffolding-presets";
 import { LoadingSpinner } from "#/components/shared/loading-spinner";
+import { useScaffoldingTemplates } from "#/hooks/query/use-scaffolding-templates";
 import { ShuffleText } from "#/components/ui/shuffle-text";
 import { StarBorder } from "#/components/ui/star-border";
 import { CountUp } from "#/components/ui/count-up";
 import { DarkVeil } from "#/components/ui/dark-veil";
-import { ScaffoldBentoGrid } from "#/components/features/scaffolding";
+import {
+  ScaffoldWizard,
+  ScaffoldingPreset,
+  TemplateDetailsModal,
+  TemplatePreviewSurface,
+} from "#/components/features/scaffolding";
 import { I18nKey } from "#/i18n/declaration";
 import { useTeamModeStore } from "#/stores/team-mode-store";
 import { useInitialQueryStore } from "#/stores/initial-query-store";
@@ -19,7 +26,7 @@ import { useInitialQueryStore } from "#/stores/initial-query-store";
 gsap.registerPlugin(ScrollTrigger);
 
 // Card hover animation variants (still using Framer Motion for hover/tap)
-const cardVariants = {
+const cardVariants: Variants = {
   hover: {
     scale: 1.03,
     y: -6,
@@ -51,66 +58,117 @@ const TEMPLATE_CATEGORIES = [
   { id: "personal", labelKey: I18nKey.ATOMS$CATEGORY_PERSONAL },
 ];
 
-// Template cards with images/previews
-const TEMPLATES = [
-  // SaaS templates
+const CATEGORY_GRADIENTS: Record<string, string> = {
+  saas: "from-blue-500/20 to-purple-500/20",
+  ecommerce: "from-rose-500/20 to-orange-500/20",
+  internal: "from-slate-500/20 to-zinc-500/20",
+  personal: "from-emerald-500/20 to-cyan-500/20",
+};
+
+const FALLBACK_PRESETS: ScaffoldingPreset[] = [
   {
-    id: "investment",
-    titleKey: I18nKey.ATOMS$TEMPLATE_INVESTMENT_TITLE,
+    id: "saas-starter",
+    title: "SaaS Starter",
+    description:
+      "Authentication, dashboard shell, billing-ready foundation, and marketing pages.",
     category: "saas",
-    gradient: "from-blue-500/20 to-purple-500/20",
+    templateId: "nextjs-app-router",
+    previewImage: "/template-preview-saas-starter.svg",
+    tags: ["saas", "dashboard", "auth", "starter"],
+    defaultConfig: {
+      projectType: "nextjs",
+      uiLibrary: "shadcn",
+      features: ["typescript", "auth", "dark-mode", "responsive"],
+      description:
+        "A SaaS starter with auth, dashboard, and polished landing pages.",
+      packageManager: "pnpm",
+    },
+    supportedOverrides: {
+      uiLibrary: true,
+      features: true,
+      projectName: true,
+      description: true,
+      packageManager: true,
+    },
   },
-  // Internal templates
   {
-    id: "admin-panel",
-    titleKey: I18nKey.ATOMS$TEMPLATE_ADMIN_PANEL_TITLE,
+    id: "admin-dashboard",
+    title: "Admin Dashboard",
+    description:
+      "Internal tooling starter with analytics widgets, CRUD surfaces, and role-oriented layout.",
     category: "internal",
-    gradient: "from-slate-500/20 to-zinc-500/20",
-  },
-  {
-    id: "employee-portal",
-    titleKey: I18nKey.ATOMS$TEMPLATE_EMPLOYEE_PORTAL_TITLE,
-    category: "internal",
-    gradient: "from-cyan-500/20 to-blue-500/20",
-  },
-  {
-    id: "inventory-system",
-    titleKey: I18nKey.ATOMS$TEMPLATE_INVENTORY_SYSTEM_TITLE,
-    category: "internal",
-    gradient: "from-amber-500/20 to-orange-500/20",
-  },
-  {
-    id: "hr-dashboard",
-    titleKey: I18nKey.ATOMS$TEMPLATE_HR_DASHBOARD_TITLE,
-    category: "internal",
-    gradient: "from-violet-500/20 to-purple-500/20",
-  },
-  // Personal templates
-  {
-    id: "manga",
-    titleKey: I18nKey.ATOMS$TEMPLATE_MANGA_TITLE,
-    category: "personal",
-    gradient: "from-pink-500/20 to-orange-500/20",
-  },
-  {
-    id: "fitness",
-    titleKey: I18nKey.ATOMS$TEMPLATE_FITNESS_TITLE,
-    category: "personal",
-    gradient: "from-green-500/20 to-teal-500/20",
-  },
-  {
-    id: "portfolio",
-    titleKey: I18nKey.ATOMS$TEMPLATE_PORTFOLIO_TITLE,
-    category: "personal",
-    gradient: "from-indigo-500/20 to-blue-500/20",
+    templateId: "react-vite-ts",
+    previewImage: "/template-preview-admin-dashboard.svg",
+    tags: ["admin", "dashboard", "internal", "analytics"],
+    defaultConfig: {
+      projectType: "react-vite",
+      uiLibrary: "shadcn",
+      features: ["typescript", "dark-mode", "responsive", "testing"],
+      description:
+        "An internal admin dashboard starter with analytics and data management surfaces.",
+      packageManager: "pnpm",
+    },
+    supportedOverrides: {
+      uiLibrary: true,
+      features: true,
+      projectName: true,
+      description: true,
+      packageManager: true,
+    },
   },
   {
     id: "blog",
-    titleKey: I18nKey.ATOMS$TEMPLATE_BLOG_TITLE,
+    title: "Blog",
+    description:
+      "Content-driven site starter with article pages, author sections, and polished reading experience.",
     category: "personal",
-    gradient: "from-emerald-500/20 to-cyan-500/20",
+    templateId: "nextjs-app-router",
+    previewImage: "/template-preview-blog.svg",
+    tags: ["blog", "content", "writing", "seo"],
+    defaultConfig: {
+      projectType: "nextjs",
+      uiLibrary: "tailwind",
+      features: ["typescript", "dark-mode", "i18n", "responsive"],
+      description:
+        "A content-first blog starter with featured articles and author pages.",
+      packageManager: "npm",
+    },
+    supportedOverrides: {
+      uiLibrary: true,
+      features: true,
+      projectName: true,
+      description: true,
+      packageManager: true,
+    },
+  },
+  {
+    id: "portfolio",
+    title: "Portfolio",
+    description:
+      "Personal showcase with hero storytelling, selected work, and contact sections.",
+    category: "personal",
+    templateId: "react-vite-ts",
+    previewImage: "/template-preview-portfolio.svg",
+    tags: ["portfolio", "personal", "showcase", "landing"],
+    defaultConfig: {
+      projectType: "react-vite",
+      uiLibrary: "tailwind",
+      features: ["typescript", "dark-mode", "responsive"],
+      description:
+        "A polished portfolio starter for showcasing work, testimonials, and contact info.",
+      packageManager: "npm",
+    },
+    supportedOverrides: {
+      uiLibrary: true,
+      features: true,
+      projectName: true,
+      description: true,
+      packageManager: true,
+    },
   },
 ];
+
+type TemplateFlow = "idle" | "details" | "wizard";
 
 export default function AtomsHome() {
   const navigate = useNavigate();
@@ -118,16 +176,61 @@ export default function AtomsHome() {
   const [inputValue, setInputValue] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [activeCategory, setActiveCategory] = useState("saas");
+  const [selectedPreset, setSelectedPreset] = useState<
+    ScaffoldingPreset | undefined
+  >(undefined);
+  const [templateFlow, setTemplateFlow] = useState<TemplateFlow>("idle");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [displayedPlaceholder, setDisplayedPlaceholder] = useState("");
   const [isTyping, setIsTyping] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
+  const presetCardRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const preventDetailsCloseAutoFocusRef = useRef(false);
   const createConversation = useCreateConversation();
+  const {
+    data: presetsData,
+    isLoading: isPresetsLoading,
+    error: presetsError,
+  } = useScaffoldingPresets();
+  const { data: templatesData, isLoading: isTemplatesLoading } =
+    useScaffoldingTemplates();
   // Team Mode: Access store to check if enabled
   const isTeamModeEnabled = useTeamModeStore((state) => state.isEnabled);
   const setInitialPrompt = useInitialQueryStore(
     (state) => state.setInitialPrompt,
   );
+  const presets =
+    presetsData?.presets?.length && !presetsError
+      ? presetsData.presets
+      : FALLBACK_PRESETS;
+  const visibleCategories = TEMPLATE_CATEGORIES.filter((category) =>
+    presets.some((preset) => preset.category === category.id),
+  );
+  const visiblePresets = presets.filter(
+    (preset) => preset.category === activeCategory,
+  );
+  const areTemplateOptionsReady =
+    !!templatesData?.templates?.length && !isTemplatesLoading;
+
+  useEffect(() => {
+    if (!visibleCategories.length) {
+      return;
+    }
+
+    if (!visibleCategories.some((category) => category.id === activeCategory)) {
+      setActiveCategory(visibleCategories[0].id);
+    }
+  }, [activeCategory, visibleCategories]);
+
+  const restorePresetFocus = (presetId?: string) => {
+    if (!presetId) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      presetCardRefs.current[presetId]?.focus();
+    });
+  };
 
   // Refs for GSAP animations
   const containerRef = useRef<HTMLDivElement>(null);
@@ -325,10 +428,9 @@ export default function AtomsHome() {
     }
   };
 
-  const handleTemplateClick = (template: (typeof TEMPLATES)[0]) => {
-    const title = t(template.titleKey);
-    const query = `Build ${title}`;
-    handleSubmit(query);
+  const handleTemplateClick = (preset: ScaffoldingPreset) => {
+    setSelectedPreset(preset);
+    setTemplateFlow("details");
   };
 
   return (
@@ -456,9 +558,32 @@ export default function AtomsHome() {
             <h2 className="text-2xl md:text-3xl font-semibold text-white">
               {t(I18nKey.ATOMS$TEMPLATES_TITLE)}
             </h2>
+            {/* Homepage marketing copy intentionally stays product-authored here. */}
+            {/* eslint-disable-next-line i18next/no-literal-string */}
+            <p className="text-neutral-400 max-w-2xl mx-auto">
+              Pick a real starter, configure it, and jump straight into a live
+              conversation workspace.
+            </p>
+            {isPresetsLoading && !presetsData ? (
+              <>
+                {/* eslint-disable-next-line i18next/no-literal-string */}
+                <p className="text-sm text-neutral-500">
+                  Loading starter templates...
+                </p>
+              </>
+            ) : null}
+            {presetsError ? (
+              <>
+                {/* eslint-disable-next-line i18next/no-literal-string */}
+                <p className="text-sm text-amber-300/80">
+                  Preset catalog is temporarily unavailable. Showing built-in
+                  starters.
+                </p>
+              </>
+            ) : null}
             {/* Category Tabs */}
             <div className="flex flex-wrap justify-center gap-2" role="tablist">
-              {TEMPLATE_CATEGORIES.map((category) => (
+              {visibleCategories.map((category) => (
                 <button
                   key={category.id}
                   type="button"
@@ -488,58 +613,68 @@ export default function AtomsHome() {
             className="grid grid-cols-1 md:grid-cols-3 gap-4"
             role="tabpanel"
           >
-            {TEMPLATES.map((template) => (
+            {visiblePresets.map((preset) => (
               <motion.button
                 type="button"
-                key={template.id}
-                onClick={() => handleTemplateClick(template)}
+                key={preset.id}
+                ref={(element) => {
+                  presetCardRefs.current[preset.id] = element;
+                }}
+                onClick={() => handleTemplateClick(preset)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    handleTemplateClick(template);
+                    handleTemplateClick(preset);
                   }
                 }}
                 disabled={isCreating}
-                className="scroll-reveal-card group relative overflow-hidden rounded-2xl bg-neutral-900/50 border border-neutral-700/30 hover:border-amber-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-neutral-900 will-change-transform"
+                aria-label={`Open ${preset.title} template`}
+                className="scroll-reveal-card group relative overflow-hidden rounded-2xl border border-neutral-700/30 bg-neutral-900/50 text-left transition-all duration-300 hover:border-amber-500/50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-neutral-900 will-change-transform"
                 variants={cardVariants}
                 whileHover="hover"
                 whileTap="tap"
               >
                 {/* Card Background Gradient */}
                 <div
-                  className={`absolute inset-0 bg-gradient-to-br ${template.gradient} opacity-50 group-hover:opacity-70 transition-opacity duration-300`}
+                  className={`absolute inset-0 bg-gradient-to-br ${
+                    CATEGORY_GRADIENTS[preset.category] ??
+                    "from-indigo-500/20 to-blue-500/20"
+                  } opacity-50 group-hover:opacity-70 transition-opacity duration-300`}
                 />
 
                 {/* Card Content */}
-                <div className="relative p-6 h-48 flex flex-col justify-between">
-                  <div className="flex justify-end">
+                <div className="relative flex min-h-[21rem] flex-col gap-4 p-4">
+                  <div className="flex justify-between items-start gap-3">
                     <span className="px-3 py-1 text-xs font-medium bg-neutral-800/80 text-neutral-300 rounded-full backdrop-blur-sm">
-                      {t(I18nKey.ATOMS$REMIX_SESSION)}
+                      {preset.category}
+                    </span>
+                    <span className="px-3 py-1 text-xs font-medium bg-neutral-800/80 text-neutral-300 rounded-full backdrop-blur-sm">
+                      {preset.defaultConfig?.uiLibrary ?? "template"}
                     </span>
                   </div>
-                  <div className="text-left">
+                  <TemplatePreviewSurface preset={preset} />
+                  <div className="text-left mt-auto">
                     <h3 className="text-lg font-semibold text-white group-hover:text-amber-300 transition-colors">
-                      {t(template.titleKey)}
+                      {preset.title}
                     </h3>
+                    <p className="mt-2 text-sm text-neutral-400 leading-relaxed line-clamp-3">
+                      {preset.description}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {preset.tags.slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className="rounded-full border border-white/10 bg-white/6 px-2.5 py-1 text-[11px] font-medium text-neutral-300/80"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </motion.button>
             ))}
           </div>
-        </div>
-
-        {/* Scaffold Templates Bento Grid - scroll reveal */}
-        <div className="scroll-reveal w-full max-w-5xl mx-auto mt-16 space-y-6 will-change-transform">
-          <div className="text-center space-y-3">
-            <h2 className="text-2xl md:text-3xl font-semibold text-white">
-              {t(I18nKey.ATOMS$SCAFFOLD_TITLE) || "Quick Start Templates"}
-            </h2>
-            <p className="text-neutral-400 max-w-2xl mx-auto">
-              {t(I18nKey.ATOMS$SCAFFOLD_DESCRIPTION) ||
-                "Generate a complete project with your favorite framework in seconds"}
-            </p>
-          </div>
-          <ScaffoldBentoGrid />
         </div>
 
         {/* Stats Section - scroll reveal with GSAP */}
@@ -604,6 +739,48 @@ export default function AtomsHome() {
           </div>
         </div>
       </div>
+
+      <TemplateDetailsModal
+        preset={selectedPreset}
+        isOpen={templateFlow === "details"}
+        isContinueReady={areTemplateOptionsReady}
+        preventCloseAutoFocusRef={preventDetailsCloseAutoFocusRef}
+        onClose={() => {
+          preventDetailsCloseAutoFocusRef.current = false;
+          const presetId = selectedPreset?.id;
+          setTemplateFlow("idle");
+          setSelectedPreset(undefined);
+          restorePresetFocus(presetId);
+        }}
+        onContinue={() => {
+          preventDetailsCloseAutoFocusRef.current = true;
+          setTemplateFlow("wizard");
+        }}
+      />
+
+      <ScaffoldWizard
+        isOpen={templateFlow === "wizard"}
+        onClose={() => {
+          const presetId = selectedPreset?.id;
+          setTemplateFlow("idle");
+          setSelectedPreset(undefined);
+          restorePresetFocus(presetId);
+        }}
+        initialPresetId={selectedPreset?.id}
+        initialTemplateId={selectedPreset?.templateId}
+        initialConfig={
+          selectedPreset?.defaultConfig
+            ? {
+                projectType: selectedPreset.defaultConfig.projectType,
+                uiLibrary: selectedPreset.defaultConfig.uiLibrary,
+                features: selectedPreset.defaultConfig.features,
+                description: selectedPreset.defaultConfig.description,
+                packageManager:
+                  selectedPreset.defaultConfig.packageManager ?? "npm",
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }

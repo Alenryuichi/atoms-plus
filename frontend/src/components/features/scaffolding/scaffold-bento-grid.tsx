@@ -2,8 +2,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { BentoGrid, BentoCard } from "#/components/ui/magic-bento";
+import { useScaffoldingTemplates } from "#/hooks/query/use-scaffolding-templates";
 import { ScaffoldWizard } from "./scaffold-wizard";
-import { PROJECT_TYPES, ProjectType } from "./types";
+import { PROJECT_TYPE_METADATA, ProjectType } from "./types";
 
 // Framework icons as SVG components for better visual appeal
 const FrameworkIcons: Record<ProjectType, React.ReactNode> = {
@@ -63,11 +64,15 @@ const cardVariants = {
 };
 
 export function ScaffoldBentoGrid() {
+  const { data } = useScaffoldingTemplates();
+  const templates = data?.templates ?? [];
   const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const [selectedType, setSelectedType] = useState<ProjectType | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
+    null,
+  );
 
-  const handleTemplateClick = (projectType: ProjectType) => {
-    setSelectedType(projectType);
+  const handleTemplateClick = (templateId: string) => {
+    setSelectedTemplateId(templateId);
     setIsWizardOpen(true);
   };
 
@@ -79,13 +84,14 @@ export function ScaffoldBentoGrid() {
         spotlightRadius={350}
         glowColor="212, 168, 85"
       >
-        {PROJECT_TYPES.map((project, index) => {
-          const colors = FrameworkColors[project.id];
-          const Icon = FrameworkIcons[project.id];
+        {templates.map((template, index) => {
+          const metadata = PROJECT_TYPE_METADATA[template.projectType];
+          const colors = FrameworkColors[template.projectType];
+          const Icon = FrameworkIcons[template.projectType];
 
           return (
             <motion.div
-              key={project.id}
+              key={template.id}
               variants={cardVariants}
               initial="hidden"
               animate="visible"
@@ -98,7 +104,7 @@ export function ScaffoldBentoGrid() {
               })()}
             >
               <BentoCard
-                onClick={() => handleTemplateClick(project.id)}
+                onClick={() => handleTemplateClick(template.id)}
                 className={`h-full min-h-[180px] ${index === 0 ? "md:min-h-[320px]" : ""}`}
                 enableTilt
                 enableMagnetism
@@ -128,10 +134,10 @@ export function ScaffoldBentoGrid() {
                   {/* Content */}
                   <div className="flex-1 flex flex-col justify-end">
                     <h3 className="text-lg font-semibold text-white mb-1.5 group-hover:text-amber-200 transition-colors">
-                      {project.name}
+                      {template.name}
                     </h3>
                     <p className="text-sm text-neutral-400 leading-relaxed">
-                      {project.description}
+                      {template.description || metadata.description}
                     </p>
                   </div>
                 </div>
@@ -145,9 +151,9 @@ export function ScaffoldBentoGrid() {
         isOpen={isWizardOpen}
         onClose={() => {
           setIsWizardOpen(false);
-          setSelectedType(null);
+          setSelectedTemplateId(null);
         }}
-        initialProjectType={selectedType ?? undefined}
+        initialTemplateId={selectedTemplateId ?? undefined}
       />
     </>
   );
