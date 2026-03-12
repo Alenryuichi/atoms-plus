@@ -44,9 +44,7 @@ export function ConversationTabNav({
         "flex items-center gap-2 cursor-pointer px-2.5 py-2",
         "border-b border-transparent transition-all duration-150 ease-out",
         "text-white/45",
-        isActive
-          ? "border-white/20 text-white"
-          : "hover:text-white/80",
+        isActive ? "border-white/20 text-white" : "hover:text-white/80",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/15 focus-visible:ring-offset-0",
         className,
       )}
