@@ -1,9 +1,32 @@
 import React from "react";
+import { AxiosError } from "axios";
 import { PostHogProvider } from "posthog-js/react";
 import OptionService from "#/api/option-service/option-service.api";
-import { displayErrorToast } from "#/utils/custom-toast-handlers";
 
 const POSTHOG_BOOTSTRAP_KEY = "posthog_bootstrap";
+const POSTHOG_MAX_RETRIES = 2;
+const POSTHOG_MAX_RETRY_DELAY_MS = 5000;
+
+const isTransientConfigError = (error: unknown): boolean => {
+  if (!(error instanceof AxiosError)) {
+    return true;
+  }
+
+  const status = error.response?.status ?? error.status;
+  if (!status) {
+    return true;
+  }
+
+  return status >= 500;
+};
+
+const getPostHogRetryDelay = (attemptIndex: number): number =>
+  Math.min(1000 * 2 ** attemptIndex, POSTHOG_MAX_RETRY_DELAY_MS);
+
+const sleep = (ms: number) =>
+  new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
 
 function getBootstrapIds() {
   // Try to extract from URL hash (e.g. #distinct_id=abc&session_id=xyz)
@@ -37,27 +60,39 @@ function getBootstrapIds() {
   return undefined;
 }
 
-export function PostHogWrapper({ children }: { children: React.ReactNode }) {
-  const [posthogClientKey, setPosthogClientKey] = React.useState<string | null>(
-    null,
-  );
-  const [isLoading, setIsLoading] = React.useState(true);
+export async function loadPostHogClientKey(): Promise<string | null> {
+  let failureCount = 0;
+
+  while (failureCount <= POSTHOG_MAX_RETRIES) {
+    try {
+      const config = await OptionService.getConfig();
+      return config.posthog_client_key;
+    } catch (error) {
+      if (
+        failureCount >= POSTHOG_MAX_RETRIES ||
+        !isTransientConfigError(error)
+      ) {
+        return null;
+      }
+
+      await sleep(getPostHogRetryDelay(failureCount));
+      failureCount += 1;
+    }
+  }
+
+  return null;
+}
+
+export function PostHogWrapper({
+  children,
+  posthogClientKey,
+}: {
+  children: React.ReactNode;
+  posthogClientKey: string | null;
+}) {
   const bootstrapIds = React.useMemo(() => getBootstrapIds(), []);
 
-  React.useEffect(() => {
-    (async () => {
-      try {
-        const config = await OptionService.getConfig();
-        setPosthogClientKey(config.posthog_client_key);
-      } catch {
-        displayErrorToast("Error fetching PostHog client key");
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, []);
-
-  if (isLoading || !posthogClientKey) {
+  if (!posthogClientKey) {
     return children;
   }
 

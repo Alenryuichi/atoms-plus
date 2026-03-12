@@ -11,10 +11,15 @@ import { hydrateRoot } from "react-dom/client";
 import "./i18n";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./query-client-config";
-import { PostHogWrapper } from "./components/providers/posthog-wrapper";
+import {
+  loadPostHogClientKey,
+  PostHogWrapper,
+} from "./components/providers/posthog-wrapper";
 import { SupabaseAuthProvider } from "./context/supabase-auth-context";
 
 async function prepareApp() {
+  const posthogClientKeyPromise = loadPostHogClientKey();
+
   if (
     process.env.NODE_ENV === "development" &&
     import.meta.env.VITE_MOCK_API === "true"
@@ -25,16 +30,20 @@ async function prepareApp() {
       onUnhandledRequest: "bypass",
     });
   }
+
+  const posthogClientKey = await posthogClientKeyPromise;
+
+  return { posthogClientKey };
 }
 
-prepareApp().then(() =>
+prepareApp().then(({ posthogClientKey }) =>
   startTransition(() => {
     hydrateRoot(
       document,
       <StrictMode>
         <QueryClientProvider client={queryClient}>
           <SupabaseAuthProvider>
-            <PostHogWrapper>
+            <PostHogWrapper posthogClientKey={posthogClientKey}>
               <HydratedRouter />
             </PostHogWrapper>
           </SupabaseAuthProvider>
