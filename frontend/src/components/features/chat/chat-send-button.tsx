@@ -1,41 +1,97 @@
-import { IconArrowUp } from "@tabler/icons-react";
+import { IconArrowUp, IconPlayerStopFilled, IconPlayerPlayFilled } from "@tabler/icons-react";
 import { cn } from "#/utils/utils";
+import { AgentState } from "#/types/agent-state";
+
+export type ButtonMode = "send" | "stop" | "resume" | "loading" | "disabled";
+
+function getButtonMode(
+  agentState: AgentState,
+  hasContent: boolean,
+  isPausing: boolean,
+): ButtonMode {
+  if (isPausing) return "loading";
+
+  if (
+    agentState === AgentState.INIT ||
+    agentState === AgentState.LOADING
+  ) {
+    return "loading";
+  }
+
+  if (agentState === AgentState.RUNNING) return "stop";
+
+  if (
+    agentState === AgentState.STOPPED ||
+    agentState === AgentState.PAUSED
+  ) {
+    return hasContent ? "send" : "resume";
+  }
+
+  return hasContent ? "send" : "disabled";
+}
 
 export interface ChatSendButtonProps {
-  buttonClassName: string;
+  buttonClassName?: string;
   handleSubmit: () => void;
-  disabled: boolean;
+  handleStop: () => void;
+  handleResume: () => void;
+  agentState: AgentState;
+  hasContent: boolean;
+  isPausing?: boolean;
 }
 
 export function ChatSendButton({
   buttonClassName,
   handleSubmit,
-  disabled,
+  handleStop,
+  handleResume,
+  agentState,
+  hasContent,
+  isPausing = false,
 }: ChatSendButtonProps) {
+  const mode = getButtonMode(agentState, hasContent, isPausing);
+
+  const handleClick = () => {
+    if (mode === "send") handleSubmit();
+    else if (mode === "stop") handleStop();
+    else if (mode === "resume") handleResume();
+  };
+
+  const isActive = mode !== "disabled" && mode !== "loading";
+
   return (
     <button
       type="button"
-      aria-label="Send message"
+      aria-label={
+        mode === "stop"
+          ? "Stop agent"
+          : mode === "resume"
+            ? "Resume agent"
+            : "Send message"
+      }
       className={cn(
-        "flex size-10 items-center justify-center rounded-full transition-all duration-150",
-        disabled
-          ? "cursor-not-allowed border border-white/10 bg-white/[0.06] text-white/35"
-          : cn(
-              "cursor-pointer bg-white text-black shadow-[0_10px_30px_-16px_rgba(255,255,255,0.8)]",
-              "hover:bg-white/90 active:scale-[0.98]",
-            ),
+        "flex size-7 items-center justify-center rounded-full transition-all duration-150",
+        mode === "loading" && "cursor-default bg-white/[0.08]",
+        mode === "disabled" && "cursor-not-allowed bg-white/[0.06] text-white/25",
+        mode === "stop" &&
+          "cursor-pointer bg-white text-black hover:bg-white/90 active:scale-[0.93]",
+        mode === "send" &&
+          "cursor-pointer bg-white text-black hover:bg-white/90 active:scale-[0.93]",
+        mode === "resume" &&
+          "cursor-pointer bg-white text-black hover:bg-white/90 active:scale-[0.93]",
         buttonClassName,
       )}
-      data-name="arrow-up-circle-fill"
       data-testid="submit-button"
-      onClick={handleSubmit}
-      disabled={disabled}
+      onClick={handleClick}
+      disabled={!isActive}
     >
-      <IconArrowUp
-        size={20}
-        stroke={2.5}
-        color={disabled ? "#6b7280" : "#0b0b0c"}
-      />
+      {mode === "loading" && (
+        <div className="h-3 w-3 animate-spin rounded-full border-[1.5px] border-white/15 border-t-white/50" />
+      )}
+      {mode === "send" && <IconArrowUp size={16} stroke={2.5} />}
+      {mode === "stop" && <IconPlayerStopFilled size={10} />}
+      {mode === "resume" && <IconPlayerPlayFilled size={10} />}
+      {mode === "disabled" && <IconArrowUp size={16} stroke={2.5} />}
     </button>
   );
 }

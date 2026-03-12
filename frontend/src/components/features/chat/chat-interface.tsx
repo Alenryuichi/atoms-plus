@@ -357,6 +357,13 @@ export function ChatInterface() {
           )}
         </div>
 
+        {/* Floating scroll-to-bottom button */}
+        {!hitBottom && (
+          <div className="absolute bottom-[140px] right-6 z-10">
+            <ScrollToBottomButton onClick={scrollDomToBottom} />
+          </div>
+        )}
+
         <div className="mx-4 mb-4 mt-2 flex flex-col gap-3 px-1 py-2 md:mx-6">
           {!isAgentRunning && suggestionChips.length > 0 && (
             <div className="flex flex-wrap gap-2 px-1">
@@ -373,19 +380,15 @@ export function ChatInterface() {
             </div>
           )}
 
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-2">
-              {isStartingStatus && (
-                <ChatStatusIndicator
-                  statusColor={serverStatusColor}
-                  status={serverStatusText}
-                />
-              )}
+          {isStartingStatus && (
+            <div className="flex items-center gap-2 px-1">
+              <ChatStatusIndicator
+                statusColor={serverStatusColor}
+                status={serverStatusText}
+              />
               <ConfirmationModeEnabled />
             </div>
-
-            {!hitBottom && <ScrollToBottomButton onClick={scrollDomToBottom} />}
-          </div>
+          )}
 
           {errorMessage && (
             <ErrorMessageBanner

@@ -16,15 +16,14 @@ export function ScrollToBottomButton({
         onClick={onClick}
         data-testid="scroll-to-bottom"
         aria-label="Scroll to latest messages"
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 backdrop-blur-sm transition-all duration-150 hover:border-white/15 hover:bg-white/[0.1] hover:text-white"
+        className="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.08] bg-black/60 text-white/60 backdrop-blur-sm transition-all duration-150 hover:bg-black/80 hover:text-white/90 active:scale-95 shadow-lg"
       >
-        <IconChevronDown size={20} stroke={2.5} />
+        <IconChevronDown size={16} stroke={2.5} />
       </button>
 
-      {/* Unread badge */}
       {unreadCount > 0 && (
-        <div className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border border-[#0b0b0c] bg-rose-500 px-1.5">
-          <span className="text-[10px] font-bold text-white">
+        <div className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1">
+          <span className="text-[9px] font-bold text-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         </div>

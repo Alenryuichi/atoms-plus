@@ -10,12 +10,17 @@ import { ChatInputGrip } from "./components/chat-input-grip";
 import { ChatInputContainer } from "./components/chat-input-container";
 import { HiddenFileInput } from "./components/hidden-file-input";
 import { useConversationStore } from "#/stores/conversation-store";
+import { AgentState } from "#/types/agent-state";
 
 export interface CustomChatInputProps {
   disabled?: boolean;
   showButton?: boolean;
   conversationStatus?: ConversationStatus | null;
   onSubmit: (message: string) => void;
+  onStop: () => void;
+  onResume: () => void;
+  agentState: AgentState;
+  isPausing?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
   onFilesPaste?: (files: File[]) => void;
@@ -28,6 +33,10 @@ export function CustomChatInput({
   showButton = true,
   conversationStatus = null,
   onSubmit,
+  onStop,
+  onResume,
+  agentState,
+  isPausing = false,
   onFocus,
   onBlur,
   onFilesPaste,
@@ -87,7 +96,9 @@ export function CustomChatInput({
     messageToSend,
   );
 
-  const { handleSubmit, handleResumeAgent } = useChatSubmission(
+  const hasContent = !!messageToSend?.text?.trim();
+
+  const { handleSubmit } = useChatSubmission(
     chatInputRef as React.RefObject<HTMLDivElement | null>,
     fileInputRef as React.RefObject<HTMLInputElement | null>,
     smartResize,
@@ -151,7 +162,11 @@ export function CustomChatInput({
           chatInputRef={chatInputRef}
           handleFileIconClick={handleFileIconClick}
           handleSubmit={handleSubmit}
-          handleResumeAgent={handleResumeAgent}
+          handleStop={onStop}
+          handleResume={onResume}
+          agentState={agentState}
+          hasContent={hasContent}
+          isPausing={isPausing}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}

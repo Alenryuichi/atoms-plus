@@ -10,6 +10,12 @@ import { processFiles, processImages } from "#/utils/file-processing";
 import { useSubConversationTaskPolling } from "#/hooks/query/use-sub-conversation-task-polling";
 import { isTaskPolling } from "#/utils/utils";
 import { useTeamModeStore } from "#/stores/team-mode-store";
+import { useUnifiedPauseConversationSandbox } from "#/hooks/mutation/use-unified-stop-conversation";
+import { useV1PauseConversation } from "#/hooks/mutation/use-v1-pause-conversation";
+import { useV1ResumeConversation } from "#/hooks/mutation/use-v1-resume-conversation";
+import { useConversationId } from "#/hooks/use-conversation-id";
+import { useSendMessage } from "#/hooks/use-send-message";
+import { generateAgentStateChangeEvent } from "#/services/agent-state-service";
 
 interface InteractiveChatBoxProps {
   onSubmit: (message: string, images: File[], files: File[]) => void;
@@ -30,39 +36,39 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
   } = useConversationStore();
   const { curAgentState } = useAgentState();
   const { data: conversation } = useActiveConversation();
+  const { conversationId } = useConversationId();
+  const { send } = useSendMessage();
 
-  // Team Mode: Check if team collaboration is running
   const isTeamModeRunning = useTeamModeStore((state) => state.isRunning);
 
-  // Poll sub-conversation task to check if it's loading
+  const pauseConversationSandboxMutation = useUnifiedPauseConversationSandbox();
+  const v1PauseConversationMutation = useV1PauseConversation();
+  const v1ResumeConversationMutation = useV1ResumeConversation();
+
+  const isV1Conversation = conversation?.conversation_version === "V1";
+
   const { taskStatus: subConversationTaskStatus } =
     useSubConversationTaskPolling(
       subConversationTaskId,
       conversation?.conversation_id || null,
     );
 
-  // Helper function to validate and filter files
   const validateAndFilterFiles = (selectedFiles: File[]) => {
     const validation = validateFiles(selectedFiles, [...images, ...files]);
-
     if (!validation.isValid) {
       displayErrorToast(`Error: ${validation.errorMessage}`);
       return null;
     }
-
     const validFiles = selectedFiles.filter((f) => !isFileImage(f));
     const validImages = selectedFiles.filter((f) => isFileImage(f));
-
     return { validFiles, validImages };
   };
 
-  // Helper function to show loading indicators for files
   const showLoadingIndicators = (validFiles: File[], validImages: File[]) => {
     validFiles.forEach((file) => addFileLoading(file.name));
     validImages.forEach((image) => addImageLoading(image.name));
   };
 
-  // Helper function to handle successful file processing results
   const handleSuccessfulFiles = (fileResults: { successful: File[] }) => {
     if (fileResults.successful.length > 0) {
       addFiles(fileResults.successful);
@@ -70,7 +76,6 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
     }
   };
 
-  // Helper function to handle successful image processing results
   const handleSuccessfulImages = (imageResults: { successful: File[] }) => {
     if (imageResults.successful.length > 0) {
       addImages(imageResults.successful);
@@ -80,7 +85,6 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
     }
   };
 
-  // Helper function to handle failed file processing results
   const handleFailedFiles = (
     fileResults: { failed: { file: File; error: Error }[] },
     imageResults: { failed: { file: File; error: Error }[] },
@@ -91,7 +95,6 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
         `Failed to process file ${file.name}: ${error.message}`,
       );
     });
-
     imageResults.failed.forEach(({ file, error }) => {
       removeImageLoading(file.name);
       displayErrorToast(
@@ -100,37 +103,25 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
     });
   };
 
-  // Helper function to clear loading states on error
   const clearLoadingStates = (validFiles: File[], validImages: File[]) => {
     validFiles.forEach((file) => removeFileLoading(file.name));
     validImages.forEach((image) => removeImageLoading(image.name));
   };
 
   const handleUpload = async (selectedFiles: File[]) => {
-    // Step 1: Validate and filter files
     const result = validateAndFilterFiles(selectedFiles);
     if (!result) return;
-
     const { validFiles, validImages } = result;
-
-    // Step 2: Show loading indicators immediately
     showLoadingIndicators(validFiles, validImages);
-
-    // Step 3: Process files using REAL FileReader
     try {
       const [fileResults, imageResults] = await Promise.all([
         processFiles(validFiles),
         processImages(validImages),
       ]);
-
-      // Step 4: Handle successful results
       handleSuccessfulFiles(fileResults);
       handleSuccessfulImages(imageResults);
-
-      // Step 5: Handle failed results
       handleFailedFiles(fileResults, imageResults);
     } catch {
-      // Clear loading states and show error
       clearLoadingStates(validFiles, validImages);
       displayErrorToast("An unexpected error occurred while processing files");
     }
@@ -141,22 +132,42 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
     clearAllFiles();
   };
 
-  // Disable input when:
-  // - Agent is loading or awaiting confirmation
-  // - Sub-conversation task is polling
-  // - Team Mode is running (PM/Architect/Engineer collaboration in progress)
+  const handleStop = () => {
+    if (isV1Conversation) {
+      v1PauseConversationMutation.mutate({ conversationId });
+      return;
+    }
+    send(generateAgentStateChangeEvent(AgentState.STOPPED));
+  };
+
+  const handleResume = () => {
+    if (isV1Conversation) {
+      v1ResumeConversationMutation.mutate({ conversationId });
+      return;
+    }
+    send(generateAgentStateChangeEvent(AgentState.RUNNING));
+  };
+
+  const isPausing =
+    pauseConversationSandboxMutation.isPending ||
+    v1PauseConversationMutation.isPending;
+
   const isDisabled =
     curAgentState === AgentState.LOADING ||
+    curAgentState === AgentState.RUNNING ||
     curAgentState === AgentState.AWAITING_USER_CONFIRMATION ||
     isTaskPolling(subConversationTaskStatus) ||
     isTeamModeRunning;
 
   return (
     <div data-testid="interactive-chat-box">
-      {/* Atoms Plus: Simplified chat box - removed RaceModePanel and GitControlBar */}
       <CustomChatInput
         disabled={isDisabled}
         onSubmit={handleSubmit}
+        onStop={handleStop}
+        onResume={handleResume}
+        agentState={curAgentState}
+        isPausing={isPausing}
         onFilesPaste={handleUpload}
         conversationStatus={conversation?.status || null}
       />

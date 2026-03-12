@@ -6,6 +6,7 @@ import { ChatInputActions } from "./chat-input-actions";
 import { SlashCommandMenu } from "./slash-command-menu";
 import { cn } from "#/lib/utils";
 import { SlashCommandItem } from "#/hooks/chat/use-slash-command";
+import { AgentState } from "#/types/agent-state";
 
 interface ChatInputContainerProps {
   chatContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -16,7 +17,11 @@ interface ChatInputContainerProps {
   chatInputRef: React.RefObject<HTMLDivElement | null>;
   handleFileIconClick: (isDisabled: boolean) => void;
   handleSubmit: () => void;
-  handleResumeAgent: () => void;
+  handleStop: () => void;
+  handleResume: () => void;
+  agentState: AgentState;
+  hasContent: boolean;
+  isPausing: boolean;
   onDragOver: (e: React.DragEvent, isDisabled: boolean) => void;
   onDragLeave: (e: React.DragEvent, isDisabled: boolean) => void;
   onDrop: (e: React.DragEvent, isDisabled: boolean) => void;
@@ -40,7 +45,11 @@ export function ChatInputContainer({
   chatInputRef,
   handleFileIconClick,
   handleSubmit,
-  handleResumeAgent,
+  handleStop,
+  handleResume,
+  agentState,
+  hasContent,
+  isPausing,
   onDragOver,
   onDragLeave,
   onDrop,
@@ -58,7 +67,7 @@ export function ChatInputContainer({
     <div
       ref={chatContainerRef}
       className={cn(
-        "relative flex w-full flex-col items-start justify-center rounded-[24px] border border-white/10 bg-black/20 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all duration-200 ease-out",
+        "relative flex w-full flex-col items-start justify-center rounded-lg border border-white/10 bg-black/20 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl transition-all duration-200 ease-out",
         "focus-within:border-white/20 focus-within:bg-black/25",
         disabled && "opacity-80",
       )}
@@ -66,12 +75,11 @@ export function ChatInputContainer({
       onDragLeave={(e) => onDragLeave(e, disabled)}
       onDrop={(e) => onDrop(e, disabled)}
     >
-      {/* Drag Over UI */}
       {isDragOver && <DragOver />}
 
       <UploadedFiles />
 
-      {/* Wrapper so the slash menu anchors just above the input row */}
+      {/* Row 1: Text input only */}
       <div className="relative w-full">
         {isSlashMenuOpen && onSlashSelect && (
           <SlashCommandMenu
@@ -84,10 +92,6 @@ export function ChatInputContainer({
         <ChatInputRow
           chatInputRef={chatInputRef}
           disabled={disabled}
-          showButton={showButton}
-          buttonClassName={buttonClassName}
-          handleFileIconClick={handleFileIconClick}
-          handleSubmit={handleSubmit}
           onInput={onInput}
           onPaste={onPaste}
           onKeyDown={onKeyDown}
@@ -96,10 +100,19 @@ export function ChatInputContainer({
         />
       </div>
 
-      <div className="mt-1 w-full border-t border-white/[0.06] px-1 pt-2">
+      {/* Row 2: Agent selector (left) + File attach + Send/Stop (right) */}
+      <div className="mt-2 w-full px-0">
         <ChatInputActions
           disabled={disabled}
-          handleResumeAgent={handleResumeAgent}
+          showButton={showButton}
+          buttonClassName={buttonClassName}
+          handleFileIconClick={handleFileIconClick}
+          handleSubmit={handleSubmit}
+          handleStop={handleStop}
+          handleResume={handleResume}
+          agentState={agentState}
+          hasContent={hasContent}
+          isPausing={isPausing}
         />
       </div>
     </div>
