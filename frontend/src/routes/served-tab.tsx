@@ -30,7 +30,7 @@ function ServedApp() {
     try {
       const url = new URL(e.target.value);
       setCurrentActiveHost(url.origin);
-      setPath(url.pathname);
+      setPath(`${url.pathname}${url.search}${url.hash}`);
     } catch {
       // Invalid URL, ignore
     }
@@ -55,11 +55,16 @@ function ServedApp() {
     [],
   );
 
-  const fullUrl = currentActiveHost
-    ? `${currentActiveHost}${path ? `/${path}` : ""}`
-    : "";
+  const fullUrl = React.useMemo(() => {
+    if (!currentActiveHost) return "";
+    try {
+      return new URL(path || "/", currentActiveHost).toString();
+    } catch {
+      return currentActiveHost;
+    }
+  }, [currentActiveHost, path]);
   const displayUrl = currentActiveHost
-    ? currentActiveHost.replace(/^https?:\/\//, "") + (path ? `/${path}` : "")
+    ? fullUrl.replace(/^https?:\/\//, "")
     : "";
 
   const copyUrl = useCallback(async () => {

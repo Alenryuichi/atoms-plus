@@ -120,6 +120,10 @@ class AppConversation(AppConversationInfo):  # type: ignore
     session_api_key: str | None = Field(
         default=None, description='The Session Api Key for REST operations.'
     )
+    preview_url: str | None = Field(
+        default=None,
+        description='Primary preview URL for generated web app, if available.',
+    )
 
     # JSON fields for complex data types
     pr_number: list[int] = Field(default_factory=list)

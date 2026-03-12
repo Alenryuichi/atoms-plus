@@ -20,5 +20,6 @@ export interface V1SandboxInfo {
   status: V1SandboxStatus;
   session_api_key: string | null;
   exposed_urls: V1ExposedUrl[] | null;
+  primary_preview_url?: string | null;
   created_at: string;
 }

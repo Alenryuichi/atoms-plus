@@ -301,6 +301,14 @@ class ProcessSandboxService(SandboxService):
         env[WORKER_10] = str(WORKER_10_PORT)
         env[WORKER_11] = str(WORKER_11_PORT)
         env[WORKER_12] = str(WORKER_12_PORT)
+        env[WORKER_13] = str(WORKER_13_PORT)
+        env[WORKER_14] = str(WORKER_14_PORT)
+        env[WORKER_15] = str(WORKER_15_PORT)
+        env[WORKER_16] = str(WORKER_16_PORT)
+        env[WORKER_17] = str(WORKER_17_PORT)
+        env[WORKER_18] = str(WORKER_18_PORT)
+        env[WORKER_19] = str(WORKER_19_PORT)
+        env[WORKER_20] = str(WORKER_20_PORT)
 
         # Prepare command arguments
         cmd = [
@@ -424,6 +432,54 @@ class ProcessSandboxService(SandboxService):
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             return SandboxStatus.MISSING
 
+    async def _select_primary_preview_url(
+        self, worker_urls: list[ExposedUrl]
+    ) -> str | None:
+        """Pick the first healthy worker URL for preview.
+
+        The probe is best-effort and intentionally short so sandbox listing stays fast.
+        """
+        preferred_port_order = [
+            5173,
+            5174,
+            5175,
+            5176,
+            5177,
+            5178,
+            5179,
+            5180,
+            3003,
+            3002,
+            3001,
+            3000,
+            4173,
+            8081,
+            8888,
+            9000,
+            4000,
+            3456,
+            8011,
+            8012,
+        ]
+        order_index = {port: idx for idx, port in enumerate(preferred_port_order)}
+        sorted_urls = sorted(
+            worker_urls,
+            key=lambda item: order_index.get(item.port, len(preferred_port_order)),
+        )
+
+        for worker_url in sorted_urls:
+            try:
+                probe_target = worker_url.url
+                # Relative exposed URLs are proxied by app server; probe localhost directly.
+                if probe_target.startswith('/'):
+                    probe_target = f'http://localhost:{worker_url.port}/'
+                response = await self.httpx_client.get(probe_target, timeout=0.8)
+                if 200 <= response.status_code < 400:
+                    return worker_url.url
+            except Exception:
+                continue
+        return None
+
     async def _process_to_sandbox_info(
         self, sandbox_id: str, process_info: ProcessInfo
     ) -> SandboxInfo:
@@ -431,6 +487,7 @@ class ProcessSandboxService(SandboxService):
         status = self._get_process_status(process_info)
 
         exposed_urls = None
+        primary_preview_url = None
         session_api_key = None
 
         if status == SandboxStatus.RUNNING:
@@ -493,6 +550,13 @@ class ProcessSandboxService(SandboxService):
                                 port=worker_port,
                             )
                         )
+                    # Prefer a healthy worker endpoint as a primary preview URL.
+                    worker_only_urls = [
+                        exposed for exposed in exposed_urls if exposed.name.startswith('WORKER_')
+                    ]
+                    primary_preview_url = await self._select_primary_preview_url(
+                        worker_only_urls
+                    )
                     session_api_key = process_info.session_api_key
                     _logger.info(
                         f'Agent server on port {process_info.port} is healthy, exposed as {exposed_url}'
@@ -519,6 +583,7 @@ class ProcessSandboxService(SandboxService):
             status=status,
             session_api_key=session_api_key,
             exposed_urls=exposed_urls,
+            primary_preview_url=primary_preview_url,
             working_dir=process_info.working_dir,
             created_at=process_info.created_at,
         )

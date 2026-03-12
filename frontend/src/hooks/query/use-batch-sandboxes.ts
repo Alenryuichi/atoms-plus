@@ -6,6 +6,7 @@ export const useBatchSandboxes = (ids: string[]) =>
     queryKey: ["sandboxes", "batch", ids],
     queryFn: () => SandboxService.batchGetSandboxes(ids),
     enabled: ids.length > 0,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 10, // keep runtime URLs fresh while conversation is active
+    refetchInterval: ids.length > 0 ? 5000 : false,
     gcTime: 1000 * 60 * 15, // 15 minutes
   });

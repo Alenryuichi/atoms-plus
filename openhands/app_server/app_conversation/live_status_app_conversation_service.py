@@ -470,6 +470,7 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
             conversation_info.execution_status if conversation_info else None
         )
         conversation_url = None
+        preview_url = None
         session_api_key = None
         if sandbox and sandbox.exposed_urls:
             conversation_url = next(
@@ -482,6 +483,7 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
             )
             if conversation_url:
                 conversation_url += f'/api/conversations/{app_conversation_info.id.hex}'
+            preview_url = sandbox.primary_preview_url
             session_api_key = sandbox.session_api_key
 
         return AppConversation(
@@ -490,6 +492,7 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
             execution_status=execution_status,
             conversation_url=conversation_url,
             session_api_key=session_api_key,
+            preview_url=preview_url,
         )
 
     def _get_sandbox_id_to_conversation_ids(

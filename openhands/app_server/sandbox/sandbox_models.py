@@ -75,6 +75,13 @@ class SandboxInfo(BaseModel):
             'not return urls.'
         ),
     )
+    primary_preview_url: str | None = Field(
+        default=None,
+        description=(
+            'Best-effort primary preview URL selected from healthy worker ports. '
+            'Frontends should prefer this URL over heuristic port detection when present.'
+        ),
+    )
     working_dir: str | None = Field(
         default=None,
         description=(
