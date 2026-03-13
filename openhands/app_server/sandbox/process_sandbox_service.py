@@ -142,6 +142,27 @@ class ProcessSandboxService(SandboxService):
         """Initialize the service after dataclass creation."""
         # Ensure base working directory exists
         os.makedirs(self.base_working_dir, exist_ok=True)
+        # Fallback httpx client for background tasks (warm pool replenishment)
+        # where the injected httpx_client may have been closed after the request ends.
+        self._fallback_httpx_client: httpx.AsyncClient | None = None
+
+    def _get_active_httpx_client(self) -> httpx.AsyncClient:
+        """Return an active httpx client.
+
+        The injected ``self.httpx_client`` is tied to the HTTP request
+        lifecycle and gets closed once the request context exits.  Background
+        tasks (such as warm-pool replenishment triggered via
+        ``asyncio.create_task``) may still need an httpx client after that.
+
+        This helper checks whether the injected client is still open and, if
+        not, lazily creates (and reuses) a long-lived fallback client.
+        """
+        if not self.httpx_client.is_closed:
+            return self.httpx_client
+        # Injected client was closed — use / create a fallback
+        if self._fallback_httpx_client is None or self._fallback_httpx_client.is_closed:
+            self._fallback_httpx_client = httpx.AsyncClient()
+        return self._fallback_httpx_client
 
     def _find_unused_port(self, excluded_ports: set[int] | None = None) -> int:
         """Find an unused port starting from base_port."""
@@ -397,7 +418,7 @@ class ProcessSandboxService(SandboxService):
                 # because the agent server runs as a child process, not in a separate container.
                 # DO NOT use replace_localhost_hostname_for_docker here!
                 url = f'http://localhost:{port}/alive'
-                response = await self.httpx_client.get(url, timeout=5.0)
+                response = await self._get_active_httpx_client().get(url, timeout=5.0)
                 if response.status_code == 200:
                     data = response.json()
                     if data.get('status') == 'ok':
@@ -463,7 +484,7 @@ class ProcessSandboxService(SandboxService):
                 # Relative exposed URLs are proxied by app server; probe localhost directly.
                 if probe_target.startswith('/'):
                     probe_target = f'http://localhost:{worker_url.port}/'
-                response = await self.httpx_client.get(probe_target, timeout=0.8)
+                response = await self._get_active_httpx_client().get(probe_target, timeout=0.8)
                 if 200 <= response.status_code < 400:
                     return worker_url.url
             except Exception:
@@ -485,7 +506,7 @@ class ProcessSandboxService(SandboxService):
             # For subprocess mode, connect directly to localhost (child process, not separate container)
             try:
                 url = f'http://localhost:{process_info.port}{self.health_check_path}'
-                response = await self.httpx_client.get(url, timeout=5.0)
+                response = await self._get_active_httpx_client().get(url, timeout=5.0)
                 if response.status_code == 200:
                     # Use exposed_url_pattern for the URL that frontend will use to connect
                     # This allows configuring a public URL for remote deployments (e.g., Railway)

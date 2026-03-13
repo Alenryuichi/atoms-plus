@@ -184,16 +184,9 @@ export function RuntimeBootstrapProgress({
         </motion.div>
       )}
 
-      {/* 进度环 - Amber Gradient with Glow */}
+      {/* 进度环 - Amber Gradient */}
       <div className="relative w-32 h-32">
-        {/* Glow effect — oversized so the blur fades smoothly without hard edges */}
-        <div
-          className="absolute -inset-6 rounded-full blur-2xl opacity-30"
-          style={{
-            background: `conic-gradient(from 0deg, transparent ${100 - simulatedProgress}%, #d4a855 ${100 - simulatedProgress}%)`,
-          }}
-        />
-        <svg className="w-full h-full transform -rotate-90 relative z-10">
+        <svg className="w-full h-full transform -rotate-90" viewBox="0 0 128 128">
           {/* Background track */}
           <circle
             cx="64"
@@ -219,9 +212,6 @@ export function RuntimeBootstrapProgress({
               strokeDashoffset: 352 - (352 * simulatedProgress) / 100,
             }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            style={{
-              filter: "drop-shadow(0 0 6px rgba(212, 168, 85, 0.5))",
-            }}
           />
           <defs>
             <linearGradient
@@ -237,7 +227,7 @@ export function RuntimeBootstrapProgress({
             </linearGradient>
           </defs>
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center z-20">
+        <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-2xl font-semibold text-[#d4a855]">
             {simulatedProgress}%
           </span>

@@ -67,6 +67,7 @@ class V1ConversationService {
     parent_conversation_id?: string,
     agent_type?: "default" | "plan",
     agent_role?: string,
+    research_context?: string,
   ): Promise<V1AppConversationStartTask> {
     const body: V1AppConversationStartRequest = {
       selected_repository: selectedRepository,
@@ -78,6 +79,7 @@ class V1ConversationService {
       parent_conversation_id: parent_conversation_id || null,
       agent_type,
       agent_role: agent_role || null,
+      research_context: research_context || null,
     };
 
     // suggested_task implies the backend will construct the initial_message

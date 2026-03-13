@@ -89,7 +89,7 @@ export function ChatMessage({
           <div className="relative group/message">
             <Card
               className={cn(
-                "relative rounded-3xl rounded-tr-lg border border-white/10 bg-white/[0.045] px-4 py-3 shadow-none backdrop-blur-md",
+                "relative rounded-lg border border-white/10 bg-white/[0.045] px-4 py-3 shadow-none backdrop-blur-md",
               )}
             >
               <div
@@ -156,7 +156,7 @@ export function ChatMessage({
                 className={cn(
                   "max-w-[78ch] text-[14px] font-medium leading-7 text-white/88",
                   isFromPlanningAgent &&
-                    "rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 backdrop-blur-sm",
+                    "rounded-lg border border-white/[0.08] bg-white/[0.025] p-4 backdrop-blur-sm",
                 )}
                 style={{ whiteSpace: "normal", wordBreak: "break-word" }}
               >

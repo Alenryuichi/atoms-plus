@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import tempfile
 import zipfile
 from collections import defaultdict
@@ -95,6 +96,50 @@ from openhands.tools.preset.planning import (
 
 _conversation_info_type_adapter = TypeAdapter(list[ConversationInfo | None])
 _logger = logging.getLogger(__name__)
+
+
+def _truncate_at_section_boundary(text: str, max_chars: int) -> str:
+    """Truncate research text at the nearest Markdown section boundary.
+
+    Avoids cutting in the middle of code blocks or paragraphs by finding
+    the last heading (## or ###) or double-newline before the limit.
+    """
+    if len(text) <= max_chars:
+        return text
+
+    # Search for the last clean break point within the budget
+    # Priority: heading boundary > double newline > single newline
+    candidate = text[:max_chars]
+
+    # Try to find the last markdown heading (## ...) within range
+    heading_matches = list(re.finditer(r'\n#{1,3} ', candidate))
+    if heading_matches:
+        last_heading = heading_matches[-1]
+        # Cut just before this heading if it's in the last 30% of text
+        # (otherwise we'd lose too much content)
+        if last_heading.start() > max_chars * 0.7:
+            cut_point = last_heading.start()
+            return (
+                text[:cut_point].rstrip()
+                + '\n\n[... Research report truncated. '
+                'Key findings above should guide implementation.]'
+            )
+
+    # Fall back to last double-newline
+    last_para = candidate.rfind('\n\n')
+    if last_para > max_chars * 0.7:
+        return (
+            text[:last_para].rstrip()
+            + '\n\n[... Research report truncated. '
+            'Key findings above should guide implementation.]'
+        )
+
+    # Last resort: hard cut at max_chars
+    return (
+        text[:max_chars]
+        + '\n\n[... Research report truncated. '
+        'Key findings above should guide implementation.]'
+    )
 
 
 @dataclass
@@ -271,6 +316,42 @@ class LiveStatusAppConversationService(AppConversationServiceBase):
                     'continuing without vibe coding instructions'
                 )
                 system_message_suffix = request.system_message_suffix
+
+            # Atoms Plus: Inject Deep Research context if provided
+            if request.research_context:
+                MAX_RESEARCH_CHARS = 8000
+                research_text = request.research_context
+                if len(research_text) > MAX_RESEARCH_CHARS:
+                    research_text = _truncate_at_section_boundary(
+                        research_text, MAX_RESEARCH_CHARS
+                    )
+                    _logger.info(
+                        f'[DeepResearch] Truncated research context from '
+                        f'{len(request.research_context)} to {len(research_text)} chars'
+                    )
+
+                research_section = (
+                    '\n\n'
+                    '═══════════════════════════════════════════════════════════════════════════════\n'
+                    '🔬 DEEP RESEARCH CONTEXT\n'
+                    '═══════════════════════════════════════════════════════════════════════════════\n'
+                    'The following research report was generated BEFORE this conversation.\n'
+                    'Use it as authoritative context for your implementation decisions.\n'
+                    'Prefer the technologies, patterns, and approaches recommended below.\n'
+                    '═══════════════════════════════════════════════════════════════════════════════\n\n'
+                    f'{research_text}\n\n'
+                    '═══════════════════════════════════════════════════════════════════════════════\n'
+                    'END OF RESEARCH CONTEXT\n'
+                    '═══════════════════════════════════════════════════════════════════════════════'
+                )
+                if system_message_suffix:
+                    system_message_suffix = f'{system_message_suffix}{research_section}'
+                else:
+                    system_message_suffix = research_section
+                _logger.info(
+                    f'[DeepResearch] Injected research context '
+                    f'({len(request.research_context)} chars)'
+                )
 
             # Build the start request
             start_conversation_request = (

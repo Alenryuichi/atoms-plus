@@ -1142,7 +1142,8 @@ def main() -> int:
     settings = load_user_settings()
 
     # Default model from settings or fallback
-    default_model = settings.get('llm_model', 'openai/qwen-plus')
+    # Priority: MiniMax-M2.5 > glm-5 > qwen3-coder-plus
+    default_model = settings.get('llm_model', 'openai/MiniMax-M2.5')
 
     parser = argparse.ArgumentParser(
         description='Atoms Plus 本地开发 CLI - 部署、测试、诊断',

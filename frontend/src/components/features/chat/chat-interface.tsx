@@ -43,6 +43,10 @@ import type { OHEvent } from "#/stores/use-event-store";
 
 import { RuntimeBootstrapProgress } from "./runtime-bootstrap-progress";
 import type { RuntimeStatus } from "#/types/runtime-status";
+import { useResearchStore } from "#/stores/research-store";
+import { ResearchProgress } from "../research/research-progress";
+import { ResearchCompleteCard } from "../research/research-complete-card";
+import { useResearchWebSocket } from "#/hooks/use-research-websocket";
 
 function getEntryPoint(
   hasRepository: boolean | null,
@@ -99,7 +103,7 @@ const getLatestAssistantTextFromV1 = (events: OHEvent[]): string => {
 
 export function ChatInterface() {
   const posthog = usePostHog();
-  const { setMessageToSend } = useConversationStore();
+  const { setMessageToSend, setSelectedTab, setIsRightPanelShown } = useConversationStore();
   const { data: conversation } = useActiveConversation();
   const { errorMessage, removeErrorMessage } = useErrorMessageStore();
   const { isLoadingMessages } = useWsClient();
@@ -131,6 +135,19 @@ export function ChatInterface() {
 
   const { curAgentState } = useAgentState();
   const { handleBuildPlanClick } = useHandleBuildPlanClick();
+
+  // Deep Research state
+  const researchPhase = useResearchStore((s) => s.phase);
+  const researchResult = useResearchStore((s) => s.result);
+  const researchQuery = useResearchStore((s) => s.query);
+  const confirmResearch = useResearchStore((s) => s.confirmResearch);
+  const { disconnect: disconnectResearch } = useResearchWebSocket();
+  const resetResearch = useResearchStore((s) => s.reset);
+  const isResearching = researchPhase === "connecting" || researchPhase === "researching";
+  const isAwaitingResearchConfirmation = researchPhase === "awaiting_confirmation";
+  const isResearchCompleted = researchPhase === "completed";
+  const isResearchError = researchPhase === "error";
+  const showResearchBubbles = isResearching || isAwaitingResearchConfirmation || isResearchCompleted || isResearchError;
 
   // Disable Build button while agent is running (streaming)
   const isAgentRunning =
@@ -259,6 +276,20 @@ export function ChatInterface() {
     setFeedbackPolarity(polarity);
   };
 
+  const handleStartBuilding = React.useCallback(() => {
+    if (!researchResult?.report || !researchQuery) return;
+
+    confirmResearch();
+    const message = `Based on the deep research report, please implement: ${researchQuery}`;
+    send(createChatMessage(message, [], [], new Date().toISOString()));
+    setOptimisticUserMessage(message);
+  }, [researchResult, researchQuery, confirmResearch, send, setOptimisticUserMessage]);
+
+  const handleEditReport = React.useCallback(() => {
+    setSelectedTab("research");
+    setIsRightPanelShown(true);
+  }, [setSelectedTab, setIsRightPanelShown]);
+
   React.useEffect(() => {
     if (autoScroll) {
       scrollDomToBottom();
@@ -318,6 +349,7 @@ export function ChatInterface() {
 
           {isTask &&
             !userEventsExist &&
+            !showResearchBubbles &&
             taskStatus !== "ERROR" && (
               <RuntimeBootstrapProgress
                 runtimeStatus={conversation?.runtime_status as RuntimeStatus}
@@ -328,12 +360,31 @@ export function ChatInterface() {
 
           {/* P0 Fix: Show transition state when navigating from task to conversation */}
           {/* This bridges the gap between task completion and WebSocket connection */}
-          {isTransitioningFromTask && (
+          {isTransitioningFromTask && !showResearchBubbles && (
             <RuntimeBootstrapProgress
               runtimeStatus={conversation?.runtime_status as RuntimeStatus}
               userMessage={optimisticUserMessage || undefined}
               taskStatus="READY"
             />
+          )}
+
+          {/* Deep Research progress — stays visible through researching → awaiting_confirmation → completed */}
+          {showResearchBubbles && (
+            <div className="w-full mb-8 mt-4 space-y-4">
+              <ResearchProgress
+                onCancel={isResearching ? () => {
+                  disconnectResearch();
+                  resetResearch();
+                } : undefined}
+                onDismiss={isResearchError ? resetResearch : undefined}
+              />
+              {(isAwaitingResearchConfirmation || isResearchCompleted) && (
+                <ResearchCompleteCard
+                  onStartBuilding={handleStartBuilding}
+                  onEditReport={handleEditReport}
+                />
+              )}
+            </div>
           )}
 
           {(!isLoadingMessages || v0Events.length > 0) && v0UserEventsExist && (
@@ -380,15 +431,17 @@ export function ChatInterface() {
             </div>
           )}
 
-          {isStartingStatus && (
-            <div className="flex items-center gap-2 px-1">
-              <ChatStatusIndicator
-                statusColor={serverStatusColor}
-                status={serverStatusText}
-              />
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-2">
+              {isStartingStatus && !showResearchBubbles && (
+                <ChatStatusIndicator
+                  statusColor={serverStatusColor}
+                  status={serverStatusText}
+                />
+              )}
               <ConfirmationModeEnabled />
             </div>
-          )}
+          </div>
 
           {errorMessage && (
             <ErrorMessageBanner

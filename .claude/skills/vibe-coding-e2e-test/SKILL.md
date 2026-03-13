@@ -105,6 +105,7 @@ The tests validate generated code against these criteria:
 | `./scripts/run-vibe-coding-tests.sh --prod` | 针对生产环境测试 |
 | `./scripts/run-vibe-coding-tests.sh --full --prod` | 生产环境 + 完整流程 |
 
+
 ## Environment Variables
 
 | Variable | Default | Description |
@@ -150,6 +151,7 @@ Running 8 tests using 7 workers
 ```
 
 ### Python 后端测试输出
+
 
 ```
 ======================================================================

@@ -1,6 +1,5 @@
 # Atoms Plus - Base Agent Node
-"""
-Base utilities for agent nodes.
+"""Base utilities for agent nodes.
 
 Provides common functionality for LLM calls, thought streaming,
 and state updates shared across all agent nodes.
@@ -26,8 +25,9 @@ logger = logging.getLogger(__name__)
 litellm.set_verbose = False
 
 # Default model configuration
-DEFAULT_MODEL = 'openai/qwen-plus'
-DEFAULT_BASE_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1'
+# Priority: MiniMax-M2.5 > glm-5 > qwen3-coder-plus
+DEFAULT_MODEL = 'openai/MiniMax-M2.5'
+DEFAULT_BASE_URL = 'https://coding.dashscope.aliyuncs.com/v1'
 
 # Cache for settings with mtime tracking to detect changes
 _settings_cache: dict[str, Any] | None = None
@@ -69,8 +69,7 @@ def _load_user_settings() -> dict[str, Any]:
 
 
 def _ensure_model_prefix(model: str, api_base: str) -> str:
-    """
-    Ensure model has the correct provider prefix for LiteLLM.
+    """Ensure model has the correct provider prefix for LiteLLM.
 
     For Alibaba Bailian Coding API (dashscope), models need 'openai/' prefix
     because the API is OpenAI-compatible.
@@ -91,8 +90,7 @@ def _ensure_model_prefix(model: str, api_base: str) -> str:
 
 
 def get_llm_config() -> dict[str, Any]:
-    """
-    Get LLM configuration from environment or user settings.
+    """Get LLM configuration from environment or user settings.
 
     Priority:
     1. Environment variables (LLM_MODEL, LLM_BASE_URL, LLM_API_KEY)
@@ -127,8 +125,7 @@ async def call_llm(
     role: AgentRole,
     model: str | None = None,
 ) -> str:
-    """
-    Call LLM with role-specific configuration.
+    """Call LLM with role-specific configuration.
 
     Args:
         messages: Conversation messages to send
@@ -166,8 +163,7 @@ async def call_llm(
 
 
 def parse_structured_response(response: str) -> dict[str, str]:
-    """
-    Parse LLM response to extract summary and details.
+    """Parse LLM response to extract summary and details.
 
     Expected format from LLM:
     ```json
@@ -272,8 +268,7 @@ def create_thought(
     metadata: dict[str, Any] | None = None,
     summary: str | None = None,
 ) -> dict[str, Any]:
-    """
-    Create a thought entry for streaming to UI.
+    """Create a thought entry for streaming to UI.
 
     Args:
         role: Agent role (PM, ARCHITECT, ENGINEER)
@@ -299,8 +294,7 @@ def update_state_with_thought(
     status: AgentStatus = AgentStatus.THINKING,
     summary: str | None = None,
 ) -> TeamState:
-    """
-    Update state with a new thought from an agent.
+    """Update state with a new thought from an agent.
 
     Args:
         state: Current team state

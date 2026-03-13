@@ -5,7 +5,7 @@ import {
   setConversationState,
 } from "#/utils/conversation-local-storage";
 
-export type ConversationTab = "editor" | "served" | "terminal";
+export type ConversationTab = "editor" | "served" | "terminal" | "research";
 
 export type ConversationMode = "code" | "plan";
 
@@ -40,6 +40,8 @@ interface ConversationState {
   panelIsDragging: boolean; // Whether user is currently dragging the resize handle
   // Chat panel collapse state - hides chat and fully expands preview
   isChatPanelCollapsed: boolean;
+  // Deep Research report content (injected at conversation creation, editable in research tab)
+  researchReport: string | null;
 }
 
 interface ConversationActions {
@@ -73,6 +75,8 @@ interface ConversationActions {
   // Chat panel collapse actions
   toggleChatPanelCollapsed: () => void;
   setChatPanelCollapsed: (collapsed: boolean) => void;
+  // Deep Research report actions
+  setResearchReport: (report: string | null) => void;
 }
 
 type ConversationStore = ConversationState & ConversationActions;
@@ -85,6 +89,47 @@ const getConversationIdFromLocation = (): string | null => {
   const match = window.location.pathname.match(/\/conversations\/([^/]+)/);
   return match ? match[1] : null;
 };
+
+const REPORT_STORAGE_PREFIX = "research-report:";
+const REPORT_MAX_ENTRIES = 5;
+
+function evictOldReports() {
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k?.startsWith(REPORT_STORAGE_PREFIX)) keys.push(k);
+    }
+    if (keys.length > REPORT_MAX_ENTRIES) {
+      keys.sort();
+      const toRemove = keys.slice(0, keys.length - REPORT_MAX_ENTRIES);
+      for (const k of toRemove) sessionStorage.removeItem(k);
+    }
+  } catch { /* ignore */ }
+}
+
+function persistReport(report: string | null) {
+  const cid = getConversationIdFromLocation();
+  if (!cid) return;
+  try {
+    if (report) {
+      sessionStorage.setItem(`${REPORT_STORAGE_PREFIX}${cid}`, report);
+      evictOldReports();
+    } else {
+      sessionStorage.removeItem(`${REPORT_STORAGE_PREFIX}${cid}`);
+    }
+  } catch { /* quota exceeded — ignore */ }
+}
+
+function restoreReport(): string | null {
+  const cid = getConversationIdFromLocation();
+  if (!cid) return null;
+  try {
+    return sessionStorage.getItem(`${REPORT_STORAGE_PREFIX}${cid}`);
+  } catch {
+    return null;
+  }
+}
 
 const parseStoredBoolean = (value: string | null): boolean | null => {
   if (value === null) {
@@ -176,6 +221,8 @@ export const useConversationStore = create<ConversationStore>()(
       panelIsDragging: false,
       // Chat panel collapse state
       isChatPanelCollapsed: false,
+      // Deep Research report — restore from sessionStorage on refresh
+      researchReport: restoreReport(),
 
       // Actions
       setIsRightPanelShown: (isRightPanelShown) =>
@@ -306,17 +353,20 @@ export const useConversationStore = create<ConversationStore>()(
       setSubmittedMessage: (submittedMessage) =>
         set({ submittedMessage }, false, "setSubmittedMessage"),
 
-      resetConversationState: () =>
+      resetConversationState: () => {
+        persistReport(null);
         set(
           {
             shouldHideSuggestions: false,
             conversationMode: getInitialConversationMode(),
             subConversationTaskId: null,
             planContent: null,
+            researchReport: null,
           },
           false,
           "resetConversationState",
-        ),
+        );
+      },
 
       setHasRightPanelToggled: (hasRightPanelToggled) =>
         set({ hasRightPanelToggled }, false, "setHasRightPanelToggled"),
@@ -371,6 +421,11 @@ export const useConversationStore = create<ConversationStore>()(
           false,
           "setChatPanelCollapsed",
         ),
+
+      setResearchReport: (report) => {
+        persistReport(report);
+        set({ researchReport: report }, false, "setResearchReport");
+      },
     }),
     {
       name: "conversation-store",

@@ -247,6 +247,7 @@ class ConversationService {
     conversationInstructions?: string,
     createMicroagent?: CreateMicroagent,
     agentRole?: string,
+    researchContext?: string,
   ): Promise<Conversation> {
     const body = {
       repository: selectedRepository,
@@ -257,6 +258,7 @@ class ConversationService {
       conversation_instructions: conversationInstructions,
       create_microagent: createMicroagent,
       agent_role: agentRole,
+      research_context: researchContext,
     };
 
     const { data } = await openHands.post<Conversation>(

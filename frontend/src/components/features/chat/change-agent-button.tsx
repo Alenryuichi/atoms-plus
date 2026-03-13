@@ -133,7 +133,7 @@ export function ChangeAgentButton() {
 
   const buttonLabel = useMemo(() => {
     if (isExecutionAgent) {
-      return t(I18nKey.COMMON$CODE);
+      return "Agent";
     }
     return t(I18nKey.COMMON$PLAN);
   }, [isExecutionAgent, t]);

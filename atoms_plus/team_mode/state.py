@@ -1,6 +1,5 @@
 # Atoms Plus - Team Mode State
-"""
-TeamState: TypedDict state model for LangGraph StateGraph.
+"""TeamState: TypedDict state model for LangGraph StateGraph.
 
 This defines the shared state that flows through all agent nodes.
 State is checkpointed for persistence and recovery.
@@ -65,8 +64,7 @@ class ExecutionMode(str, Enum):
 
 
 class TeamState(TypedDict):
-    """
-    Shared state for Team Mode LangGraph.
+    """Shared state for Team Mode LangGraph.
 
     This state flows through all agent nodes and is checkpointed
     for persistence and recovery.
@@ -109,6 +107,12 @@ class TeamState(TypedDict):
     code: str | None
     review: str | None
 
+    # Deep Research results (from Researcher node)
+    # TODO: Enable when researcher_node is fully implemented
+    research_report: str | None  # Full markdown research report
+    research_sources: list[str] | None  # List of source URLs
+    research_summary: str | None  # Key findings for Architect injection
+
     # Iteration control
     iteration: int
     max_iterations: int
@@ -141,7 +145,7 @@ def create_initial_state(
     task: str,
     session_id: str,
     user_id: str,
-    model: str = 'qwen-plus',
+    model: str = 'MiniMax-M2.5',
     max_iterations: int = 3,
     conversation_id: str | None = None,
     conversation_version: str = 'V0',
@@ -149,8 +153,7 @@ def create_initial_state(
     sandbox_api_key: str | None = None,
     execution_mode: str = ExecutionMode.PLAN_ONLY.value,
 ) -> TeamState:
-    """
-    Create initial state for a new Team Mode session.
+    """Create initial state for a new Team Mode session.
 
     Args:
         task: The user's task description
@@ -176,6 +179,10 @@ def create_initial_state(
         plan=None,
         code=None,
         review=None,
+        # Deep Research results (initially None)
+        research_report=None,
+        research_sources=None,
+        research_summary=None,
         iteration=0,
         max_iterations=max_iterations,
         session_id=session_id,

@@ -21,6 +21,9 @@ import {
 import { I18nKey } from "#/i18n/declaration";
 import { useTeamModeStore } from "#/stores/team-mode-store";
 import { useInitialQueryStore } from "#/stores/initial-query-store";
+import { useResearchStore } from "#/stores/research-store";
+import { useResearchWebSocket } from "#/hooks/use-research-websocket";
+import { ResearchToggle } from "#/components/features/research/research-toggle";
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
@@ -232,6 +235,32 @@ export default function AtomsHome() {
     });
   };
 
+  // Deep Research
+  const { isResearchMode, phase: researchPhase, reset: resetResearch } = useResearchStore();
+  const { connect: startResearchWs } = useResearchWebSocket();
+
+  // Only clear fully-terminal research states on returning to home.
+  // "error" is kept so the user can see what went wrong.
+  useEffect(() => {
+    if (researchPhase === "completed" || researchPhase === "awaiting_confirmation") {
+      resetResearch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keyboard shortcut: Cmd/Ctrl+Shift+D to toggle Deep Research mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "d") {
+        e.preventDefault();
+        const store = useResearchStore.getState();
+        store.setResearchMode(!store.isResearchMode);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   // Refs for GSAP animations
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
@@ -396,6 +425,25 @@ export default function AtomsHome() {
   const handleSubmit = async (query: string) => {
     if (!query.trim() || isCreating) return;
 
+    // Deep Research mode: start WS research + create conversation WITHOUT query.
+    // The agent won't execute until the user reviews the report and clicks
+    // "Start Build" on the conversation page (handled by chat-interface.tsx).
+    if (isResearchMode && (researchPhase === "idle" || researchPhase === "error" || researchPhase === "completed" || researchPhase === "awaiting_confirmation")) {
+      const trimmed = query.trim();
+      startResearchWs(trimmed);
+      setIsCreating(true);
+      try {
+        const result = await createConversation.mutateAsync({
+          // Don't pass query — agent should wait for "Start Build" confirmation
+        });
+        const conversationId = result.conversation_id;
+        navigate(`/conversations/${conversationId}`);
+      } catch {
+        setIsCreating(false);
+      }
+      return;
+    }
+
     setIsCreating(true);
     try {
       // Team Mode: When enabled, create conversation WITHOUT the initial query
@@ -420,6 +468,7 @@ export default function AtomsHome() {
       setIsCreating(false);
     }
   };
+
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -495,59 +544,75 @@ export default function AtomsHome() {
         >
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/30 via-orange-500/30 to-amber-500/30 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500" />
-            <div className="relative flex items-center bg-neutral-900/90 backdrop-blur-sm border border-neutral-700/50 rounded-2xl overflow-hidden focus-within:border-amber-500/50 transition-all duration-300">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={
-                  displayedPlaceholder || t(I18nKey.ATOMS$INPUT_PLACEHOLDER)
-                }
-                className="flex-1 bg-transparent text-white placeholder-neutral-500 px-6 py-5 text-lg outline-none"
-                disabled={isCreating}
-                aria-label={t(I18nKey.ATOMS$INPUT_PLACEHOLDER)}
-              />
-              <StarBorder
-                as="button"
-                type="button"
-                onClick={() => handleSubmit(inputValue)}
-                disabled={!inputValue.trim() || isCreating}
-                className="mr-3"
-                color="#d4a855"
-                speed="4s"
-              >
-                <motion.span
-                  className="flex items-center gap-2 font-semibold"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+            <div className="relative bg-neutral-900/90 backdrop-blur-sm border border-neutral-700/50 rounded-2xl overflow-hidden focus-within:border-amber-500/50 transition-all duration-300">
+              <div className="flex items-center">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={
+                    displayedPlaceholder || t(I18nKey.ATOMS$INPUT_PLACEHOLDER)
+                  }
+                  className="flex-1 bg-transparent text-white placeholder-neutral-500 px-6 py-5 text-lg outline-none"
+                  disabled={isCreating || (researchPhase !== "idle" && researchPhase !== "completed" && researchPhase !== "awaiting_confirmation" && researchPhase !== "error")}
+                  aria-label={t(I18nKey.ATOMS$INPUT_PLACEHOLDER)}
+                />
+                <StarBorder
+                  as="button"
+                  type="button"
+                  onClick={() => handleSubmit(inputValue)}
+                  disabled={!inputValue.trim() || isCreating || (researchPhase !== "idle" && researchPhase !== "completed" && researchPhase !== "awaiting_confirmation" && researchPhase !== "error")}
+                  className="mr-3"
+                  color={isResearchMode ? "#f59e0b" : "#d4a855"}
+                  speed="4s"
                 >
-                  {isCreating ? (
-                    <>
-                      <LoadingSpinner size="small" />
-                      <span>{t(I18nKey.ATOMS$BUTTON_CREATING)}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>{t(I18nKey.ATOMS$BUTTON_START)}</span>
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M14 5l7 7m0 0l-7 7m7-7H3"
-                        />
-                      </svg>
-                    </>
-                  )}
-                </motion.span>
-              </StarBorder>
+                  <motion.span
+                    className="flex items-center gap-2 font-semibold"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {isCreating ? (
+                      <>
+                        <LoadingSpinner size="small" />
+                        <span>{t(I18nKey.ATOMS$BUTTON_CREATING)}</span>
+                      </>
+                    ) : isResearchMode ? (
+                      <>
+                        <span>🔬</span>
+                        <span>Research</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{t(I18nKey.ATOMS$BUTTON_START)}</span>
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M14 5l7 7m0 0l-7 7m7-7H3"
+                          />
+                        </svg>
+                      </>
+                    )}
+                  </motion.span>
+                </StarBorder>
+              </div>
+              {/* Research toggle row */}
+              <div className="flex items-center gap-2 px-5 pb-3 pt-0">
+                <ResearchToggle />
+                {isResearchMode && (
+                  <span className="text-xs text-white/30">
+                    {t(I18nKey.ATOMS$RESEARCH_HINT)}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </motion.div>

@@ -27,6 +27,20 @@ import { useErrorMessageStore } from "#/stores/error-message-store";
 import { useUnifiedResumeConversationSandbox } from "#/hooks/mutation/use-unified-start-conversation";
 import { I18nKey } from "#/i18n/declaration";
 import { useEventStore } from "#/stores/use-event-store";
+import { useResearchStore } from "#/stores/research-store";
+import { ResearchService } from "#/api/research-service/research-service.api";
+
+const REPORT_SAVE_RETRY_DELAY_MS = 1500;
+const REPORT_SAVE_MAX_RETRIES = 5;
+
+const isNonRetryableReportSaveError = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return message.includes("not supported") || message.includes("invalid sandbox id");
+};
 
 function AppContent() {
   useConversationConfig();
@@ -42,7 +56,7 @@ function AppContent() {
     useUnifiedResumeConversationSandbox();
   const { data: isAuthed } = useIsAuthed();
   const { providers } = useUserProviders();
-  const { resetConversationState } = useConversationStore();
+  const { resetConversationState, setResearchReport, setSelectedTab, setIsRightPanelShown } = useConversationStore();
   const navigate = useNavigate();
   const clearTerminal = useCommandStore((state) => state.clearTerminal);
   const setCurrentAgentState = useAgentStore(
@@ -52,11 +66,35 @@ function AppContent() {
     (state) => state.removeErrorMessage,
   );
 
+  // Deep Research state — watch for completion to inject report + show tab
+  const researchPhase = useResearchStore((s) => s.phase);
+  const researchResult = useResearchStore((s) => s.result);
+  const [reportSaveRetryCount, setReportSaveRetryCount] = React.useState(0);
+
+  // Track the last successfully auto-saved research run, keyed by conversation + sandbox + session
+  const lastAutoSavedReportKey = React.useRef<string | null>(null);
+  const reportSaveRetryTimeout = React.useRef<number | null>(null);
+
   // Track which conversation ID we've auto-started to prevent auto-restart after manual stop
   const processedConversationId = React.useRef<string | null>(null);
 
   // Fetch batch feedback data when conversation is loaded
   useBatchFeedback();
+
+  const clearReportSaveRetryTimeout = React.useCallback(() => {
+    if (reportSaveRetryTimeout.current !== null) {
+      window.clearTimeout(reportSaveRetryTimeout.current);
+      reportSaveRetryTimeout.current = null;
+    }
+  }, []);
+
+  const reportAutoSaveKey = React.useMemo(() => {
+    if (!conversationId || !conversation?.sandbox_id || !researchResult?.session_id) {
+      return null;
+    }
+
+    return `${conversationId}:${conversation.sandbox_id}:${researchResult.session_id}`;
+  }, [conversationId, conversation?.sandbox_id, researchResult?.session_id]);
 
   // 1. Cleanup Effect - runs when navigating to a different conversation
   React.useEffect(() => {
@@ -66,10 +104,22 @@ function AppContent() {
     removeErrorMessage();
     clearEvents();
 
+    // Restore research report from sessionStorage (one-time bridge from home page)
+    const pendingReport = sessionStorage.getItem("pending-research-report");
+    if (pendingReport) {
+      sessionStorage.removeItem("pending-research-report");
+      setResearchReport(pendingReport);
+      setSelectedTab("research");
+      setIsRightPanelShown(true);
+    }
+
     // Reset tracking ONLY if we're navigating to a DIFFERENT conversation
     // Don't reset on StrictMode remounts (conversationId is the same)
     if (processedConversationId.current !== conversationId) {
       processedConversationId.current = null;
+      lastAutoSavedReportKey.current = null;
+      setReportSaveRetryCount(0);
+      clearReportSaveRetryTimeout();
     }
   }, [
     conversationId,
@@ -78,6 +128,95 @@ function AppContent() {
     setCurrentAgentState,
     removeErrorMessage,
     clearEvents,
+    setResearchReport,
+    setSelectedTab,
+    setIsRightPanelShown,
+    clearReportSaveRetryTimeout,
+  ]);
+
+  // Open Research tab as soon as research starts, inject report once available
+  React.useEffect(() => {
+    if (researchPhase === "connecting" || researchPhase === "researching") {
+      setSelectedTab("research");
+      setIsRightPanelShown(true);
+    }
+    if (
+      (researchPhase === "awaiting_confirmation" || researchPhase === "completed") &&
+      researchResult?.report
+    ) {
+      setResearchReport(researchResult.report);
+      setSelectedTab("research");
+      setIsRightPanelShown(true);
+    }
+  }, [researchPhase, researchResult, setResearchReport, setSelectedTab, setIsRightPanelShown]);
+
+  React.useEffect(() => {
+    setReportSaveRetryCount(0);
+    clearReportSaveRetryTimeout();
+  }, [reportAutoSaveKey, clearReportSaveRetryTimeout]);
+
+  React.useEffect(() => () => clearReportSaveRetryTimeout(), [clearReportSaveRetryTimeout]);
+
+  // Auto-save report to sandbox once research completes and sandbox is ready
+  React.useEffect(() => {
+    const sandboxId = conversation?.sandbox_id;
+    const report = researchResult?.report;
+    const shouldSave =
+      researchPhase === "awaiting_confirmation" || researchPhase === "completed";
+
+    if (!reportAutoSaveKey || !report || !sandboxId || !shouldSave) {
+      return;
+    }
+
+    if (lastAutoSavedReportKey.current === reportAutoSaveKey) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void ResearchService.saveReport({
+      sandbox_id: sandboxId,
+      report,
+    })
+      .then(() => {
+        if (cancelled) {
+          return;
+        }
+
+        clearReportSaveRetryTimeout();
+        lastAutoSavedReportKey.current = reportAutoSaveKey;
+      })
+      .catch((err) => {
+        if (cancelled) {
+          return;
+        }
+
+        const retryable = !isNonRetryableReportSaveError(err);
+        const hasAttemptsLeft = reportSaveRetryCount < REPORT_SAVE_MAX_RETRIES;
+
+        console.warn("[Deep Research] Failed to save report to sandbox:", err);
+
+        if (!retryable || !hasAttemptsLeft) {
+          clearReportSaveRetryTimeout();
+          return;
+        }
+
+        clearReportSaveRetryTimeout();
+        reportSaveRetryTimeout.current = window.setTimeout(() => {
+          setReportSaveRetryCount((current) => current + 1);
+        }, REPORT_SAVE_RETRY_DELAY_MS);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    researchPhase,
+    researchResult?.report,
+    conversation?.sandbox_id,
+    reportAutoSaveKey,
+    reportSaveRetryCount,
+    clearReportSaveRetryTimeout,
   ]);
 
   // 2. Task Error Display Effect

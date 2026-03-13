@@ -165,6 +165,10 @@ class AppConversationStartRequest(OpenHandsModel):
     # When set, the backend will fetch the role's system prompt and use it
     agent_role: str | None = None
 
+    # Atoms Plus: Deep Research context (Markdown report from research phase)
+    # When set, the research report is injected into the system prompt as context
+    research_context: str | None = None
+
     # Atoms Plus: optional scaffold payload to materialize files in the workspace
     scaffold: dict[str, Any] | None = None
 

@@ -56,7 +56,7 @@ export function ChangeAgentContextMenu({
       >
         <ContextMenuIconTextWithDescription
           icon={CodeTagIcon}
-          title={t(I18nKey.COMMON$CODE)}
+          title="Agent"
           description={t(I18nKey.COMMON$CODE_AGENT_DESCRIPTION)}
         />
       </ContextMenuListItem>

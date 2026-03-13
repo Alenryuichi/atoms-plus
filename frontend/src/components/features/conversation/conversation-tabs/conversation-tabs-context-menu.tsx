@@ -10,6 +10,8 @@ import ServerIcon from "#/icons/server.svg?react";
 import GitChanges from "#/icons/git_changes.svg?react";
 import PillIcon from "#/icons/pill.svg?react";
 import PillFillIcon from "#/icons/pill-fill.svg?react";
+import ResearchIcon from "#/icons/lightbulb.svg?react";
+import { useConversationStore } from "#/stores/conversation-store";
 
 interface ConversationTabsContextMenuProps {
   isOpen: boolean;
@@ -25,11 +27,15 @@ export function ConversationTabsContextMenu({
   const { conversationId } = useConversationId();
   const { state, setUnpinnedTabs } =
     useConversationLocalStorageState(conversationId);
+  const researchReport = useConversationStore((s) => s.researchReport);
 
   const tabConfig = [
     { tab: "editor", icon: GitChanges, i18nKey: I18nKey.COMMON$CHANGES },
     { tab: "served", icon: ServerIcon, i18nKey: I18nKey.COMMON$APP },
     { tab: "terminal", icon: TerminalIcon, i18nKey: I18nKey.COMMON$TERMINAL },
+    ...(researchReport
+      ? [{ tab: "research", icon: ResearchIcon, i18nKey: I18nKey.ATOMS$RESEARCH_TITLE }]
+      : []),
   ];
 
   if (!isOpen) return null;

@@ -32,7 +32,7 @@ export function ErrorMessageBanner({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="flex w-full items-start gap-3 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3.5 text-white backdrop-blur-sm"
+      className="flex w-full items-start gap-3 rounded-lg border border-rose-500/20 bg-rose-500/10 p-3.5 text-white backdrop-blur-sm"
       data-testid="error-message-banner"
     >
       {/* Icon */}

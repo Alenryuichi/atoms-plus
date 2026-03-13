@@ -10,6 +10,7 @@ import { processFiles, processImages } from "#/utils/file-processing";
 import { useSubConversationTaskPolling } from "#/hooks/query/use-sub-conversation-task-polling";
 import { isTaskPolling } from "#/utils/utils";
 import { useTeamModeStore } from "#/stores/team-mode-store";
+import { useResearchStore } from "#/stores/research-store";
 import { useUnifiedPauseConversationSandbox } from "#/hooks/mutation/use-unified-stop-conversation";
 import { useV1PauseConversation } from "#/hooks/mutation/use-v1-pause-conversation";
 import { useV1ResumeConversation } from "#/hooks/mutation/use-v1-resume-conversation";
@@ -41,12 +42,18 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
 
   const isTeamModeRunning = useTeamModeStore((state) => state.isRunning);
 
+  // Deep Research: disable input while research is in progress
+  const researchPhase = useResearchStore((s) => s.phase);
+  const isResearchActive =
+    researchPhase === "connecting" || researchPhase === "researching";
+
   const pauseConversationSandboxMutation = useUnifiedPauseConversationSandbox();
   const v1PauseConversationMutation = useV1PauseConversation();
   const v1ResumeConversationMutation = useV1ResumeConversation();
 
   const isV1Conversation = conversation?.conversation_version === "V1";
 
+  // Poll sub-conversation task to check if it's loading
   const { taskStatus: subConversationTaskStatus } =
     useSubConversationTaskPolling(
       subConversationTaskId,
@@ -157,7 +164,8 @@ export function InteractiveChatBox({ onSubmit }: InteractiveChatBoxProps) {
     curAgentState === AgentState.RUNNING ||
     curAgentState === AgentState.AWAITING_USER_CONFIRMATION ||
     isTaskPolling(subConversationTaskStatus) ||
-    isTeamModeRunning;
+    isTeamModeRunning ||
+    isResearchActive;
 
   return (
     <div data-testid="interactive-chat-box">

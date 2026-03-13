@@ -154,7 +154,7 @@ export function GenericEventMessage({
         type="button"
         onClick={() => details && setShowDetails((prev) => !prev)}
         className={cn(
-          "relative flex w-full items-center justify-between rounded-2xl px-4 py-3 transition-all",
+          "relative flex w-full items-center justify-between rounded-lg px-4 py-3 transition-all",
           "border shadow-none",
           colorScheme.border,
           details ? "cursor-pointer" : "cursor-default",

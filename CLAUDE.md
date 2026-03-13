@@ -66,16 +66,20 @@ OH_SANDBOX_EXPOSED_URL_PATTERN=https://openhands-production-c7c2.up.railway.app/
 
 > **重要**: 所有模型在 LiteLLM 中需要加 `openai/` 前缀，因为 API 兼容 OpenAI 协议
 
-| 模型 | LiteLLM 格式 | 图片理解 |
-|------|-------------|---------|
-| qwen3.5-plus | `openai/qwen3.5-plus` | ✅ |
-| kimi-k2.5 | `openai/kimi-k2.5` | ✅ |
-| glm-5 | `openai/glm-5` | ❌ |
-| MiniMax-M2.5 | `openai/MiniMax-M2.5` | ❌ |
-| qwen3-max-2026-01-23 | `openai/qwen3-max-2026-01-23` | ❌ |
-| qwen3-coder-next | `openai/qwen3-coder-next` | ❌ |
-| qwen3-coder-plus | `openai/qwen3-coder-plus` | ❌ |
-| glm-4.7 | `openai/glm-4.7` | ❌ |
+**推荐优先级**: `MiniMax-M2.5` > `glm-5` > `qwen3-coder-plus`
+
+| 厂商 | 模型 | LiteLLM 格式 | 能力 | 推荐 |
+|------|------|-------------|------|------|
+| MiniMax | MiniMax-M2.5 | `openai/MiniMax-M2.5` | 文本生成、深度思考 | ⭐ 首选 |
+| 智谱 | glm-5 | `openai/glm-5` | 文本生成、深度思考 | ⭐ 次选 |
+| 千问 | qwen3-coder-plus | `openai/qwen3-coder-plus` | 文本生成 | ⭐ 备选 |
+| 千问 | qwen3.5-plus | `openai/qwen3.5-plus` | 文本生成、深度思考、视觉理解 | |
+| 千问 | qwen3-max-2026-01-23 | `openai/qwen3-max-2026-01-23` | 文本生成、深度思考 | |
+| 千问 | qwen3-coder-next | `openai/qwen3-coder-next` | 文本生成 | |
+| 智谱 | glm-4.7 | `openai/glm-4.7` | 文本生成、深度思考 | |
+| Kimi | kimi-k2.5 | `openai/kimi-k2.5` | 文本生成、深度思考、视觉理解 | |
+
+> **注意**: `atoms_plus/deep_research/search.py` 中 DashScope 搜索 API 内部固定使用 `qwen-plus`，这是搜索服务的内部模型，与上述 LLM 调用模型无关，无需修改。
 
 ### 数据库 (Supabase)
 

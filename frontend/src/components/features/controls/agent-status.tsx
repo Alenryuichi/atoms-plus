@@ -15,6 +15,7 @@ import { useAgentState } from "#/hooks/use-agent-state";
 import { useUnifiedWebSocketStatus } from "#/hooks/use-unified-websocket-status";
 import { useTaskPolling } from "#/hooks/query/use-task-polling";
 import { useSubConversationTaskPolling } from "#/hooks/query/use-sub-conversation-task-polling";
+import { useResearchStore } from "#/stores/research-store";
 
 // Check if running in mock mode - skip loading state for testing
 const isMockMode = import.meta.env.VITE_MOCK_API === "true";
@@ -51,6 +52,10 @@ export function AgentStatus({
       conversation?.conversation_id || null,
     );
 
+  const researchPhase = useResearchStore((s) => s.phase);
+  const isResearchActive =
+    researchPhase === "connecting" || researchPhase === "researching";
+
   const statusCode = getStatusCode(
     curStatusMessage,
     webSocketStatus,
@@ -70,8 +75,8 @@ export function AgentStatus({
       isTaskPolling(taskStatus) ||
       isTaskPolling(subConversationTaskStatus);
 
-  // For UI rendering - includes pause state
-  const isLoading = shouldShownAgentLoading || isPausing;
+  // For UI rendering - includes pause state and research
+  const isLoading = shouldShownAgentLoading || isPausing || isResearchActive;
 
   const shouldShownAgentError =
     curAgentState === AgentState.ERROR ||
@@ -93,9 +98,9 @@ export function AgentStatus({
     <div className={cn("flex items-center gap-2 min-w-0", className)}>
       <span
         className="text-xs text-neutral-400 font-medium flex-1 min-w-0 max-w-full whitespace-normal break-words"
-        title={t(statusCode)}
+        title={isResearchActive ? "Researching..." : t(statusCode)}
       >
-        {t(statusCode)}
+        {isResearchActive ? "Researching..." : t(statusCode)}
       </span>
       <div
         className={cn(

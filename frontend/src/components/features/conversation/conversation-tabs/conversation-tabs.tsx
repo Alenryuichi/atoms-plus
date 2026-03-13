@@ -13,6 +13,8 @@ import { useConversationStore } from "#/stores/conversation-store";
 import { ConversationTabsContextMenu } from "./conversation-tabs-context-menu";
 import { useConversationId } from "#/hooks/use-conversation-id";
 import { useSelectConversationTab } from "#/hooks/use-select-conversation-tab";
+import ResearchIcon from "#/icons/lightbulb.svg?react";
+import { useResearchStore } from "#/stores/research-store";
 
 export function ConversationTabs() {
   const { conversationId } = useConversationId();
@@ -31,6 +33,10 @@ export function ConversationTabs() {
     selectedTab,
     isRightPanelShown,
   } = useSelectConversationTab();
+
+  const researchReport = useConversationStore((s) => s.researchReport);
+  const researchPhase = useResearchStore((s) => s.phase);
+  const isResearchActive = researchPhase === "connecting" || researchPhase === "researching" || researchPhase === "awaiting_confirmation" || researchPhase === "error";
 
   // Initialize Zustand state from localStorage on component mount
   useEffect(() => {
@@ -58,6 +64,20 @@ export function ConversationTabs() {
   const { t } = useTranslation();
 
   const tabs = [
+    ...(researchReport || isResearchActive
+      ? [
+          {
+            tabValue: "research",
+            isActive: isTabActive("research"),
+            icon: ResearchIcon,
+            onClick: () => selectTab("research"),
+            tooltipContent: t(I18nKey.ATOMS$RESEARCH_TITLE),
+            tooltipAriaLabel: t(I18nKey.ATOMS$RESEARCH_TITLE),
+            label: t(I18nKey.ATOMS$RESEARCH_TITLE),
+            className: "text-amber-400",
+          },
+        ]
+      : []),
     {
       tabValue: "editor",
       isActive: isTabActive("editor"),

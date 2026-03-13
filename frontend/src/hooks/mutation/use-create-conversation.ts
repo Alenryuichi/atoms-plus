@@ -26,6 +26,8 @@ interface CreateConversationVariables {
    * @see AgentRoleId for valid values
    */
   agentRole?: AgentRoleId;
+  /** Atoms Plus: Deep Research report to inject as system context */
+  researchContext?: string;
 }
 
 // Response type that combines both V1 and legacy responses
@@ -57,6 +59,7 @@ export const useCreateConversation = () => {
         parentConversationId,
         agentType,
         agentRole,
+        researchContext,
       } = variables;
 
       const useV1 = !!settings?.v1_enabled && !createMicroagent;
@@ -74,6 +77,7 @@ export const useCreateConversation = () => {
           parentConversationId,
           agentType,
           agentRole, // Atoms Plus: auto-detected role
+          researchContext, // Atoms Plus: deep research context
         );
 
         // Return a special task ID that the frontend will recognize
@@ -98,6 +102,7 @@ export const useCreateConversation = () => {
         conversationInstructions,
         createMicroagent,
         agentRole,
+        researchContext,
       );
 
       return {

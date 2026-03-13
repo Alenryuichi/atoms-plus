@@ -70,6 +70,8 @@ export interface V1AppConversationStartRequest {
   agent_type?: "default" | "plan";
   /** Atoms Plus: auto-detected role ID that determines agent personality */
   agent_role?: AgentRoleId | null;
+  /** Atoms Plus: Deep Research context (Markdown report) to inject into system prompt */
+  research_context?: string | null;
 }
 
 export type V1AppConversationStartTaskStatus =

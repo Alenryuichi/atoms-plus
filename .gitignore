@@ -261,6 +261,7 @@ containers/runtime/Dockerfile
 containers/runtime/project.tar.gz
 containers/runtime/code
 **/node_modules/
+**/node_modules
 
 # test results
 test-results
@@ -280,6 +281,8 @@ FINAL_DIAGNOSIS*.md
 image*.png
 # Temporary files
 .claude-flow/
+.codebuddy/
+.mcp.json
 .playwright-mcp/
 *.png
 !frontend/src/assets/branding/atoms-plus/
