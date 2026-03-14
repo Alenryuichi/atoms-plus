@@ -26,11 +26,15 @@
 
 #### 环境变量
 
+> **⚠️ 安全提示**: 前端环境变量请在 Vercel 控制台设置，切勿提交到 Git！
+>
+> 本地开发时复制 `frontend/.env.local` 为 `frontend/.env`（已列入 .gitignore）
+
 ```
 VITE_BACKEND_BASE_URL=openhands-production-c7c2.up.railway.app
 VITE_USE_TLS=true
-VITE_SUPABASE_URL=https://akvsldogobzimfbtrdha.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
 ```
 
 ### 后端 (Railway)
@@ -45,14 +49,19 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 #### 环境变量
 
+> **⚠️ 安全提示**: 所有密钥请在 Railway 控制台设置，切勿提交到 Git！
+
 ```
-LLM_API_KEY=sk-1d30db2d6c864ad5b12065aaf30a0efc
+# 必需的环境变量（从 .env 或 Railway 控制台设置）
+LLM_API_KEY=${LLM_API_KEY}
 LLM_BASE_URL=https://coding.dashscope.aliyuncs.com/v1
 LLM_MODEL=openai/MiniMax-M2.5
 LLM_MAX_OUTPUT_TOKENS=4096
 LLM_TIMEOUT=180
-OH_SECRET_KEY=szqgnj7u5pf9bhvynuq67183m2la55yw
-SANDBOX_API_KEY=sk-oh-etrszt3bL2TQm5DrG9yP61FB7XkoDIO0
+OH_SECRET_KEY=${OH_SECRET_KEY}
+SANDBOX_API_KEY=${SANDBOX_API_KEY}
+
+# 固定配置
 PERMITTED_CORS_ORIGINS=https://frontend-ten-beta-79.vercel.app
 RUNTIME=local
 OH_ENABLE_BROWSER=false

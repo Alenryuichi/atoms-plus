@@ -82,9 +82,9 @@ class ProjectGenerator:
         context = config.to_template_context()
         
         # Process template files
-        files_created = []
-        errors = []
-        warnings = []
+        files_created: list[str] = []
+        errors: list[str] = []
+        warnings: list[str] = []
         
         try:
             files_created = self._process_template_dir(
